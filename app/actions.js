@@ -1,6 +1,6 @@
 "use server";
 
-const ELDORADO_API_URL = process.env.ELDORADO_API_URL || "https://www.eldorado.gg/api";
+const ELDORADO_API_URL = process.env.ELDORADO_API_URL;
 
 if (typeof global.ELDORADO_DYNAMIC_TOKEN === "undefined") {
     global.ELDORADO_DYNAMIC_TOKEN = process.env.ELDORADO_ID_TOKEN || "";
@@ -34,7 +34,7 @@ export async function refreshEldoradoToken() {
                 "Content-Type": "application/x-amz-json-1.1",
             },
             body: JSON.stringify({
-                ClientId: "3a4hal6jgl8gf5hnnjo06k05s5",
+                ClientId: process.env.ELDORADO_COGNITO_CLIENT_ID || "3a4hal6jgl8gf5hnnjo06k05s5",
                 AuthFlow: "REFRESH_TOKEN_AUTH",
                 AuthParameters: {
                     REFRESH_TOKEN: global.ELDORADO_DYNAMIC_REFRESH_TOKEN,

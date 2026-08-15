@@ -206,7 +206,7 @@ export default function OrderDetail({ activeOrderId, activeOrderDetails, activeO
                                 <button
                                     onClick={(e) => {
                                         e.stopPropagation();
-                                        navigator.clipboard.writeText(`https://www.eldorado.gg/order/${activeOrderId}`);
+                                        navigator.clipboard.writeText(`${process.env.NEXT_PUBLIC_ELDORADO_URL}/order/${activeOrderId}`);
                                         toast.success("Link order dicopy!");
                                         setIsLinkCopied(true);
                                         setTimeout(() => setIsLinkCopied(false), 2000);
@@ -214,7 +214,7 @@ export default function OrderDetail({ activeOrderId, activeOrderDetails, activeO
                                     className="flex items-center gap-1.5 rounded-md border border-zinc-700/50 bg-zinc-800/50 px-2 py-1 font-mono text-xs text-zinc-400 transition-colors hover:bg-zinc-700/50 hover:text-zinc-200"
                                     title="Copy Order Link"
                                 >
-                                    https://www.eldorado.gg/order/{activeOrderId}
+                                    {process.env.NEXT_PUBLIC_ELDORADO_URL}/order/{activeOrderId}
                                     {isLinkCopied ? <CheckIcon className="h-3.5 w-3.5 text-green-500" /> : <CopyIcon className="h-3.5 w-3.5" />}
                                 </button>
                             </div>
@@ -330,7 +330,7 @@ export default function OrderDetail({ activeOrderId, activeOrderDetails, activeO
                         <div className="flex min-h-0 w-full flex-1 flex-col">
                             {talkData && activeOrderDetails.talkJsConversationId ? (
                                 <div className="min-h-0 w-full flex-1 overflow-hidden">
-                                    <Session appId="49mLECOW" userId={talkData.userId} tokenFetcher={() => talkData.token}>
+                                    <Session appId={process.env.NEXT_PUBLIC_TALKJS_APP_ID} userId={talkData.userId} tokenFetcher={() => talkData.token}>
                                         <Chatbox conversationId={activeOrderDetails.talkJsConversationId} showChatHeader={false} messageFilter={{ type: ["!=", "SystemMessage"] }} style={{ width: "100%", height: "100%" }} />
                                     </Session>
                                 </div>
