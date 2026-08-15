@@ -1,17 +1,16 @@
 {
     "manifest_version": 3,
-    "name": "TraxStore Auto-Sync",
+    "name": "TraxStore Auto-Sync (PROD)",
     "version": "1.0",
-    "description": "Otomatis narik cookie Eldorado buat TraxStore",
+    "description": "Otomatis narik cookie Eldorado buat TraxStore versi Vercel",
     "permissions": ["cookies", "tabs"],
     "host_permissions": [
         "https://www.eldorado.gg/*",
-        "http://localhost:3000/*",
         "*://*.vercel.app/*"
     ],
     "content_scripts": [
         {
-            "matches": ["http://localhost:3000/*", "*://*.vercel.app/*"],
+            "matches": ["*://*.vercel.app/*"],
             "js": ["content.js"]
         }
     ],

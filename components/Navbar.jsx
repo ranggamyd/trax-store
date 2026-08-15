@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { Gamepad2, Users, Package, LogOut, Shield, User, MessageSquare, ShoppingCart, List, Bell } from "lucide-react";
+import { Gamepad2, Users, Package, LogOut, Shield, User, MessageSquare, ShoppingCart, List, Bell, BookOpen } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/lib/supabase";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -188,6 +188,11 @@ export function Navbar() {
                             </div>
                         </PopoverContent>
                     </Popover>
+                    <Link href="/guide">
+                        <Button variant="ghost" className={`rounded-full px-3 text-zinc-400 hover:bg-zinc-800/50 hover:text-white ${pathname === "/guide" ? "bg-zinc-800 text-white" : ""}`} title="Panduan & Setup">
+                            <BookOpen className="h-5 w-5" />
+                        </Button>
+                    </Link>
                     <Link href="/profile">
                         <Button variant="ghost" className={`rounded-full px-3 text-zinc-400 hover:bg-zinc-800/50 hover:text-white ${pathname === "/profile" ? "bg-zinc-800 text-white" : ""}`} title="Profile">
                             <User className="h-5 w-5" />
