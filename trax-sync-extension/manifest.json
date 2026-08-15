@@ -1,0 +1,17 @@
+{
+    "manifest_version": 3,
+    "name": "TraxStore Auto-Sync",
+    "version": "1.0",
+    "description": "Otomatis narik cookie Eldorado buat TraxStore",
+    "permissions": ["cookies", "tabs"],
+    "host_permissions": ["https://www.eldorado.gg/*", "http://localhost:3000/*"],
+    "content_scripts": [
+        {
+            "matches": ["http://localhost:3000/*"],
+            "js": ["content.js"]
+        }
+    ],
+    "background": {
+        "service_worker": "background.js"
+    }
+}
