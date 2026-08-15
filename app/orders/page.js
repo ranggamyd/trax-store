@@ -85,8 +85,15 @@ export default function OrdersPage() {
 
     // Listen for successful token refresh from Chrome Extension
     useEffect(() => {
-        const handleMessage = (event) => {
+        const handleMessage = async (event) => {
             if (event.data?.type === "TRAX_TOKEN_REFRESHED") {
+                if (event.data.token) {
+                    await fetch("/api/sync-token", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ token: event.data.token }),
+                    });
+                }
                 toast.success("🔥 Token berhasil dicolong otomatis! Nge-refresh pesanan...");
                 fetchOrders("", false);
             }

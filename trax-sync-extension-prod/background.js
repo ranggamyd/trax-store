@@ -36,38 +36,22 @@ chrome.cookies.onChanged.addListener((changeInfo) => {
 });
 
 function syncToken(token) {
-    fetch(SYNC_ENDPOINT, {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ token: token }),
-    })
-        .then((res) => res.json())
-        .then((data) => {
-            if (data.success) {
-                console.log("🔥 Successfully synced token to TraxStore!");
+    console.log("🔥 Grabbed token! Sending directly to TraxStore tab...");
 
-                // If we had a background tab open for refresh, close it now that we succeeded!
-                if (refreshTabId !== null) {
-                    chrome.tabs.remove(refreshTabId, () => {
-                        if (chrome.runtime.lastError) console.log(chrome.runtime.lastError);
-                    });
-                    refreshTabId = null;
-                    console.log("Background tab closed because token was received!");
-                }
+    if (refreshTabId !== null) {
+        chrome.tabs.remove(refreshTabId, () => {
+            if (chrome.runtime.lastError) console.log(chrome.runtime.lastError);
+        });
+        refreshTabId = null;
+        console.log("Background tab closed because token was received!");
+    }
 
-                // Notify TraxStore tabs that token is ready
-                chrome.tabs.query({ url: TRAX_TAB_MATCH }, (tabs) => {
-                    tabs.forEach((tab) => {
-                        chrome.tabs.sendMessage(tab.id, { action: "TOKEN_REFRESHED_SUCCESSFULLY" });
-                    });
-                });
-            } else {
-                console.error("Failed to sync token:", data.error);
-            }
-        })
-        .catch((err) => console.error("Error connecting to TraxStore backend:", err));
+    // Notify TraxStore tabs that token is ready, and pass the token!
+    chrome.tabs.query({ url: TRAX_TAB_MATCH }, (tabs) => {
+        tabs.forEach((tab) => {
+            chrome.tabs.sendMessage(tab.id, { action: "TOKEN_REFRESHED_SUCCESSFULLY", token: token });
+        });
+    });
 }
 
 // Listen for messages from Trax Store (via content script)

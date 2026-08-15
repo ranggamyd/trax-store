@@ -38,8 +38,15 @@ export function Navbar() {
         const interval = setInterval(fetchUnread, 30000);
 
         // Listen for extension auto-refresh
-        const handleMessage = (event) => {
+        const handleMessage = async (event) => {
             if (event.data?.type === "TRAX_TOKEN_REFRESHED") {
+                if (event.data.token) {
+                    await fetch("/api/sync-token", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ token: event.data.token }),
+                    });
+                }
                 fetchUnread();
             }
         };

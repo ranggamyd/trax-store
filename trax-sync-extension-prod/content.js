@@ -14,6 +14,6 @@ window.addEventListener("message", (event) => {
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     if (request.action === "TOKEN_REFRESHED_SUCCESSFULLY") {
         console.log("[TraxStore Extension] Token successfully refreshed! Relaying to frontend...");
-        window.postMessage({ type: "TRAX_TOKEN_REFRESHED" }, "*");
+        window.postMessage({ type: "TRAX_TOKEN_REFRESHED", token: request.token }, "*");
     }
 });

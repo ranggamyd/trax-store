@@ -1,29 +1,25 @@
 "use server";
 
+import { cookies } from "next/headers";
+
 const ELDORADO_API_URL = process.env.ELDORADO_API_URL;
 
-if (typeof global.ELDORADO_DYNAMIC_TOKEN === "undefined") {
-    global.ELDORADO_DYNAMIC_TOKEN = process.env.ELDORADO_ID_TOKEN || "";
-}
-if (typeof global.ELDORADO_DYNAMIC_REFRESH_TOKEN === "undefined") {
-    global.ELDORADO_DYNAMIC_REFRESH_TOKEN = process.env.ELDORADO_REFRESH_TOKEN || "";
-}
-
 export async function setEldoradoToken(token, refreshToken = "") {
-    global.ELDORADO_DYNAMIC_TOKEN = token;
-    if (refreshToken) global.ELDORADO_DYNAMIC_REFRESH_TOKEN = refreshToken;
+    if (token) cookies().set("eldorado_token", token, { path: "/" });
+    if (refreshToken) cookies().set("eldorado_refresh_token", refreshToken, { path: "/" });
     return { success: true };
 }
 
 export async function getEldoradoToken() {
     return {
-        idToken: global.ELDORADO_DYNAMIC_TOKEN,
-        refreshToken: global.ELDORADO_DYNAMIC_REFRESH_TOKEN,
+        idToken: cookies().get("eldorado_token")?.value || process.env.ELDORADO_ID_TOKEN || "",
+        refreshToken: cookies().get("eldorado_refresh_token")?.value || process.env.ELDORADO_REFRESH_TOKEN || "",
     };
 }
 
 export async function refreshEldoradoToken() {
-    if (!global.ELDORADO_DYNAMIC_REFRESH_TOKEN) return { success: false, error: "No refresh token available" };
+    const refreshToken = cookies().get("eldorado_refresh_token")?.value || process.env.ELDORADO_REFRESH_TOKEN;
+    if (!refreshToken) return { success: false, error: "No refresh token available" };
 
     try {
         // AWS Cognito Endpoint for Eldorado.gg based on their JWT issuer
@@ -37,15 +33,16 @@ export async function refreshEldoradoToken() {
                 ClientId: process.env.ELDORADO_COGNITO_CLIENT_ID || "3a4hal6jgl8gf5hnnjo06k05s5",
                 AuthFlow: "REFRESH_TOKEN_AUTH",
                 AuthParameters: {
-                    REFRESH_TOKEN: global.ELDORADO_DYNAMIC_REFRESH_TOKEN,
+                    REFRESH_TOKEN: refreshToken,
                 },
             }),
         });
 
         const data = await res.json();
         if (data.AuthenticationResult?.IdToken) {
-            global.ELDORADO_DYNAMIC_TOKEN = data.AuthenticationResult.IdToken;
-            return { success: true, token: global.ELDORADO_DYNAMIC_TOKEN };
+            const newToken = data.AuthenticationResult.IdToken;
+            cookies().set("eldorado_token", newToken, { path: "/" });
+            return { success: true, token: newToken };
         }
         return { success: false, error: "Failed to refresh token", data };
     } catch (error) {
@@ -54,7 +51,8 @@ export async function refreshEldoradoToken() {
 }
 
 export async function getTalkJsToken() {
-    if (!global.ELDORADO_DYNAMIC_TOKEN) return { success: false, error: "TOKEN_EXPIRED_401" };
+    const token = cookies().get("eldorado_token")?.value || process.env.ELDORADO_ID_TOKEN;
+    if (!token) return { success: false, error: "TOKEN_EXPIRED_401" };
     try {
         const res = await fetchEldorado("/conversations/me/authorize");
         if (res && res.token) {
@@ -72,7 +70,7 @@ export async function getTalkJsToken() {
 }
 
 async function fetchEldorado(endpoint, options = {}) {
-    const tokenToUse = global.ELDORADO_DYNAMIC_TOKEN;
+    const tokenToUse = cookies().get("eldorado_token")?.value || process.env.ELDORADO_ID_TOKEN;
     if (!tokenToUse) {
         throw new Error("TOKEN_EXPIRED_401");
     }
@@ -90,7 +88,8 @@ async function fetchEldorado(endpoint, options = {}) {
     });
     if (!response.ok) {
         if (response.status === 401) {
-            if (global.ELDORADO_DYNAMIC_REFRESH_TOKEN) {
+            const refreshToken = cookies().get("eldorado_refresh_token")?.value || process.env.ELDORADO_REFRESH_TOKEN;
+            if (refreshToken) {
                 console.log("Token expired during API call, attempting refresh...");
                 const refreshed = await refreshEldoradoToken();
                 if (refreshed.success) {
