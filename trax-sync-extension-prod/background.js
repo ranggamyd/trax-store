@@ -1,6 +1,6 @@
 // ====== CONFIGURATION ======
 const IS_PRODUCTION = true; // Ubah ke false kalau lagi ngoding lokal (localhost)
-const PROD_DOMAIN = "traxstore.vercel.app"; // Ganti sama domain asli Vercel lu nanti
+const PROD_DOMAIN = "trax-store.vercel.app"; // Ganti sama domain asli Vercel lu nanti
 const DEV_DOMAIN = "localhost:3000";
 
 const TARGET_DOMAIN = IS_PRODUCTION ? PROD_DOMAIN : DEV_DOMAIN;
