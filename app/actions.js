@@ -298,7 +298,7 @@ export async function getEldoradoOffers(params = {}) {
 
         const searchParams = new URLSearchParams();
         searchParams.append("pageSize", pageSize.toString());
-        searchParams.append("pageIndex", pageIndex.toString());
+        if (pageIndex > 0) searchParams.append("pageIndex", pageIndex.toString());
 
         if (query) searchParams.append("searchQuery", query);
         if (offerState) searchParams.append("offerState", offerState);
