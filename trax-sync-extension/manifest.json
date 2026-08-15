@@ -4,10 +4,14 @@
     "version": "1.0",
     "description": "Otomatis narik cookie Eldorado buat TraxStore",
     "permissions": ["cookies", "tabs"],
-    "host_permissions": ["https://www.eldorado.gg/*", "http://localhost:3000/*"],
+    "host_permissions": [
+        "https://www.eldorado.gg/*",
+        "http://localhost:3000/*",
+        "*://*.vercel.app/*"
+    ],
     "content_scripts": [
         {
-            "matches": ["http://localhost:3000/*"],
+            "matches": ["http://localhost:3000/*", "*://*.vercel.app/*"],
             "js": ["content.js"]
         }
     ],

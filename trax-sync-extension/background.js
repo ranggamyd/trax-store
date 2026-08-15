@@ -1,6 +1,18 @@
+// ====== CONFIGURATION ======
+const IS_PRODUCTION = true; // Ubah ke false kalau lagi ngoding lokal (localhost)
+const PROD_DOMAIN = "traxstore.vercel.app"; // Ganti sama domain asli Vercel lu nanti
+const DEV_DOMAIN = "localhost:3000";
+
+const TARGET_DOMAIN = IS_PRODUCTION ? PROD_DOMAIN : DEV_DOMAIN;
+const SYNC_ENDPOINT = IS_PRODUCTION 
+    ? `https://${TARGET_DOMAIN}/api/sync-token`
+    : `http://${TARGET_DOMAIN}/api/sync-token`;
+const TRAX_TAB_MATCH = IS_PRODUCTION
+    ? `https://${TARGET_DOMAIN}/*`
+    : `http://${TARGET_DOMAIN}/*`;
+// =========================
+
 const TARGET_COOKIE_NAME = "__Host-EldoradoIdToken";
-const ELDORADO_DOMAIN = "www.eldorado.gg";
-const SYNC_ENDPOINT = "http://localhost:3000/api/sync-token";
 
 let refreshTabId = null;
 
@@ -46,7 +58,7 @@ function syncToken(token) {
                 }
 
                 // Notify TraxStore tabs that token is ready
-                chrome.tabs.query({ url: "http://localhost:3000/*" }, (tabs) => {
+                chrome.tabs.query({ url: TRAX_TAB_MATCH }, (tabs) => {
                     tabs.forEach((tab) => {
                         chrome.tabs.sendMessage(tab.id, { action: "TOKEN_REFRESHED_SUCCESSFULLY" });
                     });
