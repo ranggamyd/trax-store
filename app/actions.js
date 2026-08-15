@@ -5,20 +5,23 @@ import { cookies } from "next/headers";
 const ELDORADO_API_URL = process.env.ELDORADO_API_URL;
 
 export async function setEldoradoToken(token, refreshToken = "") {
-    if (token) cookies().set("eldorado_token", token, { path: "/" });
-    if (refreshToken) cookies().set("eldorado_refresh_token", refreshToken, { path: "/" });
+    const cookieStore = await cookies();
+    if (token) cookieStore.set("eldorado_token", token, { path: "/" });
+    if (refreshToken) cookieStore.set("eldorado_refresh_token", refreshToken, { path: "/" });
     return { success: true };
 }
 
 export async function getEldoradoToken() {
+    const cookieStore = await cookies();
     return {
-        idToken: cookies().get("eldorado_token")?.value || process.env.ELDORADO_ID_TOKEN || "",
-        refreshToken: cookies().get("eldorado_refresh_token")?.value || process.env.ELDORADO_REFRESH_TOKEN || "",
+        idToken: cookieStore.get("eldorado_token")?.value || process.env.ELDORADO_ID_TOKEN || "",
+        refreshToken: cookieStore.get("eldorado_refresh_token")?.value || process.env.ELDORADO_REFRESH_TOKEN || "",
     };
 }
 
 export async function refreshEldoradoToken() {
-    const refreshToken = cookies().get("eldorado_refresh_token")?.value || process.env.ELDORADO_REFRESH_TOKEN;
+    const cookieStore = await cookies();
+    const refreshToken = cookieStore.get("eldorado_refresh_token")?.value || process.env.ELDORADO_REFRESH_TOKEN;
     if (!refreshToken) return { success: false, error: "No refresh token available" };
 
     try {
@@ -41,7 +44,8 @@ export async function refreshEldoradoToken() {
         const data = await res.json();
         if (data.AuthenticationResult?.IdToken) {
             const newToken = data.AuthenticationResult.IdToken;
-            cookies().set("eldorado_token", newToken, { path: "/" });
+            const cookieStore = await cookies();
+            cookieStore.set("eldorado_token", newToken, { path: "/" });
             return { success: true, token: newToken };
         }
         return { success: false, error: "Failed to refresh token", data };
@@ -51,7 +55,8 @@ export async function refreshEldoradoToken() {
 }
 
 export async function getTalkJsToken() {
-    const token = cookies().get("eldorado_token")?.value || process.env.ELDORADO_ID_TOKEN;
+    const cookieStore = await cookies();
+    const token = cookieStore.get("eldorado_token")?.value || process.env.ELDORADO_ID_TOKEN;
     if (!token) return { success: false, error: "TOKEN_EXPIRED_401" };
     try {
         const res = await fetchEldorado("/conversations/me/authorize");
@@ -70,7 +75,8 @@ export async function getTalkJsToken() {
 }
 
 async function fetchEldorado(endpoint, options = {}) {
-    const tokenToUse = cookies().get("eldorado_token")?.value || process.env.ELDORADO_ID_TOKEN;
+    const cookieStore = await cookies();
+    const tokenToUse = cookieStore.get("eldorado_token")?.value || process.env.ELDORADO_ID_TOKEN;
     if (!tokenToUse) {
         throw new Error("TOKEN_EXPIRED_401");
     }
@@ -88,7 +94,8 @@ async function fetchEldorado(endpoint, options = {}) {
     });
     if (!response.ok) {
         if (response.status === 401) {
-            const refreshToken = cookies().get("eldorado_refresh_token")?.value || process.env.ELDORADO_REFRESH_TOKEN;
+            const cookieStore = await cookies();
+            const refreshToken = cookieStore.get("eldorado_refresh_token")?.value || process.env.ELDORADO_REFRESH_TOKEN;
             if (refreshToken) {
                 console.log("Token expired during API call, attempting refresh...");
                 const refreshed = await refreshEldoradoToken();
