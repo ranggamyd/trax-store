@@ -1,7 +1,7 @@
 "use client";
 
-import PageContainer from "@/components/templates/PageContainer";
-import PageHeader from "@/components/molecules/PageHeader";
+import { PageContainer } from "@/components/templates/PageContainer";
+import { PageHeader } from "@/components/molecules/PageHeader";
 import { BookOpenIcon, DownloadIcon, CheckCircleIcon, ZapIcon, LinkIcon } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 
