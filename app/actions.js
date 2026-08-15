@@ -282,42 +282,237 @@ export async function getEldoradoOrderDetails(orderId) {
 
 export async function getEldoradoOffers(params = {}) {
     try {
-        const { query = "", offerState = "", cursorValue = "", pageSize = 50 } = params;
+        const {
+            query = "",
+            offerState = "",
+            category = "",
+            deliveryTime = "",
+            gameId = "",
+            lowestPrice = "",
+            highestPrice = "",
+            pageIndex = 0,
+            pageSize = 50,
+            offerSortingCriterion = "",
+            isAscending = "",
+        } = params;
 
-        // According to Eldorado swagger: /api/v1/item-management/me/offers/me/search
         const searchParams = new URLSearchParams();
         searchParams.append("pageSize", pageSize.toString());
+        searchParams.append("pageIndex", pageIndex.toString());
 
-        if (query) searchParams.append("searchQuery", query); // swagger uses searchQuery
-        // Add offerState if needed, assuming the API accepts it or we filter it later
+        if (query) searchParams.append("searchQuery", query);
+        if (offerState) searchParams.append("offerState", offerState);
+        if (category) searchParams.append("category", category);
+        if (deliveryTime) searchParams.append("deliveryTime", deliveryTime);
+        if (gameId) searchParams.append("gameId", gameId);
+        if (lowestPrice) searchParams.append("lowestPrice", lowestPrice);
+        if (highestPrice) searchParams.append("highestPrice", highestPrice);
+        if (offerSortingCriterion) searchParams.append("offerSortingCriterion", offerSortingCriterion);
+        if (isAscending !== "") searchParams.append("isAscending", isAscending);
 
         const data = await fetchEldorado(`/v1/item-management/me/offers/me/search?${searchParams.toString()}`);
 
         let parsedOffers = [];
         if (data && data.results && Array.isArray(data.results)) {
-            parsedOffers = data.results.map((offer) => {
-                return {
-                    id: offer.id,
-                    offerTitle: offer.offerTitle || "Item",
-                    gameCategoryTitle: offer.gameCategoryTitle || "Game",
-                    category: offer.category || "Category",
-                    quantity: offer.quantity || 0,
-                    pricePerUnit: offer.pricePerUnit || { amount: 0, currency: "USD" },
-                    offerState: offer.offerState || "Unknown",
-                    guaranteedDeliveryTime: offer.guaranteedDeliveryTime || "-",
-                    description: offer.description || "",
-                    raw: offer,
-                };
-            });
+            parsedOffers = data.results.map((offer) => ({
+                id: offer.id,
+                userId: offer.userId,
+                gameId: offer.gameId,
+                offerTitle: offer.offerTitle || "Item",
+                gameCategoryTitle: offer.gameCategoryTitle || "Game",
+                gameSeoAlias: offer.gameSeoAlias,
+                category: offer.category || "Category",
+                quantity: offer.quantity || 0,
+                minQuantity: offer.minQuantity || 0,
+                maxPurchaseQuantity: offer.maxPurchaseQuantity || 0,
+                volumeDiscounts: offer.volumeDiscounts || [],
+                pricePerUnit: offer.pricePerUnit || { amount: 0, currency: "USD" },
+                pricePerUnitWithDiscount: offer.pricePerUnitWithDiscount,
+                pricePerUnitInUSD: offer.pricePerUnitInUSD,
+                discountPercentage: offer.discountPercentage || 0,
+                minPurchasePrice: offer.minPurchasePrice,
+                exchangeRate: offer.exchangeRate,
+                offerState: offer.offerState || "Unknown",
+                guaranteedDeliveryTime: offer.guaranteedDeliveryTime || "-",
+                expireDate: offer.expireDate,
+                offerVersion: offer.offerVersion,
+                description: offer.description || "",
+                tradeEnvironmentValues: offer.tradeEnvironmentValues || [],
+                offerAttributeIdValues: offer.offerAttributeIdValues || [],
+                attributes: offer.attributes || [],
+                mainOfferImage: offer.mainOfferImage,
+                offerImages: offer.offerImages || [],
+                orderCounts: offer.orderCounts || { last24Hours: 0, last30Days: 0, allTime: 0 },
+                standardizedProductKey: offer.standardizedProductKey,
+                isProduct: offer.isProduct,
+                productImage: offer.productImage,
+                raw: offer,
+            }));
         }
 
         return {
             success: true,
             data: parsedOffers,
-            nextPageCursor: data?.nextPageCursor || null,
+            pageIndex: data?.pageIndex || 0,
+            totalPages: data?.totalPages || 0,
+            recordCount: data?.recordCount || 0,
+            pageSize: data?.pageSize || pageSize,
         };
     } catch (error) {
         console.error("[getEldoradoOffers] Error:", error.message);
+        return { success: false, error: error.message };
+    }
+}
+
+// --- Offer CRUD Actions ---
+
+export async function createEldoradoOffer(body) {
+    try {
+        const data = await fetchEldorado("/v1/item-management/me/offers/item", {
+            method: "POST",
+            body: JSON.stringify(body),
+        });
+        return { success: true, data };
+    } catch (error) {
+        console.error("[createEldoradoOffer] Error:", error.message);
+        return { success: false, error: error.message };
+    }
+}
+
+export async function updateEldoradoOfferDetails(offerId, body) {
+    if (!offerId) return { success: false, error: "offerId is required" };
+    try {
+        const data = await fetchEldorado(`/v1/item-management/me/offers/item/${offerId}/details`, {
+            method: "PUT",
+            body: JSON.stringify(body),
+        });
+        return { success: true, data };
+    } catch (error) {
+        console.error("[updateEldoradoOfferDetails] Error:", error.message);
+        return { success: false, error: error.message };
+    }
+}
+
+export async function deleteEldoradoOffer(offerId) {
+    if (!offerId) return { success: false, error: "offerId is required" };
+    try {
+        await fetchEldorado(`/v1/item-management/me/offers/${offerId}`, {
+            method: "DELETE",
+        });
+        return { success: true };
+    } catch (error) {
+        console.error("[deleteEldoradoOffer] Error:", error.message);
+        return { success: false, error: error.message };
+    }
+}
+
+export async function pauseEldoradoOffer(offerId) {
+    if (!offerId) return { success: false, error: "offerId is required" };
+    try {
+        await fetchEldorado(`/v1/item-management/me/offers/${offerId}/pause`, {
+            method: "POST",
+        });
+        return { success: true };
+    } catch (error) {
+        console.error("[pauseEldoradoOffer] Error:", error.message);
+        return { success: false, error: error.message };
+    }
+}
+
+export async function resumeEldoradoOffer(offerId) {
+    if (!offerId) return { success: false, error: "offerId is required" };
+    try {
+        await fetchEldorado(`/v1/item-management/me/offers/${offerId}/resume`, {
+            method: "POST",
+        });
+        return { success: true };
+    } catch (error) {
+        console.error("[resumeEldoradoOffer] Error:", error.message);
+        return { success: false, error: error.message };
+    }
+}
+
+export async function bulkPauseEldoradoOffers(body) {
+    try {
+        const data = await fetchEldorado("/v1/item-management/me/offers/pause", {
+            method: "POST",
+            body: JSON.stringify(body),
+        });
+        return { success: true, data };
+    } catch (error) {
+        console.error("[bulkPauseEldoradoOffers] Error:", error.message);
+        return { success: false, error: error.message };
+    }
+}
+
+export async function bulkResumeEldoradoOffers(gameId, body) {
+    if (!gameId) return { success: false, error: "gameId is required" };
+    try {
+        const data = await fetchEldorado(`/v1/item-management/me/offers/game/${gameId}/resume`, {
+            method: "POST",
+            body: JSON.stringify(body),
+        });
+        return { success: true, data };
+    } catch (error) {
+        console.error("[bulkResumeEldoradoOffers] Error:", error.message);
+        return { success: false, error: error.message };
+    }
+}
+
+export async function bulkDeleteEldoradoOffers(params = {}) {
+    try {
+        const searchParams = new URLSearchParams();
+        if (params.offerState) searchParams.append("offerState", params.offerState);
+        if (params.gameId) searchParams.append("gameId", params.gameId);
+        if (params.category) searchParams.append("category", params.category);
+
+        await fetchEldorado(`/v1/item-management/me/offers/delete?${searchParams.toString()}`, {
+            method: "DELETE",
+        });
+        return { success: true };
+    } catch (error) {
+        console.error("[bulkDeleteEldoradoOffers] Error:", error.message);
+        return { success: false, error: error.message };
+    }
+}
+
+export async function updateEldoradoOfferPrice(offerId, priceBody) {
+    if (!offerId) return { success: false, error: "offerId is required" };
+    try {
+        const data = await fetchEldorado(`/v1/item-management/me/offers/${offerId}/price`, {
+            method: "PUT",
+            body: JSON.stringify(priceBody),
+        });
+        return { success: true, data };
+    } catch (error) {
+        console.error("[updateEldoradoOfferPrice] Error:", error.message);
+        return { success: false, error: error.message };
+    }
+}
+
+export async function updateEldoradoDeliveryTime(body) {
+    try {
+        const data = await fetchEldorado("/v1/item-management/me/offers/delivery-time", {
+            method: "POST",
+            body: JSON.stringify(body),
+        });
+        return { success: true, data };
+    } catch (error) {
+        console.error("[updateEldoradoDeliveryTime] Error:", error.message);
+        return { success: false, error: error.message };
+    }
+}
+
+export async function bulkUpdateEldoradoPrice(gameId, body) {
+    if (!gameId) return { success: false, error: "gameId is required" };
+    try {
+        const data = await fetchEldorado(`/v1/item-management/me/offers/game/${gameId}/price`, {
+            method: "POST",
+            body: JSON.stringify(body),
+        });
+        return { success: true, data };
+    } catch (error) {
+        console.error("[bulkUpdateEldoradoPrice] Error:", error.message);
         return { success: false, error: error.message };
     }
 }
