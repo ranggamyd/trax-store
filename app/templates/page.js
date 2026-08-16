@@ -43,7 +43,7 @@ export default function TemplatesPage() {
         setLoading(false);
     };
 
-    const { session } = useAuthGuard(() => fetchTemplates());
+    useAuthGuard(() => fetchTemplates());
 
     const openAddModal = () => {
         setSelectedTemplate(null);
@@ -146,11 +146,11 @@ export default function TemplatesPage() {
                                 <div className="mb-3 flex items-start justify-between">
                                     <div className="flex flex-col gap-0.5">
                                         <span className="text-lg font-bold text-white">{tmpl.title}</span>
-                                        <span className="text-[10px] text-zinc-500 font-mono">Order: #{tmpl.sort_order || 0}</span>
+                                        <span className="font-mono text-[10px] text-zinc-500">Order: #{tmpl.sort_order || 0}</span>
                                     </div>
                                     <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold uppercase ${tmpl.type === "General" ? "border border-blue-900/50 bg-blue-900/30 text-blue-400" : "border border-purple-900/50 bg-purple-900/30 text-purple-400"}`}>{tmpl.type}</span>
                                 </div>
-                                <p className="mb-4 flex-1 text-sm text-zinc-400 italic">"{tmpl.text}"</p>
+                                <p className="mb-4 flex-1 text-sm text-zinc-400 italic">&quot;{tmpl.text}&quot;</p>
 
                                 <div className="flex items-end justify-between border-t border-zinc-800/80 pt-4">
                                     <div className="flex flex-1 flex-col gap-1.5 pr-2">
@@ -169,13 +169,7 @@ export default function TemplatesPage() {
                                     </div>
                                     <div className="flex gap-1">
                                         <ActionIcon icon={Pencil} onClick={() => openEditModal(tmpl)} className="hover:text-blue-400" />
-                                        <ConfirmDialog 
-                                            trigger={<ActionIcon icon={Trash2} className="hover:text-red-400" />}
-                                            title="Hapus Template" 
-                                            description={`Yakin mau hapus template "${tmpl.title}"?`} 
-                                            onConfirm={() => handleDelete(tmpl.id)}
-                                            confirmText="Hapus" 
-                                        />
+                                        <ConfirmDialog trigger={<ActionIcon icon={Trash2} className="hover:text-red-400" />} title="Hapus Template" description={`Yakin mau hapus template "${tmpl.title}"?`} onConfirm={() => handleDelete(tmpl.id)} confirmText="Hapus" />
                                     </div>
                                 </div>
                             </div>
@@ -196,7 +190,7 @@ export default function TemplatesPage() {
                         </div>
                         <div className="grid grid-cols-4 items-center gap-4">
                             <label className="text-right text-sm text-zinc-400">Sort Order</label>
-                            <Input type="number" value={formData.sort_order} onChange={(e) => setFormData({ ...formData, sort_order: parseInt(e.target.value) || 0 })} className="col-span-3 border-zinc-700 bg-zinc-900 w-28" placeholder="0" />
+                            <Input type="number" value={formData.sort_order} onChange={(e) => setFormData({ ...formData, sort_order: parseInt(e.target.value) || 0 })} className="col-span-3 w-28 border-zinc-700 bg-zinc-900" placeholder="0" />
                         </div>
                         <div className="grid grid-cols-4 items-center gap-4">
                             <label className="text-right text-sm text-zinc-400">Type</label>
@@ -234,7 +228,6 @@ export default function TemplatesPage() {
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
-
         </PageContainer>
     );
 }

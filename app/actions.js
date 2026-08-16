@@ -282,19 +282,7 @@ export async function getEldoradoOrderDetails(orderId) {
 
 export async function getEldoradoOffers(params = {}) {
     try {
-        const {
-            query = "",
-            offerState = "",
-            category = "",
-            deliveryTime = "",
-            gameId = "",
-            lowestPrice = "",
-            highestPrice = "",
-            pageIndex = 0,
-            pageSize = 50,
-            offerSortingCriterion = "",
-            isAscending = "",
-        } = params;
+        const { query = "", offerState = "", category = "", deliveryTime = "", gameId = "", lowestPrice = "", highestPrice = "", pageIndex = 0, pageSize = 50, offerSortingCriterion = "", isAscending = "" } = params;
 
         const searchParams = new URLSearchParams();
         searchParams.append("pageSize", pageSize.toString());
@@ -579,11 +567,11 @@ export async function getEldoradoLibrary() {
         const response = await fetch("https://www.eldorado.gg/api/library?locale=en-US", {
             next: { revalidate: 3600 }, // Cache for 1 hour on the server
         });
-        
+
         if (!response.ok) {
             throw new Error(`Failed to fetch library: ${response.status}`);
         }
-        
+
         const data = await response.json();
         return { success: true, data };
     } catch (error) {

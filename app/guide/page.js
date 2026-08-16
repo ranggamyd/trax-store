@@ -13,7 +13,7 @@ export default function GuidePage() {
             <div className="mx-auto max-w-4xl space-y-8 pb-12">
                 {/* Download Section */}
                 <section>
-                    <h2 className="mb-4 flex items-center gap-2 text-xl font-bold tracking-wide text-primary">
+                    <h2 className="text-primary mb-4 flex items-center gap-2 text-xl font-bold tracking-wide">
                         <DownloadIcon className="h-5 w-5" />
                         1. Download Extension
                     </h2>
@@ -33,12 +33,12 @@ export default function GuidePage() {
                         </Card>
                         <Card className="border-primary/20 bg-primary/5">
                             <CardContent className="flex flex-col items-center p-6 text-center">
-                                <div className="mb-4 rounded-full bg-primary/20 p-3 text-primary">
+                                <div className="bg-primary/20 text-primary mb-4 rounded-full p-3">
                                     <ZapIcon className="h-8 w-8" />
                                 </div>
                                 <h3 className="mb-2 text-lg font-bold text-white">Versi Production (PROD)</h3>
                                 <p className="mb-4 text-sm text-zinc-400">Khusus buat web yang udah online di Vercel</p>
-                                <a href="/trax-sync-extension-prod.zip" download className="mt-auto flex w-full items-center justify-center gap-2 rounded-md bg-primary px-4 py-2 font-medium text-black transition-colors hover:bg-primary/90">
+                                <a href="/trax-sync-extension-prod.zip" download className="bg-primary hover:bg-primary/90 mt-auto flex w-full items-center justify-center gap-2 rounded-md px-4 py-2 font-medium text-black transition-colors">
                                     <DownloadIcon className="h-4 w-4" /> Download ZIP
                                 </a>
                             </CardContent>
@@ -48,7 +48,7 @@ export default function GuidePage() {
 
                 {/* Install Guide Section */}
                 <section>
-                    <h2 className="mb-4 flex items-center gap-2 text-xl font-bold tracking-wide text-primary">
+                    <h2 className="text-primary mb-4 flex items-center gap-2 text-xl font-bold tracking-wide">
                         <CheckCircleIcon className="h-5 w-5" />
                         2. Cara Install Extension di Chrome
                     </h2>
@@ -59,7 +59,7 @@ export default function GuidePage() {
                                     <strong className="text-white">Ekstrak file ZIP</strong> yang baru lu download tadi jadi satu folder.
                                 </li>
                                 <li>
-                                    Buka Google Chrome, terus ketik <code className="rounded bg-zinc-800 px-1.5 py-0.5 text-accent">chrome://extensions/</code> di URL bar.
+                                    Buka Google Chrome, terus ketik <code className="text-accent rounded bg-zinc-800 px-1.5 py-0.5">chrome://extensions/</code> di URL bar.
                                 </li>
                                 <li>
                                     Nyalain mode <strong className="text-white">Developer mode</strong> di pojok kanan atas.
@@ -70,9 +70,7 @@ export default function GuidePage() {
                                 <li>
                                     Pilih folder hasil ekstrak tadi (folder yang ada file <code className="text-zinc-400">manifest.json</code> nya).
                                 </li>
-                                <li>
-                                    Selesai! Pastiin logo extension-nya muncul dan aktif.
-                                </li>
+                                <li>Selesai! Pastiin logo extension-nya muncul dan aktif.</li>
                             </ol>
                         </CardContent>
                     </Card>
@@ -80,7 +78,7 @@ export default function GuidePage() {
 
                 {/* Usage Guide Section */}
                 <section>
-                    <h2 className="mb-4 flex items-center gap-2 text-xl font-bold tracking-wide text-primary">
+                    <h2 className="text-primary mb-4 flex items-center gap-2 text-xl font-bold tracking-wide">
                         <LinkIcon className="h-5 w-5" />
                         3. Cara Pakai TraxStore
                     </h2>
@@ -89,22 +87,28 @@ export default function GuidePage() {
                             <div className="space-y-6 text-zinc-300">
                                 <div>
                                     <h3 className="mb-2 text-lg font-bold text-white">Login ke Eldorado</h3>
-                                    <p>Buka tab baru, masuk ke <a href="https://www.eldorado.gg" target="_blank" rel="noreferrer" className="text-primary hover:underline">www.eldorado.gg</a> dan pastikan lu udah login pakai akun seller lu. Extension TraxStore bakal otomatis narik token lu di background secara diem-diem.</p>
+                                    <p>
+                                        Buka tab baru, masuk ke{" "}
+                                        <a href="https://www.eldorado.gg" target="_blank" rel="noreferrer" className="text-primary hover:underline">
+                                            www.eldorado.gg
+                                        </a>{" "}
+                                        dan pastikan lu udah login pakai akun seller lu. Extension TraxStore bakal otomatis narik token lu di background secara diem-diem.
+                                    </p>
                                 </div>
                                 <hr className="border-zinc-800" />
                                 <div>
                                     <h3 className="mb-2 text-lg font-bold text-white">Kelola Orderan (Orders)</h3>
-                                    <p>Masuk ke menu Orders di web ini. Kalau token lu valid, semua orderan lu bakal muncul. Lu bisa liat detail pesanan, nama Roblox buyer, link VIP server, dan klik "Mark as Delivered" cuma dari sini tanpa harus buka Eldorado.</p>
+                                    <p>Masuk ke menu Orders di web ini. Kalau token lu valid, semua orderan lu bakal muncul. Lu bisa liat detail pesanan, nama Roblox buyer, link VIP server, dan klik &quot;Mark as Delivered&quot; cuma dari sini tanpa harus buka Eldorado.</p>
                                 </div>
                                 <hr className="border-zinc-800" />
                                 <div>
                                     <h3 className="mb-2 text-lg font-bold text-white">Live Chat (Auto Balas)</h3>
-                                    <p>Klik tombol Chat di tiap order buat buka Live Chat. Gunain fitur "Templates" buat bikin balesan otomatis. Biar buyer puas karena fast respon.</p>
+                                    <p>Klik tombol Chat di tiap order buat buka Live Chat. Gunain fitur &quot;Templates&quot; buat bikin balesan otomatis. Biar buyer puas karena fast respon.</p>
                                 </div>
                                 <hr className="border-zinc-800" />
                                 <div>
                                     <h3 className="mb-2 text-lg font-bold text-white">Gagal Tarik Data?</h3>
-                                    <p>Kalau tiba-tiba list order ilang atau error "Token basi", coba refresh halaman web TraxStore ini. Kalau masih gak bisa, buka tab eldorado.gg lagi dan pastikan lu belom ke-logout.</p>
+                                    <p>Kalau tiba-tiba list order ilang atau error &quot;Token basi&quot;, coba refresh halaman web TraxStore ini. Kalau masih gak bisa, buka tab eldorado.gg lagi dan pastikan lu belom ke-logout.</p>
                                 </div>
                             </div>
                         </CardContent>

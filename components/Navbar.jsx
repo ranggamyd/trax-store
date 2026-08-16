@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { Gamepad2, Users, Package, LogOut, Shield, User, MessageSquare, ShoppingCart, List, Bell, BookOpen } from "lucide-react";
+import { Gamepad2, Users, Package, LogOut, Shield, User, MessageSquare, ShoppingCart, List, Bell, BookOpen, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/lib/supabase";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -58,7 +58,7 @@ export function Navbar() {
         };
     }, [pathname]);
 
-    const fetchLatestNotifs = async () => {
+    const fetchLatestNotifs = useCallback(async () => {
         if (pathname === "/login" || pathname === "/reset-password") return;
         setIsLoadingNotifs(true);
         const res = await getEldoradoNotifications("");
@@ -68,13 +68,16 @@ export function Navbar() {
             window.postMessage({ type: "TRAX_FORCE_REFRESH" }, "*");
         }
         setIsLoadingNotifs(false);
-    };
+    }, [pathname]);
 
     useEffect(() => {
         if (isPopoverOpen) {
-            fetchLatestNotifs();
+            const timeoutId = setTimeout(() => {
+                fetchLatestNotifs();
+            }, 0);
+            return () => clearTimeout(timeoutId);
         }
-    }, [isPopoverOpen]);
+    }, [isPopoverOpen, fetchLatestNotifs]);
 
     const handleLogout = async () => {
         const { error } = await supabase.auth.signOut();
@@ -91,6 +94,7 @@ export function Navbar() {
         { name: "Items", href: "/items", icon: Package },
         { name: "Templates", href: "/templates", icon: MessageSquare },
         { name: "Users", href: "/users", icon: Shield },
+        { name: "Shifts", href: "/shifts", icon: Clock },
     ];
 
     const group2 = [

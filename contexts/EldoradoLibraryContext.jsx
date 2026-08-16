@@ -28,15 +28,11 @@ export function EldoradoLibraryProvider({ children }) {
     const getGameName = (gameId) => {
         if (!gameId) return null;
         // API returns gameId as string e.g. "142", match with that
-        const game = library.find(g => g.gameId === String(gameId) || g.legacyUrlId === String(gameId));
-        return game ? (game.menuGameTitle || game.gameName) : null;
+        const game = library.find((g) => g.gameId === String(gameId) || g.legacyUrlId === String(gameId));
+        return game ? game.menuGameTitle || game.gameName : null;
     };
 
-    return (
-        <EldoradoLibraryContext.Provider value={{ library, getGameName }}>
-            {children}
-        </EldoradoLibraryContext.Provider>
-    );
+    return <EldoradoLibraryContext.Provider value={{ library, getGameName }}>{children}</EldoradoLibraryContext.Provider>;
 }
 
 export function useEldoradoLibrary() {

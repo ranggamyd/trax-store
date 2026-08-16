@@ -16,14 +16,12 @@ export default function OrdersPage() {
     const [cancelMessage, setCancelMessage] = useState("");
 
     const [isDelivering, setIsDelivering] = useState(false);
-    const [isDeliverDialogOpen, setIsDeliverDialogOpen] = useState(false);
     const [isCancelDialogOpen, setIsCancelDialogOpen] = useState(false);
     const [isLoadingOrders, setIsLoadingOrders] = useState(true);
     const [isLoadingOrderDetails, setIsLoadingOrderDetails] = useState(false);
     const [activeOrderFullDetails, setActiveOrderFullDetails] = useState(null);
     const [apiError, setApiError] = useState(null);
     const [talkData, setTalkData] = useState(null);
-    const [activeTab, setActiveTab] = useState("details"); // "details" or "chat"
     const [chatPreviews, setChatPreviews] = useState({}); // { conversationId: { lastMessage, unreadCount, timestamp } }
     const talkSessionRef = useRef(null);
 
@@ -180,14 +178,17 @@ export default function OrdersPage() {
         const openId = urlParams.get("openOrderId");
 
         if (openId && !searchQuery) {
-            setSearchInput(openId);
-            setSearchQuery(openId);
-            setActiveOrderId(openId);
-            return; // will re-trigger effect when fetchOrders changes due to searchQuery update
+            const timeoutId = setTimeout(() => {
+                setSearchInput(openId);
+                setSearchQuery(openId);
+                setActiveOrderId(openId);
+            }, 0);
+            return () => clearTimeout(timeoutId);
         }
 
-         
-        fetchOrders();
+        const timeoutId = setTimeout(() => {
+            fetchOrders();
+        }, 0);
 
         // Auto-Polling Realtime for Orders List (Every 15s)
         const interval = setInterval(() => {
@@ -195,8 +196,11 @@ export default function OrdersPage() {
             fetchOrders("", false, true);
         }, 15000);
 
-        return () => clearInterval(interval);
-    }, [fetchOrders]);
+        return () => {
+            clearTimeout(timeoutId);
+            clearInterval(interval);
+        };
+    }, [fetchOrders, searchQuery]);
 
     const handleScroll = (e) => {
         const { scrollTop, scrollHeight, clientHeight } = e.target;
@@ -213,26 +217,30 @@ export default function OrdersPage() {
         setSearchQuery(searchInput); // Trigger fetchOrders
     };
 
-    const handleStateFilterChange = (e) => {
-        setOrderStateFilter(e.target.value); // Trigger fetchOrders
-    };
 
-    const loadOrderDetails = useCallback(async (silent = false) => {
-        if (!activeOrderId) return;
 
-        if (!silent) setIsLoadingOrderDetails(true);
-        const res = await getEldoradoOrderDetails(activeOrderId);
-        if (!silent) setIsLoadingOrderDetails(false);
+    const loadOrderDetails = useCallback(
+        async (silent = false) => {
+            if (!activeOrderId) return;
 
-        if (res.success) {
-            setActiveOrderFullDetails(res.data);
-        } else {
-            setActiveOrderFullDetails(null);
-        }
-    }, [activeOrderId]);
+            if (!silent) setIsLoadingOrderDetails(true);
+            const res = await getEldoradoOrderDetails(activeOrderId);
+            if (!silent) setIsLoadingOrderDetails(false);
+
+            if (res.success) {
+                setActiveOrderFullDetails(res.data);
+            } else {
+                setActiveOrderFullDetails(null);
+            }
+        },
+        [activeOrderId]
+    );
 
     useEffect(() => {
-        loadOrderDetails();
+        const timeoutId = setTimeout(() => {
+            loadOrderDetails();
+        }, 0);
+        return () => clearTimeout(timeoutId);
     }, [loadOrderDetails]);
 
     async function handleMarkDelivered(e) {
@@ -244,7 +252,6 @@ export default function OrdersPage() {
 
         if (result.success) {
             toast.success("Cakep! Pesanan udah ditandai terkirim ke Eldorado.");
-            setIsDeliverDialogOpen(false);
             setActiveOrders((prev) => prev.map((o) => (o.id === activeOrderId ? { ...o, status: "Delivered" } : o)));
             loadOrderDetails(true); // Silent reload
         } else {

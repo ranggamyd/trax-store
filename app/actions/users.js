@@ -2,7 +2,7 @@
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 
 export async function resolveLoginIdentifier(identifier) {
-    const { data, error } = await supabaseAdmin.from("admin_profiles").select("primary_email").or(`username.eq.${identifier},emails.cs.{${identifier}}`).maybeSingle();
+    const { data } = await supabaseAdmin.from("admin_profiles").select("primary_email").or(`username.eq.${identifier},emails.cs.{${identifier}}`).maybeSingle();
 
     if (data && data.primary_email) {
         return { email: data.primary_email };
@@ -89,7 +89,7 @@ export async function updateUser(id, payload) {
         updateData.password = password;
     }
 
-    const { data: authData, error: authError } = await supabaseAdmin.auth.admin.updateUserById(id, updateData);
+    const { error: authError } = await supabaseAdmin.auth.admin.updateUserById(id, updateData);
 
     if (authError) {
         if (authError.message.toLowerCase().includes("already registered")) {

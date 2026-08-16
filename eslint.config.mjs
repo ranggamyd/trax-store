@@ -4,13 +4,14 @@ import unusedImports from "eslint-plugin-unused-imports";
 
 const eslintConfig = defineConfig([
     ...nextVitals,
-    // Override default ignores of eslint-config-next.
     globalIgnores([
-        // Default ignores of eslint-config-next:
         ".next/**",
         "out/**",
         "build/**",
         "next-env.d.ts",
+        "scratch/**",
+        "trax-sync-extension-dev/**",
+        "trax-sync-extension-prod/**",
     ]),
     {
         plugins: {
@@ -22,14 +23,14 @@ const eslintConfig = defineConfig([
             "unused-imports/no-unused-vars": [
                 "warn",
                 {
-                    "vars": "all",
-                    "varsIgnorePattern": "^_",
-                    "args": "after-used",
-                    "argsIgnorePattern": "^_"
-                }
-            ]
-        }
-    }
+                    vars: "all",
+                    varsIgnorePattern: "^_",
+                    args: "after-used",
+                    argsIgnorePattern: "^_",
+                },
+            ],
+        },
+    },
 ]);
 
 export default eslintConfig;

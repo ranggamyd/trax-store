@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import Image from "next/image";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
 import { TableCell } from "@/components/ui/table";
@@ -36,7 +36,6 @@ export default function Dashboard() {
     const [isMissingLinksOpen, setIsMissingLinksOpen] = useState(false);
     const [pendingGameData, setPendingGameData] = useState(null);
     const [searchTerm, setSearchTerm] = useState("");
-    const router = useRouter();
     const { library } = useEldoradoLibrary();
 
     const {
@@ -50,8 +49,6 @@ export default function Dashboard() {
         resolver: zodResolver(gameSchema),
     });
 
-    const { session } = useAuthGuard(() => fetchGames());
-
     const fetchGames = async () => {
         setLoading(true);
         const { data, error } = await supabase.from("games").select("*").order("created_at", { ascending: false });
@@ -63,6 +60,8 @@ export default function Dashboard() {
         }
         setLoading(false);
     };
+
+    const { session } = useAuthGuard(() => fetchGames());
 
     const onSubmit = async (data) => {
         if (editGameId) {
@@ -160,14 +159,7 @@ export default function Dashboard() {
     if (!session) return <GlobalLoading text="Mengecek sesi..." />;
 
     const filteredGames = games.filter((g) => g.name.toLowerCase().includes(searchTerm.toLowerCase()));
-    const filteredEldoradoGames = Array.from(
-        new Map(
-            (library || [])
-                .filter((g) => g.gameGroup?.toLowerCase() === 'roblox' && (g.menuGameTitle || g.gameName || "").toLowerCase().includes(searchTerm.toLowerCase()))
-                .map((g) => [g.gameId, g])
-        ).values()
-    ).sort((a, b) => (a.menuGameTitle || a.gameName || "").localeCompare(b.menuGameTitle || b.gameName || ""));
-    console.log({filteredEldoradoGames})
+    const filteredEldoradoGames = Array.from(new Map((library || []).filter((g) => g.gameGroup?.toLowerCase() === "roblox" && (g.menuGameTitle || g.gameName || "").toLowerCase().includes(searchTerm.toLowerCase())).map((g) => [g.gameId, g])).values()).sort((a, b) => (a.menuGameTitle || a.gameName || "").localeCompare(b.menuGameTitle || b.gameName || ""));
 
     return (
         <PageContainer>
@@ -199,10 +191,14 @@ export default function Dashboard() {
             <div className="w-full">
                 <Tabs defaultValue="local" className="w-full">
                     <TabsList className="mb-6 grid w-full max-w-md grid-cols-2 bg-zinc-900/50 p-1 backdrop-blur-md">
-                        <TabsTrigger value="local" className="data-[state=active]:bg-zinc-800 data-[state=active]:text-primary rounded-lg font-bold transition-all">My Games (Local)</TabsTrigger>
-                        <TabsTrigger value="eldorado" className="data-[state=active]:bg-zinc-800 data-[state=active]:text-primary rounded-lg font-bold transition-all">Eldorado Library</TabsTrigger>
+                        <TabsTrigger value="local" className="data-[state=active]:text-primary rounded-lg font-bold transition-all data-[state=active]:bg-zinc-800">
+                            My Games (Local)
+                        </TabsTrigger>
+                        <TabsTrigger value="eldorado" className="data-[state=active]:text-primary rounded-lg font-bold transition-all data-[state=active]:bg-zinc-800">
+                            Eldorado Library
+                        </TabsTrigger>
                     </TabsList>
-                    
+
                     <TabsContent value="local" className="m-0 border-none p-0 outline-none">
                         <DataTable
                             loading={loading}
@@ -212,7 +208,7 @@ export default function Dashboard() {
                             renderRow={(game) => (
                                 <ClickableTableRow key={game.id} href={`/games/${game.id}`} className="group">
                                     <TableCell className="flex items-center gap-3 font-medium">
-                                        <div className="group-hover:border-primary/50 flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-zinc-700/50 bg-zinc-800/80 font-bold text-zinc-400 shadow-inner transition-colors">{game.image_url ? <img src={game.image_url} alt={game.name} className="h-full w-full object-cover" /> : <Gamepad2 className="h-5 w-5" />}</div>
+                                        <div className="group-hover:border-primary/50 flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-zinc-700/50 bg-zinc-800/80 font-bold text-zinc-400 shadow-inner transition-colors">{game.image_url ? <Image unoptimized src={game.image_url} alt={game.name} width={40} height={40} className="h-full w-full object-cover" /> : <Gamepad2 className="h-5 w-5" />}</div>
                                         <span className="group-hover:text-primary text-base font-bold text-white transition-colors">{game.name}</span>
                                     </TableCell>
                                     <TableCell>{game.requires_private_server ? <StatusBadge variant="accent">Wajib Private Server</StatusBadge> : <StatusBadge variant="default">Public / Bebas</StatusBadge>}</TableCell>
@@ -251,11 +247,11 @@ export default function Dashboard() {
                             emptyMessage="Game dari eldorado gak ketemu bro."
                             columns={[{ label: "Game ID", className: "w-[150px]" }, { label: "Nama Game" }]}
                             renderRow={(game, index) => (
-                                <ClickableTableRow key={`eldo-${game.gameId || '0'}-${index}`} href="#" className="group cursor-default">
+                                <ClickableTableRow key={`eldo-${game.gameId || "0"}-${index}`} href="#" className="group cursor-default">
                                     <TableCell className="font-mono text-zinc-400">{game.gameId}</TableCell>
                                     <TableCell className="flex items-center gap-3 font-medium">
                                         <div className="group-hover:border-primary/50 flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-zinc-700/50 bg-zinc-800/80 font-bold text-zinc-400 shadow-inner transition-colors">
-                                            <img src={`https://assetsdelivery.eldorado.gg/v7/_assets_/icons/v28/${game.gameId}.png`} alt={game.menuGameTitle || game.gameName} className="h-full w-full object-cover" />
+                                            <Image unoptimized src={`https://assetsdelivery.eldorado.gg/v7/_assets_/icons/v28/${game.gameId}.png`} alt={game.menuGameTitle || game.gameName} width={40} height={40} className="h-full w-full object-cover" />
                                         </div>
                                         <span className="group-hover:text-primary text-base font-bold text-white transition-colors">{game.menuGameTitle || game.gameName}</span>
                                     </TableCell>

@@ -44,6 +44,15 @@ export default function ItemDetail() {
     const [editItemName, setEditItemName] = useState("");
     const [editItemDesc, setEditItemDesc] = useState("");
 
+    const fetchData = async () => {
+        setLoading(true);
+        const [{ data: itemData }, { data: accData }, { data: allAccData }] = await Promise.all([supabase.from("items").select("*, games(name, requires_private_server)").eq("id", params.id).single(), supabase.from("account_items").select("*, accounts(username)").eq("item_id", params.id), supabase.from("accounts").select("*")]);
+        setItem(itemData);
+        setAccounts(accData || []);
+        setAllAccounts(allAccData || []);
+        setLoading(false);
+    };
+
     const { session } = useAuthGuard(() => fetchData(), [params.id]);
 
     // Auto-fetch PS link when account selected
@@ -57,18 +66,10 @@ export default function ItemDetail() {
                 .single()
                 .then(({ data }) => setPrivateServerLink(data?.private_server_link || ""));
         } else {
-            setPrivateServerLink("");
+            const timeoutId = setTimeout(() => setPrivateServerLink(""), 0);
+            return () => clearTimeout(timeoutId);
         }
     }, [selectedAcc, item]);
-
-    const fetchData = async () => {
-        setLoading(true);
-        const [{ data: itemData }, { data: accData }, { data: allAccData }] = await Promise.all([supabase.from("items").select("*, games(name, requires_private_server)").eq("id", params.id).single(), supabase.from("account_items").select("*, accounts(username)").eq("item_id", params.id), supabase.from("accounts").select("*")]);
-        setItem(itemData);
-        setAccounts(accData || []);
-        setAllAccounts(allAccData || []);
-        setLoading(false);
-    };
 
     const handleEditItem = async (e) => {
         e.preventDefault();

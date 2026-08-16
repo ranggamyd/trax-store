@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
 import { TableCell } from "@/components/ui/table";
@@ -27,7 +26,6 @@ import { getInitials } from "@/lib/utils";
 import { Plus, Pencil, Trash2, CircleDollarSign, User, Eye } from "lucide-react";
 
 export default function AccountsPage() {
-    const router = useRouter();
     const [accounts, setAccounts] = useState([]);
     const [loading, setLoading] = useState(true);
     const [isAddOpen, setIsAddOpen] = useState(false);
@@ -43,8 +41,6 @@ export default function AccountsPage() {
         resolver: zodResolver(accountSchema),
     });
 
-    const { session } = useAuthGuard(() => fetchAccounts());
-
     const fetchAccounts = async () => {
         setLoading(true);
         const { data, error } = await supabase.from("accounts").select("*").order("created_at", { ascending: false });
@@ -56,6 +52,8 @@ export default function AccountsPage() {
         }
         setLoading(false);
     };
+
+    const { session } = useAuthGuard(() => fetchAccounts());
 
     const onSubmit = async (data) => {
         if (editAccountId) {

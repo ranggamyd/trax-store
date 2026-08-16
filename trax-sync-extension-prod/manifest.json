@@ -4,10 +4,7 @@
     "version": "1.0",
     "description": "Otomatis narik cookie Eldorado buat TraxStore versi Vercel",
     "permissions": ["cookies", "tabs"],
-    "host_permissions": [
-        "https://www.eldorado.gg/*",
-        "*://*.vercel.app/*"
-    ],
+    "host_permissions": ["https://www.eldorado.gg/*", "*://*.vercel.app/*"],
     "content_scripts": [
         {
             "matches": ["*://*.vercel.app/*"],

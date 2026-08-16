@@ -73,8 +73,6 @@ export default function AccountDetail() {
     const [editItemData, setEditItemData] = useState(null);
     const [newNotes, setNewNotes] = useState("");
 
-    const { session } = useAuthGuard(() => fetchData(), [params.id]);
-
     const fetchData = async () => {
         setLoading(true);
         const [{ data: accData }, { data: gamesData }, { data: itemsData }, { data: allGamesData }] = await Promise.all([supabase.from("accounts").select("*").eq("id", params.id).single(), supabase.from("account_games").select("*, games(id, name, image_url, requires_private_server)").eq("account_id", params.id), supabase.from("account_items").select("*, items(id, item_name, game_id, games(name))").eq("account_id", params.id), supabase.from("games").select("*, items(id, item_name)")]);
@@ -84,6 +82,8 @@ export default function AccountDetail() {
         setAllGames(allGamesData || []);
         setLoading(false);
     };
+
+    const { session } = useAuthGuard(() => fetchData(), [params.id]);
 
     // ─── Account CRUD ───
     const toggleStatus = async () => {

@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { Package, Plus, Pencil, Trash2 } from "lucide-react";
 import { toast } from "sonner";
@@ -28,7 +27,6 @@ export default function GlobalItems() {
     const [games, setGames] = useState([]);
     const [loading, setLoading] = useState(true);
     const [search, setSearch] = useState("");
-    const router = useRouter();
 
     const [isAddOpen, setIsAddOpen] = useState(false);
     const [editItemId, setEditItemId] = useState(null);
@@ -45,8 +43,6 @@ export default function GlobalItems() {
         defaultValues: { item_name: "", description: "" },
     });
 
-    const { session } = useAuthGuard(() => fetchData());
-
     const fetchData = async () => {
         setLoading(true);
         const { data: itemsData } = await supabase.from("items").select("*, games(name)").order("created_at", { ascending: false });
@@ -57,6 +53,8 @@ export default function GlobalItems() {
 
         setLoading(false);
     };
+
+    const { session } = useAuthGuard(() => fetchData());
 
     const filteredItems = items.filter((item) => {
         const matchSearch = item.item_name.toLowerCase().includes(search.toLowerCase()) || (item.games?.name && item.games.name.toLowerCase().includes(search.toLowerCase())) || (item.description && item.description.toLowerCase().includes(search.toLowerCase()));

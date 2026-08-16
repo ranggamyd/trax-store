@@ -17,6 +17,7 @@ export function CopyButton({ textToCopy, className }) {
             });
             setTimeout(() => setCopied(false), 2000);
         } catch (err) {
+            console.error("Waduh, gagal copy nih.", err);
             toast.error("Waduh, gagal copy nih.", {
                 description: "Coba lagi atau copy manual ya.",
             });

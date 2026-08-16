@@ -2,7 +2,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { TableSkeleton } from "@/components/TableSkeleton";
 import { cn } from "@/lib/utils";
 
-export function DataTable({ columns, data, loading = false, emptyMessage = "Data nggak ketemu bro.", keyExtractor = (item) => item.id, renderRow }) {
+export function DataTable({ columns, data, loading = false, emptyMessage = "Data nggak ketemu bro.", renderRow }) {
     if (loading && (!data || data.length === 0)) {
         return <TableSkeleton rows={5} columns={columns.length} />;
     }

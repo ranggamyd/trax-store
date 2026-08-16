@@ -20,6 +20,7 @@ export const formatJsonValue = (data) => {
         }
         return String(data);
     } catch (e) {
+        console.error("Error formatting JSON value:", e);
         return "-";
     }
 };
@@ -62,6 +63,7 @@ export const formatDeliveryTime = (timeStr) => {
 
         return parts.join(" ");
     } catch (e) {
+        console.error("Error formatting delivery time:", e);
         return timeStr;
     }
 };

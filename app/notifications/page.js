@@ -77,7 +77,10 @@ export default function NotificationsPage() {
     }, []);
 
     useEffect(() => {
-        fetchNotifications();
+        const timeoutId = setTimeout(() => {
+            fetchNotifications();
+        }, 0);
+        return () => clearTimeout(timeoutId);
     }, [fetchNotifications]);
 
     // Infinite Scroll Handler
@@ -196,7 +199,7 @@ export default function NotificationsPage() {
                             <p className="text-sm">Belum ada notif masuk buat lu.</p>
                         </div>
                     ) : (
-                        notifications.map((notif, idx) => {
+                        notifications.map((notif, _idx) => {
                             const n = notif.notification;
                             if (!n) return null;
 
