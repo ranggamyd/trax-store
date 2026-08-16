@@ -120,7 +120,7 @@ async function fetchEldorado(endpoint, options = {}) {
 
 export async function getEldoradoOrders(params = {}) {
     try {
-        const { query = "", orderState = "", cursorValue = "", pageSize = 5 } = params;
+        const { query = "", orderState = "", cursorValue = "", pageSize = 50 } = params;
 
         const searchParams = new URLSearchParams();
         searchParams.append("displayFilter", "DisplaySellingOrders");

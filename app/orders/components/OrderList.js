@@ -7,18 +7,21 @@ import { Command, CommandEmpty, CommandGroup, CommandItem, CommandList } from "@
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
-import { RefreshCwIcon, SearchIcon, FilterIcon, ChevronsUpDownIcon, CheckIcon, UserIcon, CalendarIcon, TimerIcon, Gamepad2Icon, CopyIcon, Loader2Icon } from "lucide-react";
-import { getStatusIcon, formatDeliveryTime } from "./utils";
+import { RefreshCwIcon, SearchIcon, FilterIcon, ChevronsUpDownIcon, CheckIcon, UserIcon, CalendarIcon, TimerIcon, Gamepad2Icon, CopyIcon, Loader2Icon, MessageSquareIcon } from "lucide-react";
+import { getStatusIcon, formatDeliveryTime, timeAgo } from "./utils";
 import { useEldoradoLibrary } from "@/contexts/EldoradoLibraryContext";
 
-export default function OrderList({ activeOrderList, activeOrderId, setActiveOrderId, isLoadingOrders, fetchOrders, apiError, searchInput, setSearchInput, handleSearchSubmit, openFilter, setOpenFilter, orderStateFilter, setOrderStateFilter, handleScroll, isFetchingNextPage, hasNextPage }) {
+export default function OrderList({ activeOrderList, activeOrderId, setActiveOrderId, isLoadingOrders, fetchOrders, apiError, searchInput, setSearchInput, handleSearchSubmit, openFilter, setOpenFilter, orderStateFilter, setOrderStateFilter, handleScroll, isFetchingNextPage, hasNextPage, chatPreviews = {}, talkUserId }) {
     const { getGameName } = useEldoradoLibrary();
     return (
         <div className="flex h-full w-full shrink-0 flex-col gap-3 md:w-1/3">
             <div className="relative flex shrink-0 flex-col gap-3 overflow-hidden rounded-2xl border border-zinc-800 bg-zinc-900/50 p-4 backdrop-blur-md">
                 <div className="from-primary/10 absolute inset-0 z-0 bg-gradient-to-br to-transparent"></div>
                 <div className="relative z-10 flex items-center justify-between">
-                    <h1 className="neon-text-primary text-2xl font-bold tracking-widest uppercase">My Orderan Gweh</h1>
+                    <div className="flex flex-col gap-0.5">
+                        <h1 className="neon-text-primary text-2xl font-bold tracking-widest uppercase">My Orderan Gweh</h1>
+                        <p className="text-[10px] text-zinc-500 font-medium tracking-wide">Kelola pesanan aktif Eldorado secara real-time</p>
+                    </div>
                     <Button size="icon" variant="ghost" className="h-8 w-8 text-zinc-400 hover:text-white" onClick={() => fetchOrders("", false)} disabled={isLoadingOrders} title="Refresh Orders">
                         <RefreshCwIcon className={`h-4 w-4 ${isLoadingOrders ? "text-primary animate-spin" : ""}`} />
                     </Button>
@@ -33,19 +36,10 @@ export default function OrderList({ activeOrderList, activeOrderId, setActiveOrd
                     <div className="shrink-0">
                         <Popover open={openFilter} onOpenChange={setOpenFilter}>
                             <PopoverTrigger asChild>
-                                <Button variant="outline" role="combobox" aria-expanded={openFilter} className="h-8 w-[120px] justify-between border-zinc-800 bg-zinc-950/80 px-2 text-xs text-zinc-200 hover:bg-zinc-900 hover:text-white">
+                                <Button variant="outline" role="combobox" aria-expanded={openFilter} className="h-8 w-[120px] justify-between border-zinc-800 bg-zinc-950/80 px-2.5 text-xs text-zinc-200 hover:bg-zinc-900/50 transition-colors focus:outline-none font-normal">
                                     <div className="flex items-center gap-1.5 truncate">
                                         <FilterIcon className="h-3 w-3 shrink-0 text-zinc-500" />
-                                        <span className="truncate">{orderStateFilter || "Semua"}</span>
-                                    </div>
-                                    <ChevronsUpDownIcon className="ml-2 h-3 w-3 shrink-0 opacity-50" />
-                                </Button>
-                            </PopoverTrigger>
-                            <PopoverContent className="w-[140px] border-zinc-800 bg-zinc-950 p-0">
-                                <Command className="bg-transparent">
-                                    <CommandList>
-                                        <CommandEmpty>No status found.</CommandEmpty>
-                                        <CommandGroup>
+                                        <span className="truncate">
                                             {[
                                                 { value: "", label: "Semua" },
                                                 { value: "Paid", label: "Paid" },
@@ -53,23 +47,41 @@ export default function OrderList({ activeOrderList, activeOrderId, setActiveOrd
                                                 { value: "Completed", label: "Completed" },
                                                 { value: "Disputed", label: "Disputed" },
                                                 { value: "Canceled", label: "Canceled" },
-                                            ].map((status) => (
-                                                <CommandItem
-                                                    key={status.value}
-                                                    value={status.label}
-                                                    onSelect={() => {
-                                                        setOrderStateFilter(status.value);
-                                                        setOpenFilter(false);
-                                                    }}
-                                                    className="cursor-pointer text-xs text-zinc-200 hover:bg-zinc-800 hover:text-white aria-selected:bg-zinc-800 aria-selected:text-white"
-                                                >
-                                                    <CheckIcon className={cn("mr-2 h-3 w-3", orderStateFilter === status.value ? "text-primary opacity-100" : "opacity-0")} />
-                                                    {status.label}
-                                                </CommandItem>
-                                            ))}
-                                        </CommandGroup>
-                                    </CommandList>
-                                </Command>
+                                            ].find(s => s.value === orderStateFilter)?.label || "Semua"}
+                                        </span>
+                                    </div>
+                                    <ChevronsUpDownIcon className="h-3 w-3 shrink-0 text-zinc-500" />
+                                </Button>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-[130px] border-zinc-800 bg-zinc-950 p-1.5 text-zinc-200 shadow-xl" align="start">
+                                <div className="flex flex-col gap-0.5">
+                                    {[
+                                        { value: "", label: "Semua" },
+                                        { value: "Paid", label: "Paid" },
+                                        { value: "Delivered", label: "Delivered" },
+                                        { value: "Completed", label: "Completed" },
+                                        { value: "Disputed", label: "Disputed" },
+                                        { value: "Canceled", label: "Canceled" },
+                                    ].map((status) => {
+                                        const isChecked = orderStateFilter === status.value;
+                                        return (
+                                            <button
+                                                key={status.value}
+                                                onClick={() => {
+                                                    setOrderStateFilter(status.value);
+                                                    setOpenFilter(false);
+                                                }}
+                                                className={cn(
+                                                    "flex w-full items-center justify-between rounded-md px-2 py-1 text-xs text-zinc-400 transition-colors hover:bg-zinc-900 hover:text-white text-left cursor-pointer",
+                                                    isChecked && "bg-zinc-900 text-primary font-medium"
+                                                )}
+                                            >
+                                                <span className="truncate">{status.label}</span>
+                                                {isChecked && <CheckIcon className="h-3 w-3 text-primary shrink-0" />}
+                                            </button>
+                                        );
+                                    })}
+                                </div>
                             </PopoverContent>
                         </Popover>
                     </div>
@@ -103,9 +115,23 @@ export default function OrderList({ activeOrderList, activeOrderId, setActiveOrd
                 ) : activeOrderList.length === 0 ? (
                     <div className="p-4 text-center text-sm text-zinc-500">Nggak ada pesanan aktif saat ini bro.</div>
                 ) : (
-                    activeOrderList.map((order) => (
-                        <Card key={order.id} className={`cursor-pointer border transition-all ${activeOrderId === order.id ? "border-primary/50 bg-zinc-800/80 shadow-[0_0_10px_rgba(255,0,255,0.1)]" : "border-zinc-800 bg-zinc-900/40 hover:bg-zinc-800/40"}`} onClick={() => setActiveOrderId(order.id)}>
-                            <div className="flex flex-col gap-2 p-2">
+                    activeOrderList.map((order) => {
+                        const chatPreview = order.talkJsConversationId ? chatPreviews[order.talkJsConversationId] : null;
+                        const hasUnread = chatPreview?.unreadCount > 0;
+                        const isActive = activeOrderId === order.id;
+
+                        let cardClasses = "cursor-pointer border transition-all ";
+                        if (isActive) {
+                            cardClasses += "border-primary/50 bg-zinc-800/80 shadow-[0_0_10px_rgba(255,0,255,0.1)]";
+                        } else if (hasUnread) {
+                            cardClasses += "border-green-500/40 bg-zinc-800/90 hover:bg-zinc-700/80 shadow-[0_0_15px_rgba(34,197,94,0.1)]";
+                        } else {
+                            cardClasses += "border-zinc-800 bg-zinc-900/40 hover:bg-zinc-800/40";
+                        }
+
+                        return (
+                            <Card key={order.id} className={cardClasses} onClick={() => setActiveOrderId(order.id)}>
+                                <div className="flex flex-col gap-2 p-2">
                                 <div className="flex items-start justify-between text-sm font-bold text-zinc-200">
                                     <div className="flex max-w-[65%] flex-col">
                                         <span className="text-primary flex items-center gap-1.5 truncate font-bold">
@@ -206,9 +232,30 @@ export default function OrderList({ activeOrderList, activeOrderId, setActiveOrd
                                         </div>
                                     )}
                                 </div>
+
+                                {/* Chat Preview & Unread Indicator */}
+                                {(() => {
+                                    const chatPreview = order.talkJsConversationId ? chatPreviews[order.talkJsConversationId] : null;
+                                    if (!chatPreview) return null;
+                                    return (
+                                        <div className="flex items-center gap-2 rounded-lg border border-zinc-800/40 bg-zinc-950/60 px-2 py-1.5">
+                                            <MessageSquareIcon className="h-3 w-3 shrink-0 text-zinc-500" />
+                                            <p className="min-w-0 flex-1 truncate text-[11px] text-zinc-400">
+                                                {chatPreview.lastMessage}
+                                            </p>
+                                            {chatPreview.timestamp > 0 && (
+                                                <span className="shrink-0 text-[10px] font-medium text-zinc-500">{timeAgo(chatPreview.timestamp)}</span>
+                                            )}
+                                            {chatPreview.unreadCount > 0 && (
+                                                <span className="h-2.5 w-2.5 shrink-0 animate-pulse rounded-full bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.7)]"></span>
+                                            )}
+                                        </div>
+                                    );
+                                })()}
                             </div>
                         </Card>
-                    ))
+                        );
+                    })
                 )}
 
                 {/* Loading Indicator for Infinity Scroll */}

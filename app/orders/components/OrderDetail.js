@@ -7,86 +7,198 @@ import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Skeleton } from "@/components/ui/skeleton";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger, AlertDialogFooter } from "@/components/ui/alert-dialog";
-import { InfoIcon, CheckIcon, CopyIcon, UserIcon, Gamepad2Icon, CalendarIcon, XCircleIcon, CheckCircleIcon, Loader2Icon, TimerIcon, SparklesIcon, SearchIcon, SendIcon } from "lucide-react";
+import {
+    InfoIcon,
+    CheckIcon,
+    CopyIcon,
+    UserIcon,
+    Gamepad2Icon,
+    CalendarIcon,
+    XCircleIcon,
+    CheckCircleIcon,
+    Loader2Icon,
+    TimerIcon,
+    SparklesIcon,
+    SearchIcon,
+    SendIcon,
+    PencilIcon
+} from "lucide-react";
 import { getStatusIcon, formatDeliveryTime, CANCEL_REASONS } from "./utils";
 import { supabase } from "@/lib/supabase";
 import { useEldoradoLibrary } from "@/contexts/EldoradoLibraryContext";
-function ChatTemplateCard({ tmpl, onSend, isRecommended }) {
+import { cn } from "@/lib/utils";
+function ChatTemplateCard({
+    tmpl,
+    onSend,
+    isRecommended,
+    compact = false,
+    chatboxRef
+}) {
     const [copied, setCopied] = useState(false);
-    const [isSending, setIsSending] = useState(false);
 
-    return (
-        <div className={`rounded-2xl border bg-zinc-900 p-4 text-zinc-200 shadow-xl ${isRecommended ? "border-primary/50 shadow-[0_0_15px_rgba(var(--primary),0.2)]" : "border-zinc-800"} flex h-full flex-col transition-all duration-300 hover:z-20 hover:scale-105 hover:shadow-2xl ${tmpl.style || ""} group relative min-h-[140px] w-full`}>
-            <div className="pointer-events-none absolute inset-0 rounded-2xl bg-gradient-to-br from-zinc-800/40 to-transparent"></div>
-            {isRecommended && <div className="bg-primary text-primary-foreground absolute -top-3 left-1/2 z-20 -translate-x-1/2 rounded-full px-2 py-0.5 text-[9px] font-bold tracking-wider uppercase shadow-lg">Recommended</div>}
-            <div className="relative z-10 mt-1 mb-2 flex items-start justify-between gap-2">
-                <span className="text-sm leading-tight font-bold text-zinc-100">{tmpl.title}</span>
-                <span className={`rounded-full bg-zinc-800/80 px-2 py-0.5 text-[10px] font-extrabold tracking-wider uppercase ${tmpl.type === "General" ? "border border-blue-900/30 text-blue-400" : "border border-purple-900/30 text-purple-400"}`}>{tmpl.type}</span>
-            </div>
-            <p className="relative z-10 mt-1 mb-4 flex-1 text-xs font-medium text-zinc-300">"{tmpl.text}"</p>
-            <div className="relative z-10 mt-auto flex flex-col gap-2 border-t border-zinc-800 pt-3">
-                <div className="flex w-full gap-2">
+    if (compact) {
+        return (
+            <div className={cn(
+                "group relative flex flex-col gap-2 rounded-lg border bg-zinc-900/60 p-2.5 transition-colors hover:bg-zinc-800/80 h-full",
+                isRecommended ? "border-primary/40 border-l-2 border-l-primary" : "border-zinc-800/80"
+            )}>
+                {/* <div className="flex items-start gap-1 min-w-0">
+                    <div className="flex-1 min-w-0">
+                        <span className="block truncate text-[11px] font-bold text-zinc-100 leading-tight">{tmpl.title}</span>
+                        <span className="rounded bg-zinc-800 px-1 text-[7px] font-extrabold uppercase text-zinc-500">{tmpl.type}</span>
+                    </div>
+                </div> */}
+                <p className="text-[10px] text-zinc-400 leading-tight line-clamp-2">"{tmpl.text}"</p>
+                <div className="flex items-center gap-1 mt-auto pt-1 border-t border-zinc-800/60">
                     <Button
-                        variant="outline"
-                        className="h-8 flex-1 border-zinc-700 bg-zinc-800/50 px-2 text-xs text-white hover:bg-zinc-700"
+                        variant="ghost"
+                        size="icon"
+                        className="h-5 w-5 shrink-0 text-zinc-400 hover:text-white"
                         onClick={(e) => {
                             e.stopPropagation();
-                            navigator.clipboard.writeText(tmpl.text);
-                            setCopied(true);
-                            toast.success("Template dicopy!");
-                            setTimeout(() => setCopied(false), 2000);
+                            if (chatboxRef.current?.isAlive) {
+                                chatboxRef.current.messageField.setText(tmpl.text);
+                                chatboxRef.current.messageField.focus();
+                                setCopied(true);
+                                // toast.success("Template masuk ke chat!");
+                                setTimeout(() => setCopied(false), 2000);
+                            } else {
+                                navigator.clipboard.writeText(tmpl.text);
+                                setCopied(true);
+                                // toast.success("Template dicopy!");
+                                setTimeout(() => setCopied(false), 2000);
+                            }
                         }}
                     >
-                        {copied ? <CheckIcon className="mr-1 h-3.5 w-3.5 shrink-0 text-green-400" /> : <CopyIcon className="mr-1 h-3.5 w-3.5 shrink-0 text-zinc-400" />}
-                        Copy
+                        <PencilIcon className="h-3 w-3" />
                     </Button>
-                    <Button 
-                        className="bg-primary hover:bg-primary/90 text-primary-foreground h-8 flex-1 px-2 text-xs" 
+                    <Button
+                        size="sm"
+                        className="bg-primary hover:bg-primary/90 text-primary-foreground h-6 flex-1 gap-1 px-2 text-[9px] font-bold"
                         onClick={(e) => {
                             e.stopPropagation();
                             onSend(tmpl);
                         }}
                     >
-                        <SendIcon className="mr-1 h-3.5 w-3.5 shrink-0" />
-                        Send
+                        <SendIcon className="h-2 w-2 shrink-0" />
+                        Kirim
                     </Button>
                 </div>
+            </div>
+        );
+    }
+
+    return (
+        <div className={cn(
+            "group relative flex items-center justify-between gap-3 rounded-lg border bg-zinc-900/60 p-2 transition-colors hover:bg-zinc-800/80",
+            isRecommended ? "border-primary/40 shadow-[0_0_8px_rgba(var(--primary),0.05)] border-l-2 border-l-primary" : "border-zinc-800/80"
+        )}>
+            <div className="flex min-w-0 flex-1 flex-col gap-0.5">
+                {/* <div className="flex items-center gap-1.5">
+                    <span className="truncate text-xs font-bold text-zinc-200">{tmpl.title}</span>
+                    <span className="rounded bg-zinc-800 px-1 py-0.2 text-[8px] font-extrabold uppercase text-zinc-400">{tmpl.type}</span>
+                </div> */}
+                <p className="truncate text-[10px] text-zinc-400">"{tmpl.text}"</p>
+            </div>
+            <div className="flex shrink-0 items-center gap-1.5">
+                <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-6 w-6 text-zinc-400 hover:text-white"
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        if (chatboxRef.current?.isAlive) {
+                            chatboxRef.current.messageField.setText(tmpl.text);
+                            chatboxRef.current.messageField.focus();
+                            setCopied(true);
+                            toast.success("Template masuk ke chat!");
+                            setTimeout(() => setCopied(false), 2000);
+                        } else {
+                            navigator.clipboard.writeText(tmpl.text);
+                            setCopied(true);
+                            toast.success("Template dicopy!");
+                            setTimeout(() => setCopied(false), 2000);
+                        }
+                    }}
+                >
+                    <PencilIcon className="h-3 w-3" />
+                </Button>
+                <Button 
+                    size="sm"
+                    variant="outline-primary"
+                    className="bg-primary hover:bg-primary/90 text-primary-foreground h-6.5 gap-1 px-2 text-[10px] font-bold" 
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        onSend(tmpl);
+                    }}
+                >
+                    <SendIcon className="h-2.5 w-2.5 shrink-0" />
+                    Kirim
+                </Button>
             </div>
         </div>
     );
 }
 
-function QuickRepliesPopover({ activeOrderDetails, onSend }) {
+function QuickRepliesPopover({ activeOrderDetails, onSend, chatboxRef }) {
     const [search, setSearch] = useState("");
     const [templates, setTemplates] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
 
     const currentStatus = activeOrderDetails?.status?.toLowerCase() || "";
 
-    useEffect(() => {
-        async function fetchTemplates() {
-            setIsLoading(true);
-            const { data, error } = await supabase.from("chat_templates").select("*");
-            if (error) {
-                toast.error("Gagal load templates: " + error.message);
-            } else {
-                // Recommendation logic
-                let sorted = (data || []).sort((a, b) => {
-                    const aRec = a.triggers?.includes(currentStatus) ? 1 : 0;
-                    const bRec = b.triggers?.includes(currentStatus) ? 1 : 0;
+    const fetchTemplates = async () => {
+        setIsLoading(true);
+        const { data, error } = await supabase.from("chat_templates").select("*").order("sort_order", { ascending: true });
+        if (error) {
+            toast.error("Gagal load templates: " + error.message);
+        } else {
+            // Urutkan recommended paling atas, sisanya mengikuti sort_order bawaan
+            let sorted = (data || []).sort((a, b) => {
+                const aRec = a.triggers?.includes(currentStatus) ? 1 : 0;
+                const bRec = b.triggers?.includes(currentStatus) ? 1 : 0;
+                if (aRec !== bRec) {
                     return bRec - aRec;
-                });
-
-                setTemplates(sorted);
-            }
-            setIsLoading(false);
+                }
+                return (a.sort_order === 0 ? Infinity : a.sort_order) -
+       (b.sort_order === 0 ? Infinity : b.sort_order);
+            });
+            setTemplates(sorted);
         }
+        setIsLoading(false);
+    };
 
+    useEffect(() => {
         fetchTemplates();
     }, [currentStatus]);
 
-    const filtered = templates.filter((t) => t.text.toLowerCase().includes(search.toLowerCase()) || t.type.toLowerCase().includes(search.toLowerCase()) || t.title.toLowerCase().includes(search.toLowerCase()));
+    const handleUpdateSortOrder = async (id, newOrder) => {
+        const { error } = await supabase
+            .from("chat_templates")
+            .update({ sort_order: newOrder })
+            .eq("id", id);
+        
+        if (error) {
+            toast.error("Gagal update urutan: " + error.message);
+        } else {
+            // Update state local untuk merubah sort order dan urutan list secara instan
+            setTemplates(prev => {
+                const updated = prev.map(t => t.id === id ? { ...t, sort_order: newOrder } : t);
+                return updated.sort((a, b) => {
+                    const aRec = a.triggers?.includes(currentStatus) ? 1 : 0;
+                    const bRec = b.triggers?.includes(currentStatus) ? 1 : 0;
+                    if (aRec !== bRec) {
+                        return bRec - aRec;
+                    }
+                    return (a.sort_order === 0 ? Infinity : a.sort_order) -
+       (b.sort_order === 0 ? Infinity : b.sort_order);
+                });
+            });
+        }
+    };
 
+    const filtered = templates.filter((t) => t.text.toLowerCase().includes(search.toLowerCase()) || t.type.toLowerCase().includes(search.toLowerCase()) || t.title.toLowerCase().includes(search.toLowerCase()));
+    const displayedTemplates = filtered.slice(0, 5);
 
     return (
         <div className="absolute right-6 bottom-24 z-50">
@@ -96,54 +208,60 @@ function QuickRepliesPopover({ activeOrderDetails, onSend }) {
                         <SparklesIcon className="h-5 w-5" />
                     </Button>
                 </PopoverTrigger>
-                <PopoverContent side="top" align="end" className="mb-4 flex w-[900px] flex-col overflow-hidden rounded-3xl border border-zinc-800 bg-zinc-950/90 p-0 shadow-2xl backdrop-blur-xl">
-                    <div className="p-8 pb-4">
-                        <div className="mb-6 flex items-center justify-between">
-                            <div className="flex items-center gap-3">
-                                <div className="bg-primary/20 text-primary rounded-xl p-2">
-                                    <SparklesIcon className="h-5 w-5" />
-                                </div>
-                                <div>
-                                    <h3 className="text-lg font-bold text-white">Quick Replies</h3>
-                                    <p className="text-xs text-zinc-400">Pilih template buat bales chat bule dengan kilat</p>
-                                </div>
-                            </div>
-                            <div className="relative w-64">
-                                <SearchIcon className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-zinc-500" />
-                                <input type="text" placeholder="Search templates..." value={search} onChange={(e) => setSearch(e.target.value)} className="focus:border-primary w-full rounded-full border border-zinc-700 bg-zinc-900 py-2 pr-4 pl-9 text-sm text-white transition-colors focus:outline-none" />
-                            </div>
+                <PopoverContent side="top" align="end" className="mb-3 flex w-[360px] flex-col overflow-hidden rounded-2xl border border-zinc-800 bg-zinc-950/95 p-3 shadow-2xl backdrop-blur-xl gap-2">
+                    <div className="flex items-center justify-between gap-2">
+                        <div className="flex items-center gap-2">
+                            <SparklesIcon className="h-4 w-4 text-primary" />
+                            <h3 className="text-sm font-bold text-white">Quick Replies</h3>
+                        </div>
+                        <div className="relative w-40">
+                            <SearchIcon className="absolute top-2 left-2 h-3.5 w-3.5 text-zinc-500" />
+                            <input type="text" placeholder="Cari..." value={search} onChange={(e) => setSearch(e.target.value)} className="focus:border-primary h-7.5 w-full rounded-md border border-zinc-800 bg-zinc-900 pr-2 pl-7.5 text-xs text-white transition-colors focus:outline-none" />
                         </div>
                     </div>
 
-                    <div className="custom-scrollbar max-h-[500px] overflow-y-auto px-8 pb-8">
+                    <div className="custom-scrollbar flex flex-col gap-1.5 max-h-80 overflow-y-auto">
                         {isLoading ? (
-                            <div className="flex justify-center py-10">
-                                <Loader2Icon className="h-6 w-6 animate-spin text-zinc-500" />
+                            <div className="flex justify-center py-6">
+                                <Loader2Icon className="h-5 w-5 animate-spin text-zinc-500" />
                             </div>
-                        ) : filtered.length > 0 ? (
-                            <div className="mt-2 flex flex-col gap-6 pr-6 pb-4">
-                                {Array.from({ length: Math.ceil(filtered.length / 3) }).map((_, rowIdx) => {
-                                    const rowItems = filtered.slice(rowIdx * 3, rowIdx * 3 + 3);
-                                    return (
-                                        <div key={rowIdx} className={`flex gap-6 ${rowIdx % 2 !== 0 ? "ml-12" : ""}`}>
-                                            {rowItems.map((tmpl) => (
-                                                <div key={tmpl.id} className="group/card relative max-w-[260px] min-w-[240px] flex-1 pt-3">
-                                                    <ChatTemplateCard 
-                                                        tmpl={tmpl} 
+                        ) : displayedTemplates.length > 0 ? (
+                            <div className="flex flex-col gap-1.5 pb-1">
+                                {Object.entries(
+                                    displayedTemplates.reduce((groups, tmpl) => {
+                                        const key = tmpl.sort_order ?? 0;
+                                        if (!groups[key]) groups[key] = [];
+                                        groups[key].push(tmpl);
+                                        return groups;
+                                    }, {})
+                                )
+                                    .sort(([a], [b]) => {
+    const aOrder = Number(a) === 0 ? Infinity : Number(a);
+    const bOrder = Number(b) === 0 ? Infinity : Number(b);
+
+    return aOrder - bOrder;
+})
+                                    .map(([order, group]) => (
+                                        <div key={order} className={`flex gap-1.5 ${group.length > 1 ? "flex-row items-stretch" : "flex-col"}`}>
+                                            {group.map((tmpl) => (
+                                                <div key={tmpl.id} className={group.length > 1 ? "flex-1 min-w-0" : ""}>
+                                                    <ChatTemplateCard
+                                                        tmpl={tmpl}
+    chatboxRef={chatboxRef}
                                                         onSend={(t) => {
                                                             onSend(t);
                                                             setTemplates((prev) => prev.filter((x) => x.id !== t.id));
-                                                        }} 
-                                                        isRecommended={tmpl.triggers?.includes(currentStatus)} 
+                                                        }}
+                                                        isRecommended={tmpl.triggers?.includes(currentStatus)}
+                                                        compact={group.length > 1}
                                                     />
                                                 </div>
                                             ))}
                                         </div>
-                                    );
-                                })}
+                                    ))}
                             </div>
                         ) : (
-                            <div className="py-10 text-center text-zinc-500">Template tidak ditemukan :(</div>
+                            <div className="py-6 text-center text-xs text-zinc-500">Template tidak ditemukan :(</div>
                         )}
                     </div>
                 </PopoverContent>
@@ -151,13 +269,14 @@ function QuickRepliesPopover({ activeOrderDetails, onSend }) {
         </div>
     );
 }
+
 import { CopyablePill } from "./SharedUI";
 
 export default function OrderDetail({ activeOrderId, activeOrderDetails, activeOrderFullDetails, isLoadingOrderDetails, handleMarkDelivered, isDelivering, handleCancelOrder, isCanceling, cancelReason, setCancelReason, cancelMessage, setCancelMessage, isCancelDialogOpen, setIsCancelDialogOpen, talkData, robloxUsernames }) {
-    console.log(activeOrderDetails, activeOrderFullDetails)
     const { getGameName } = useEldoradoLibrary();
     const [isLinkCopied, setIsLinkCopied] = useState(false);
     const sessionRef = useRef(null);
+const chatboxRef = useRef(null);
 
     const handleQuickReplySend = (tmpl) => {
         if (!sessionRef.current || !activeOrderDetails?.talkJsConversationId) {
@@ -402,7 +521,8 @@ export default function OrderDetail({ activeOrderId, activeOrderDetails, activeO
                 </div>
 
                 {/* Floating Quick Replies */}
-                {activeOrderDetails && !isLoadingOrderDetails && <QuickRepliesPopover activeOrderDetails={activeOrderDetails} onSend={handleQuickReplySend} />}
+                {activeOrderDetails && !isLoadingOrderDetails && <QuickRepliesPopover activeOrderDetails={activeOrderDetails} onSend={handleQuickReplySend}
+    chatboxRef={chatboxRef} />}
 
                 {/* Live Chat is rendered below details */}
                 {/* Scrollable Content */}
@@ -417,7 +537,14 @@ export default function OrderDetail({ activeOrderId, activeOrderDetails, activeO
                         {talkData && activeOrderDetails.talkJsConversationId ? (
                             <div className="min-h-0 w-full flex-1 overflow-hidden">
                                 <Session sessionRef={sessionRef} appId={process.env.NEXT_PUBLIC_TALKJS_APP_ID} userId={talkData.userId} tokenFetcher={() => talkData.token}>
-                                    <Chatbox syncId="chatbox" conversationId={activeOrderDetails.talkJsConversationId} showChatHeader={false} messageFilter={{ type: ["!=", "SystemMessage"] }} style={{ width: "100%", height: "100%" }} />
+                                    <Chatbox
+    chatboxRef={chatboxRef}
+    syncId="chatbox"
+    conversationId={activeOrderDetails.talkJsConversationId}
+    showChatHeader={false}
+    messageFilter={{ type: ["!=", "SystemMessage"] }}
+    style={{ width: "100%", height: "100%" }}
+/>
                                 </Session>
                             </div>
                         ) : (

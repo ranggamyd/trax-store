@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { toast } from "sonner";
+import Talk from "talkjs";
 import { markOrderDelivered, cancelOrder, getEldoradoOrders, getEldoradoOrderDetails, getTalkJsToken } from "@/app/actions";
 import OrderList from "./components/OrderList";
 import OrderDetail from "./components/OrderDetail";
@@ -23,6 +24,8 @@ export default function OrdersPage() {
     const [apiError, setApiError] = useState(null);
     const [talkData, setTalkData] = useState(null);
     const [activeTab, setActiveTab] = useState("details"); // "details" or "chat"
+    const [chatPreviews, setChatPreviews] = useState({}); // { conversationId: { lastMessage, unreadCount, timestamp } }
+    const talkSessionRef = useRef(null);
 
     // Filter & Pagination States
     const [searchInput, setSearchInput] = useState("");
@@ -124,6 +127,44 @@ export default function OrdersPage() {
         window.addEventListener("message", handleMessage);
         return () => window.removeEventListener("message", handleMessage);
     }, [fetchOrders]);
+
+    // Init TalkJS session for unreads tracking
+    useEffect(() => {
+        if (!talkData || talkSessionRef.current) return;
+
+        Talk.ready.then(() => {
+            const me = new Talk.User({ id: talkData.userId, name: "Me" });
+            const session = new Talk.Session({
+                appId: process.env.NEXT_PUBLIC_TALKJS_APP_ID,
+                me: me,
+                tokenFetcher: () => talkData.token,
+            });
+
+            talkSessionRef.current = session;
+
+            // Subscribe to unreads for chat previews
+            session.unreads.onChange((unreads) => {
+                const previews = {};
+                for (const convo of unreads) {
+                    previews[convo.conversation.id] = {
+                        lastMessage: convo.lastMessage?.body || "",
+                        senderName: convo.lastMessage?.sender?.name || "",
+                        senderId: convo.lastMessage?.senderId || "",
+                        unreadCount: convo.unreadMessageCount || 0,
+                        timestamp: convo.lastMessage?.timestamp || 0,
+                    };
+                }
+                setChatPreviews(previews);
+            });
+        });
+
+        return () => {
+            if (talkSessionRef.current) {
+                talkSessionRef.current.destroy();
+                talkSessionRef.current = null;
+            }
+        };
+    }, [talkData]);
 
     useEffect(() => {
         // Fetch TalkJS token for Live Chat
@@ -244,7 +285,7 @@ export default function OrdersPage() {
     return (
         <div className="text-foreground bg-black p-4 pb-20 md:p-8">
             <div className="mx-auto flex h-[80vh] w-full max-w-7xl flex-col gap-6 md:flex-row">
-                <OrderList activeOrderList={activeOrderList} activeOrderId={activeOrderId} setActiveOrderId={setActiveOrderId} isLoadingOrders={isLoadingOrders} fetchOrders={fetchOrders} apiError={apiError} searchInput={searchInput} setSearchInput={setSearchInput} handleSearchSubmit={handleSearchSubmit} openFilter={openFilter} setOpenFilter={setOpenFilter} orderStateFilter={orderStateFilter} setOrderStateFilter={setOrderStateFilter} handleScroll={handleScroll} isFetchingNextPage={isFetchingNextPage} hasNextPage={hasNextPage} />
+                <OrderList activeOrderList={activeOrderList} activeOrderId={activeOrderId} setActiveOrderId={setActiveOrderId} isLoadingOrders={isLoadingOrders} fetchOrders={fetchOrders} apiError={apiError} searchInput={searchInput} setSearchInput={setSearchInput} handleSearchSubmit={handleSearchSubmit} openFilter={openFilter} setOpenFilter={setOpenFilter} orderStateFilter={orderStateFilter} setOrderStateFilter={setOrderStateFilter} handleScroll={handleScroll} isFetchingNextPage={isFetchingNextPage} hasNextPage={hasNextPage} chatPreviews={chatPreviews} talkUserId={talkData?.userId} />
 
                 <OrderDetail activeOrderId={activeOrderId} activeOrderDetails={activeOrderDetails} activeOrderFullDetails={activeOrderFullDetails} isLoadingOrderDetails={isLoadingOrderDetails} handleMarkDelivered={handleMarkDelivered} isDelivering={isDelivering} handleCancelOrder={handleCancelOrder} isCanceling={isCanceling} cancelReason={cancelReason} setCancelReason={setCancelReason} cancelMessage={cancelMessage} setCancelMessage={setCancelMessage} isCancelDialogOpen={isCancelDialogOpen} setIsCancelDialogOpen={setIsCancelDialogOpen} talkData={talkData} robloxUsernames={robloxUsernames} />
             </div>

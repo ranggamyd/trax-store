@@ -83,6 +83,22 @@ export const getStatusIcon = (status, className) => {
     }
 };
 
+export const timeAgo = (timestamp) => {
+    if (!timestamp) return "";
+    const now = Date.now();
+    const diff = now - timestamp;
+    const seconds = Math.floor(diff / 1000);
+    const minutes = Math.floor(seconds / 60);
+    const hours = Math.floor(minutes / 60);
+    const days = Math.floor(hours / 24);
+
+    if (seconds < 60) return "just now";
+    if (minutes < 60) return `${minutes}m`;
+    if (hours < 24) return `${hours}h`;
+    if (days < 30) return `${days}d`;
+    return `${Math.floor(days / 30)}mo`;
+};
+
 export const CANCEL_REASONS = [
     {
         value: "Buyer_Provided_Incorrect_Information",

@@ -12,7 +12,6 @@ import {
     updateEldoradoDeliveryTime,
     bulkPauseEldoradoOffers,
     bulkDeleteEldoradoOffers,
-    createEldoradoOffer,
 } from "@/app/actions";
 import { useEldoradoLibrary } from "@/contexts/EldoradoLibraryContext";
 import { Button } from "@/components/ui/button";
@@ -29,6 +28,20 @@ import {
     AlertDialogTitle,
     AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import {
+    Popover,
+    PopoverContent,
+    PopoverTrigger,
+} from "@/components/ui/popover";
+import {
+    Command,
+    CommandInput,
+    CommandList,
+    CommandEmpty,
+    CommandGroup,
+    CommandItem,
+} from "@/components/ui/command";
+import { cn } from "@/lib/utils";
 import {
     SearchIcon,
     FilterIcon,
@@ -225,21 +238,79 @@ const EditableField = ({ label, value, icon, onSave, type = "text", isLoading = 
     );
 };
 
-const SelectFilter = ({ value, onChange, options, icon, className = "" }) => (
-    <div className={`relative shrink-0 ${className}`}>
-        {icon && <div className="pointer-events-none absolute top-2 left-2 z-10 text-zinc-500">{icon}</div>}
-        <select
-            value={value}
-            onChange={(e) => onChange(e.target.value)}
-            className={`focus:border-primary/50 h-8 w-full cursor-pointer appearance-none rounded-lg border border-zinc-800 bg-zinc-950/80 ${icon ? "pl-7" : "pl-2.5"} pr-6 text-xs text-zinc-200 transition-colors focus:outline-none`}
-        >
-            {options.map((o) => (
-                <option key={o.value} value={o.value}>{o.label}</option>
-            ))}
-        </select>
-        <ChevronDownIcon className="pointer-events-none absolute top-2.5 right-1.5 h-3 w-3 text-zinc-500" />
-    </div>
-);
+const SelectFilter = ({ value, onChange, options, icon, className = "" }) => {
+    const [open, setOpen] = useState(false);
+    const [search, setSearch] = useState("");
+    const selectedOption = options.find((o) => o.value === value) || options[0];
+
+    const filteredOptions = options.filter(o => 
+        o.label.toLowerCase().includes(search.toLowerCase())
+    );
+
+    // Reset search on close
+    useEffect(() => {
+        if (!open) setSearch("");
+    }, [open]);
+
+    return (
+        <Popover open={open} onOpenChange={setOpen}>
+            <PopoverTrigger asChild>
+                <Button
+                    variant="outline"
+                    role="combobox"
+                    aria-expanded={open}
+                    className={cn(
+                        "focus:border-primary/50 h-8 w-full cursor-pointer justify-between border-zinc-800 bg-zinc-950/80 hover:bg-zinc-900/50 px-2.5 text-xs text-zinc-200 transition-colors focus:outline-none font-normal",
+                        className
+                    )}
+                >
+                    <span className="flex items-center gap-1.5 truncate">
+                        {icon && <span className="text-zinc-500">{icon}</span>}
+                        <span className="truncate">{selectedOption?.label || "Semua"}</span>
+                    </span>
+                    <ChevronDownIcon className="h-3 w-3 shrink-0 text-zinc-500" />
+                </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-[180px] border-zinc-800 bg-zinc-950 p-1.5 text-zinc-200 shadow-xl flex flex-col gap-1.5" align="start">
+                <div className="relative">
+                    <SearchIcon className="absolute top-2 left-2 h-3.5 w-3.5 text-zinc-500" />
+                    <input
+                        type="text"
+                        placeholder="Cari..."
+                        value={search}
+                        onChange={(e) => setSearch(e.target.value)}
+                        className="focus:border-primary/50 h-7.5 w-full rounded-md border border-zinc-800 bg-zinc-900/50 pr-2 pl-7.5 text-xs text-zinc-200 transition-colors placeholder:text-zinc-650 focus:outline-none"
+                    />
+                </div>
+                <div className="flex flex-col gap-0.5 max-h-48 overflow-y-auto custom-scrollbar">
+                    {filteredOptions.length === 0 ? (
+                        <div className="py-3 text-[11px] text-zinc-500 text-center">Tidak ditemukan</div>
+                    ) : (
+                        filteredOptions.map((o) => {
+                            const isChecked = o.value === value;
+                            return (
+                                <button
+                                    key={o.value}
+                                    onClick={() => {
+                                        onChange(o.value);
+                                        setOpen(false);
+                                    }}
+                                    className={cn(
+                                        "flex w-full items-center justify-between rounded-md px-2 py-1 text-xs text-zinc-400 transition-colors hover:bg-zinc-900 hover:text-white text-left cursor-pointer",
+                                        isChecked && "bg-zinc-900 text-primary font-medium"
+                                    )}
+                                >
+                                    <span className="truncate">{o.label}</span>
+                                    {isChecked && <CheckIcon className="h-3 w-3 text-primary shrink-0" />}
+                                </button>
+                            );
+                        })
+                    )}
+                </div>
+            </PopoverContent>
+        </Popover>
+    );
+};
 
 const OfferCardSkeleton = () => (
     <Card className="border-zinc-800 bg-zinc-900/40 p-2.5">
@@ -275,7 +346,7 @@ export default function OffersPage() {
     const [pageIndex, setPageIndex] = useState(0);
     const [totalPages, setTotalPages] = useState(0);
     const [recordCount, setRecordCount] = useState(0);
-    const [pageSize] = useState(20);
+    const [pageSize] = useState(50);
 
     // Filters
     const [searchInput, setSearchInput] = useState("");
@@ -298,21 +369,6 @@ export default function OffersPage() {
     // Multi-select
     const [selectedIds, setSelectedIds] = useState(new Set());
     const [selectMode, setSelectMode] = useState(false);
-
-    // Create offer dialog
-    const [createOpen, setCreateOpen] = useState(false);
-    const [createLoading, setCreateLoading] = useState(false);
-    const [createForm, setCreateForm] = useState({
-        offerTitle: "",
-        description: "",
-        gameId: "",
-        category: "Currency",
-        guaranteedDeliveryTime: "Minute20",
-        quantity: 1,
-        minQuantity: 1,
-        priceAmount: 0,
-        priceCurrency: "USD",
-    });
 
     const offerList = Array.isArray(offers) ? offers : [];
     const activeOffer = offerList.find((o) => o.id === activeOfferId) || null;
@@ -526,42 +582,6 @@ export default function OffersPage() {
         fetchOffers();
     };
 
-    // === Create Offer ===
-    const handleCreateOffer = async () => {
-        setCreateLoading(true);
-        const body = {
-            details: {
-                offerTitle: createForm.offerTitle,
-                description: createForm.description,
-                guaranteedDeliveryTime: createForm.guaranteedDeliveryTime,
-                pricing: {
-                    quantity: parseInt(createForm.quantity) || 1,
-                    minQuantity: parseInt(createForm.minQuantity) || 1,
-                    volumeDiscounts: [],
-                    pricePerUnit: {
-                        amount: parseFloat(createForm.priceAmount) || 0,
-                        currency: createForm.priceCurrency,
-                    },
-                },
-            },
-            augmentedGame: {
-                gameId: createForm.gameId,
-                category: createForm.category,
-            },
-        };
-        const res = await createEldoradoOffer(body);
-        setCreateLoading(false);
-
-        if (res.success) {
-            toast.success("Offer baru berhasil dibuat!");
-            setCreateOpen(false);
-            setCreateForm({ offerTitle: "", description: "", gameId: "", category: "Currency", guaranteedDeliveryTime: "Minute20", quantity: 1, minQuantity: 1, priceAmount: 0, priceCurrency: "USD" });
-            fetchOffers();
-        } else {
-            toast.error("Gagal buat offer: " + res.error);
-        }
-    };
-
     const resetFilters = () => {
         setSearchInput("");
         setSearchQuery("");
@@ -597,9 +617,6 @@ export default function OffersPage() {
                                 </Button>
                                 <Button size="icon" variant="ghost" className="h-7 w-7 text-zinc-400 hover:text-white" onClick={fetchOffers} title="Refresh">
                                     <RefreshCwIcon className="h-3.5 w-3.5" />
-                                </Button>
-                                <Button size="icon" variant="ghost" className="h-7 w-7 bg-primary/20 text-primary hover:bg-primary/30 hover:text-white" onClick={() => setCreateOpen(true)} title="Tambah Offer">
-                                    <PlusIcon className="h-3.5 w-3.5" />
                                 </Button>
                             </div>
                         </div>
@@ -789,27 +806,27 @@ export default function OffersPage() {
                                     >
                                         <CardHeader className="p-2.5 pb-1">
                                             <CardTitle className="flex items-start justify-between text-sm font-bold text-zinc-200">
-                                                <div className="flex max-w-[60%] flex-col gap-1">
-                                                    <span className="text-primary flex items-center gap-2 truncate text-xs font-bold">
-                                                        {selectMode ? (
-                                                            <button onClick={(e) => toggleSelect(offer.id, e)} className="shrink-0">
-                                                                {isSelected ? <CheckSquareIcon className="h-3.5 w-3.5 text-primary" /> : <SquareIcon className="h-3.5 w-3.5 text-zinc-500" />}
-                                                            </button>
+                                                <div className="flex max-w-[65%] items-center gap-2">
+                                                    {selectMode ? (
+                                                        <button onClick={(e) => toggleSelect(offer.id, e)} className="shrink-0">
+                                                            {isSelected ? <CheckSquareIcon className="h-4 w-4 text-primary" /> : <SquareIcon className="h-4 w-4 text-zinc-500" />}
+                                                        </button>
+                                                    ) : (
+                                                        offer.mainOfferImage?.smallImage ? (
+                                                            <img src={`https://fileserviceusprod.blob.core.windows.net/offerimages/${offer.mainOfferImage.smallImage}`} alt="Offer" className="h-10 w-10 shrink-0 rounded-md object-cover border border-zinc-800" />
                                                         ) : (
-                                                            offer.gameId ? (
-                                                                <img src={`https://assetsdelivery.eldorado.gg/v7/_assets_/icons/v28/${offer.gameId}.png`} alt="Game" className="h-3.5 w-3.5 shrink-0 rounded-sm object-cover" />
-                                                            ) : (
-                                                                <PackageIcon className="h-3.5 w-3.5 shrink-0 text-zinc-400" />
-                                                            )
+                                                            <PackageIcon className="h-8 w-8 shrink-0 text-zinc-500" />
+                                                        )
+                                                    )}
+                                                    <div className="flex flex-col gap-0.5 truncate">
+                                                        {offer.gameId && (
+                                                            <div className="flex items-center gap-1">
+                                                                <img src={`https://assetsdelivery.eldorado.gg/v7/_assets_/icons/v28/${offer.gameId}.png`} alt="Game" className="h-3 w-3 shrink-0 rounded-sm object-cover opacity-60" />
+                                                                <span className="text-[9px] text-zinc-500 font-bold uppercase tracking-widest truncate">{getGameName(offer.gameId) || "Game"}</span>
+                                                            </div>
                                                         )}
-                                                        <span className="truncate">
-                                                            {offer.gameId && <span className="text-[10px] text-zinc-400 font-normal uppercase tracking-widest mr-1">{getGameName(offer.gameId) || "Game"}</span>}
-                                                            {offer.offerTitle}
-                                                        </span>
-                                                    </span>
-                                                    <span className={`truncate ${selectMode ? "pl-5" : "pl-5"} font-mono text-[9px] text-zinc-600`}>
-                                                        {offer.id?.substring(0, 8)}...
-                                                    </span>
+                                                        <span className="text-primary text-xs sm:text-sm font-medium truncate">{offer.offerTitle}</span>
+                                                    </div>
                                                 </div>
                                                 <div className="ml-2 flex shrink-0 flex-col items-end gap-1">
                                                     <span className={`rounded-md border px-1.5 py-0.5 text-[9px] font-bold tracking-wider uppercase ${getStateBadgeClass(offer.offerState)}`}>
@@ -824,8 +841,6 @@ export default function OffersPage() {
                                                 <p className="flex items-center gap-1.5 truncate text-[10px] font-medium text-zinc-400">
                                                     <Gamepad2Icon className="h-3 w-3 shrink-0 text-zinc-600" />
                                                     <span className="truncate">{offer.gameCategoryTitle}</span>
-                                                    <span className="text-zinc-600">·</span>
-                                                    <span className="text-zinc-500">{offer.category}</span>
                                                 </p>
                                                 <div className="ml-2 flex shrink-0 items-center gap-2">
                                                     <span className="flex items-center gap-0.5 text-[9px] text-zinc-500">
@@ -1094,8 +1109,17 @@ export default function OffersPage() {
                                         {/* 8. Images */}
                                         {(activeOffer.mainOfferImage || activeOffer.offerImages?.length > 0) && (
                                             <DetailSection title="Images" icon={<ImageIcon className="text-primary h-4 w-4" />}>
-                                                {activeOffer.mainOfferImage && (
-                                                    <DetailItem label="Main Image" value={activeOffer.mainOfferImage.smallImage || activeOffer.mainOfferImage.largeImage || "-"} icon={<ImageIcon className="h-3 w-3" />} colSpan />
+                                                {activeOffer.mainOfferImage?.smallImage ? (
+                                                    <div className="group/item flex flex-col gap-2 overflow-hidden rounded-lg border border-zinc-800/50 bg-zinc-900/40 p-2.5 sm:col-span-2">
+                                                        <span className="flex items-center gap-1.5 text-[9px] font-bold tracking-widest text-zinc-500 uppercase">
+                                                            <ImageIcon className="h-3 w-3" /> Main Image
+                                                        </span>
+                                                        <img src={`https://fileserviceusprod.blob.core.windows.net/offerimages/${activeOffer.mainOfferImage.smallImage}`} alt="Main" className="h-24 w-24 rounded object-cover" />
+                                                    </div>
+                                                ) : (
+                                                    activeOffer.mainOfferImage && (
+                                                        <DetailItem label="Main Image" value="No image URL" icon={<ImageIcon className="h-3 w-3" />} colSpan />
+                                                    )
                                                 )}
                                                 {activeOffer.offerImages?.map((img, i) => (
                                                     <DetailItem key={i} label={`Image ${i + 1}`} value={img.smallImage || img.largeImage || "-"} icon={<ImageIcon className="h-3 w-3" />} />
@@ -1112,126 +1136,6 @@ export default function OffersPage() {
                     )}
                 </div>
             </div>
-
-            {/* ===== CREATE OFFER DIALOG ===== */}
-            <AlertDialog open={createOpen} onOpenChange={setCreateOpen}>
-                <AlertDialogContent className="text-foreground max-h-[85vh] overflow-y-auto border-zinc-800 bg-zinc-950 sm:max-w-lg">
-                    <AlertDialogHeader>
-                        <AlertDialogTitle className="flex items-center gap-2 text-xl">
-                            <div className="bg-primary/20 border-primary/30 rounded-lg border p-1.5">
-                                <PlusIcon className="text-primary h-4 w-4" />
-                            </div>
-                            Buat Offer Baru
-                        </AlertDialogTitle>
-                        <AlertDialogDescription className="text-zinc-400">Isi detail offer baru yang mau ditambahin ke Eldorado.</AlertDialogDescription>
-                    </AlertDialogHeader>
-
-                    <div className="mt-2 flex flex-col gap-3">
-                        <div>
-                            <label className="mb-1 block text-[10px] font-bold tracking-widest text-zinc-500 uppercase">Offer Title *</label>
-                            <input
-                                type="text"
-                                value={createForm.offerTitle}
-                                onChange={(e) => setCreateForm({ ...createForm, offerTitle: e.target.value })}
-                                className="focus:border-primary/50 h-9 w-full rounded-lg border border-zinc-700 bg-zinc-900 px-3 text-sm text-zinc-200 focus:outline-none"
-                                placeholder="Contoh: 1M Robux"
-                            />
-                        </div>
-                        <div>
-                            <label className="mb-1 block text-[10px] font-bold tracking-widest text-zinc-500 uppercase">Description</label>
-                            <textarea
-                                value={createForm.description}
-                                onChange={(e) => setCreateForm({ ...createForm, description: e.target.value })}
-                                className="focus:border-primary/50 h-20 w-full resize-none rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-zinc-200 focus:outline-none"
-                                placeholder="Deskripsi offer..."
-                            />
-                        </div>
-                        <div className="grid grid-cols-2 gap-3">
-                            <div>
-                                <label className="mb-1 block text-[10px] font-bold tracking-widest text-zinc-500 uppercase">Game ID *</label>
-                                <input
-                                    type="text"
-                                    value={createForm.gameId}
-                                    onChange={(e) => setCreateForm({ ...createForm, gameId: e.target.value })}
-                                    className="focus:border-primary/50 h-9 w-full rounded-lg border border-zinc-700 bg-zinc-900 px-3 text-sm text-zinc-200 focus:outline-none"
-                                    placeholder="Game ID"
-                                />
-                            </div>
-                            <div>
-                                <label className="mb-1 block text-[10px] font-bold tracking-widest text-zinc-500 uppercase">Category</label>
-                                <select
-                                    value={createForm.category}
-                                    onChange={(e) => setCreateForm({ ...createForm, category: e.target.value })}
-                                    className="focus:border-primary/50 h-9 w-full cursor-pointer rounded-lg border border-zinc-700 bg-zinc-900 px-3 text-sm text-zinc-200 focus:outline-none"
-                                >
-                                    {CATEGORY_OPTIONS.filter((o) => o.value).map((o) => (
-                                        <option key={o.value} value={o.value}>{o.label}</option>
-                                    ))}
-                                </select>
-                            </div>
-                        </div>
-                        <div className="grid grid-cols-2 gap-3">
-                            <div>
-                                <label className="mb-1 block text-[10px] font-bold tracking-widest text-zinc-500 uppercase">Price (USD) *</label>
-                                <input
-                                    type="number"
-                                    step="0.01"
-                                    value={createForm.priceAmount}
-                                    onChange={(e) => setCreateForm({ ...createForm, priceAmount: e.target.value })}
-                                    className="focus:border-primary/50 h-9 w-full rounded-lg border border-zinc-700 bg-zinc-900 px-3 text-sm text-zinc-200 focus:outline-none"
-                                    placeholder="0.00"
-                                />
-                            </div>
-                            <div>
-                                <label className="mb-1 block text-[10px] font-bold tracking-widest text-zinc-500 uppercase">Delivery Time</label>
-                                <select
-                                    value={createForm.guaranteedDeliveryTime}
-                                    onChange={(e) => setCreateForm({ ...createForm, guaranteedDeliveryTime: e.target.value })}
-                                    className="focus:border-primary/50 h-9 w-full cursor-pointer rounded-lg border border-zinc-700 bg-zinc-900 px-3 text-sm text-zinc-200 focus:outline-none"
-                                >
-                                    {DELIVERY_TIME_OPTIONS.filter((o) => o.value).map((o) => (
-                                        <option key={o.value} value={o.value}>{o.label}</option>
-                                    ))}
-                                </select>
-                            </div>
-                        </div>
-                        <div className="grid grid-cols-2 gap-3">
-                            <div>
-                                <label className="mb-1 block text-[10px] font-bold tracking-widest text-zinc-500 uppercase">Quantity</label>
-                                <input
-                                    type="number"
-                                    value={createForm.quantity}
-                                    onChange={(e) => setCreateForm({ ...createForm, quantity: e.target.value })}
-                                    className="focus:border-primary/50 h-9 w-full rounded-lg border border-zinc-700 bg-zinc-900 px-3 text-sm text-zinc-200 focus:outline-none"
-                                    placeholder="1"
-                                />
-                            </div>
-                            <div>
-                                <label className="mb-1 block text-[10px] font-bold tracking-widest text-zinc-500 uppercase">Min Quantity</label>
-                                <input
-                                    type="number"
-                                    value={createForm.minQuantity}
-                                    onChange={(e) => setCreateForm({ ...createForm, minQuantity: e.target.value })}
-                                    className="focus:border-primary/50 h-9 w-full rounded-lg border border-zinc-700 bg-zinc-900 px-3 text-sm text-zinc-200 focus:outline-none"
-                                    placeholder="1"
-                                />
-                            </div>
-                        </div>
-                    </div>
-
-                    <AlertDialogFooter className="mt-4">
-                        <AlertDialogCancel className="border-zinc-700 bg-zinc-900 text-zinc-300">Batal</AlertDialogCancel>
-                        <Button
-                            onClick={handleCreateOffer}
-                            disabled={createLoading || !createForm.offerTitle || !createForm.gameId}
-                            className="bg-primary hover:bg-primary/80 font-bold text-white"
-                        >
-                            {createLoading ? <Loader2Icon className="mr-2 h-4 w-4 animate-spin" /> : <PlusIcon className="mr-2 h-4 w-4" />}
-                            Buat Offer
-                        </Button>
-                    </AlertDialogFooter>
-                </AlertDialogContent>
-            </AlertDialog>
         </div>
     );
 }
