@@ -9,8 +9,10 @@ import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { RefreshCwIcon, SearchIcon, FilterIcon, ChevronsUpDownIcon, CheckIcon, UserIcon, CalendarIcon, TimerIcon, Gamepad2Icon, CopyIcon, Loader2Icon } from "lucide-react";
 import { getStatusIcon, formatDeliveryTime } from "./utils";
+import { useEldoradoLibrary } from "@/contexts/EldoradoLibraryContext";
 
 export default function OrderList({ activeOrderList, activeOrderId, setActiveOrderId, isLoadingOrders, fetchOrders, apiError, searchInput, setSearchInput, handleSearchSubmit, openFilter, setOpenFilter, orderStateFilter, setOrderStateFilter, handleScroll, isFetchingNextPage, hasNextPage }) {
+    const { getGameName } = useEldoradoLibrary();
     return (
         <div className="flex h-full w-full shrink-0 flex-col gap-3 md:w-1/3">
             <div className="relative flex shrink-0 flex-col gap-3 overflow-hidden rounded-2xl border border-zinc-800 bg-zinc-900/50 p-4 backdrop-blur-md">
@@ -120,7 +122,7 @@ export default function OrderList({ activeOrderList, activeOrderId, setActiveOrd
                                             {getStatusIcon(order.status, "w-3 h-3")}
                                             {order.status || "Unknown"}
                                         </span>
-                                        {order.raw?.deliveryTime && ["Delivered", "Completed"].includes(order.status) && (
+                                        {order.raw?.deliveryTime && ["Delivered", "Received", "Completed"].includes(order.status) && (
                                             <p className="flex items-center gap-1 rounded border border-zinc-700/50 bg-zinc-800/50 px-1 py-0.5 font-mono text-[9px] text-zinc-400">
                                                 <TimerIcon className="h-2.5 w-2.5" />
                                                 {formatDeliveryTime(order.raw.deliveryTime)}
@@ -131,31 +133,58 @@ export default function OrderList({ activeOrderList, activeOrderId, setActiveOrd
 
                                 <div className="flex flex-col gap-1">
                                     <div className="flex items-center justify-between rounded border border-zinc-800/50 bg-zinc-950/50 p-1.5">
-                                        <p className="flex items-center gap-1.5 truncate text-sm font-medium text-zinc-300">
-                                            <Gamepad2Icon className="h-3.5 w-3.5 shrink-0 text-zinc-500" />
+                                        <div className="flex items-center gap-2 truncate text-sm font-medium text-zinc-300">
+                                            {order.raw?.orderOfferDetails?.mainOfferImage?.smallImage ? (
+                                                <img 
+                                                    src={`https://assetsdelivery.eldorado.gg/v7/_offers-v2_/${order.raw.orderOfferDetails.mainOfferImage.smallImage}`}
+                                                    alt="Item"
+                                                    className="h-6 w-6 shrink-0 rounded object-cover"
+                                                />
+                                            ) : (
+                                                <Gamepad2Icon className="h-4 w-4 shrink-0 text-zinc-500" />
+                                            )}
                                             <Popover>
                                                 <PopoverTrigger asChild>
-                                                    <button type="button" className="cursor-pointer truncate text-left transition-colors hover:text-white" title={order.game || order.gameName} onClick={(e) => e.stopPropagation()}>
-                                                        {order.game || order.gameName || "Game"}
+                                                    <button type="button" className="flex cursor-pointer flex-col truncate text-left transition-colors hover:text-white" title={order.game || order.gameName} onClick={(e) => e.stopPropagation()}>
+                                                        <span className="flex items-center gap-1.5 text-[10px] font-bold tracking-wider text-zinc-400 uppercase">
+                                                            {(order.raw?.orderOfferDetails?.gameId || order.raw?.gameId) && (
+                                                                <img src={`https://assetsdelivery.eldorado.gg/v7/_assets_/icons/v28/${order.raw?.orderOfferDetails?.gameId || order.raw?.gameId}.png`} alt="Game" className="h-3.5 w-3.5 rounded-sm object-cover opacity-90" />
+                                                            )}
+                                                            {getGameName(order.raw?.orderOfferDetails?.gameId || order.raw?.gameId) || "Game"}
+                                                        </span>
+                                                        <span className="truncate">
+                                                            {order.game || order.gameName || "Item"}
+                                                        </span>
                                                     </button>
                                                 </PopoverTrigger>
-                                                <PopoverContent className="z-50 flex w-auto items-center gap-2 border-zinc-700 bg-zinc-900 p-3 shadow-xl" onClick={(e) => e.stopPropagation()}>
-                                                    <span className="max-w-xs text-sm font-medium break-all text-white">{order.game || order.gameName || "Game"}</span>
-                                                    <Button
-                                                        size="icon"
-                                                        variant="ghost"
-                                                        className="h-6 w-6 shrink-0 text-zinc-400 hover:text-white"
-                                                        onClick={(e) => {
-                                                            e.stopPropagation();
-                                                            navigator.clipboard.writeText(order.game || order.gameName || "Game");
-                                                            toast.success("Game name dicopy!");
-                                                        }}
-                                                    >
-                                                        <CopyIcon className="h-3.5 w-3.5" />
-                                                    </Button>
+                                                <PopoverContent className="z-50 flex w-auto flex-col gap-2 border-zinc-700 bg-zinc-900 p-3 shadow-xl" onClick={(e) => e.stopPropagation()}>
+                                                    <div className="flex flex-col gap-1">
+                                                        <span className="flex items-center gap-1.5 text-xs font-bold text-zinc-400 uppercase">
+                                                            {(order.raw?.orderOfferDetails?.gameId || order.raw?.gameId) && (
+                                                                <img src={`https://assetsdelivery.eldorado.gg/v7/_assets_/icons/v28/${order.raw?.orderOfferDetails?.gameId || order.raw?.gameId}.png`} alt="Game" className="h-4 w-4 rounded-sm object-cover opacity-90" />
+                                                            )}
+                                                            {getGameName(order.raw?.orderOfferDetails?.gameId || order.raw?.gameId) || "Game"}
+                                                        </span>
+                                                        <div className="flex items-center gap-2">
+                                                            <span className="max-w-xs text-sm font-medium break-all text-white">{order.game || order.gameName || "Item"}</span>
+                                                            <Button
+                                                                size="icon"
+                                                                variant="ghost"
+                                                                className="h-6 w-6 shrink-0 text-zinc-400 hover:text-white"
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    navigator.clipboard.writeText(order.game || order.gameName || "Item");
+                                                                    toast.success("Item name dicopy!");
+                                                                }}
+                                                            >
+                                                                <CopyIcon className="h-3.5 w-3.5" />
+                                                            </Button>
+                                                        </div>
+                                                    </div>
                                                 </PopoverContent>
+
                                             </Popover>
-                                        </p>
+                                        </div>
                                         <span className="bg-primary/20 text-primary ml-2 flex shrink-0 items-center rounded px-1.5 py-0.5 text-xs font-bold">x{order.quantity || 1}</span>
                                     </div>
 

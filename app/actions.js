@@ -573,3 +573,21 @@ export async function markAllNotificationsAsRead() {
         return { success: false, error: error.message };
     }
 }
+
+export async function getEldoradoLibrary() {
+    try {
+        const response = await fetch("https://www.eldorado.gg/api/library?locale=en-US", {
+            next: { revalidate: 3600 }, // Cache for 1 hour on the server
+        });
+        
+        if (!response.ok) {
+            throw new Error(`Failed to fetch library: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        return { success: true, data };
+    } catch (error) {
+        console.error("[getEldoradoLibrary] Error:", error.message);
+        return { success: false, error: error.message, data: [] };
+    }
+}

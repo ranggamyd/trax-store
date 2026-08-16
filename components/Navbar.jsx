@@ -86,15 +86,15 @@ export function Navbar() {
     };
 
     const group1 = [
-        { name: "Game", href: "/games", icon: Gamepad2 },
-        { name: "Akun", href: "/accounts", icon: Users },
-        { name: "Item", href: "/items", icon: Package },
+        { name: "Games", href: "/games", icon: Gamepad2 },
+        { name: "Accounts", href: "/accounts", icon: Users },
+        { name: "Items", href: "/items", icon: Package },
         { name: "Templates", href: "/templates", icon: MessageSquare },
-        { name: "Admin", href: "/users", icon: Shield },
+        { name: "Users", href: "/users", icon: Shield },
     ];
 
     const group2 = [
-        { name: "Order", href: "/orders", icon: ShoppingCart },
+        { name: "Orders", href: "/orders", icon: ShoppingCart },
         { name: "Offers", href: "/offers", icon: List },
     ];
 
@@ -114,7 +114,7 @@ export function Navbar() {
     };
 
     return (
-        <div className="sticky top-6 z-50 mx-auto mt-6 mb-2 w-full max-w-6xl px-4">
+        <div className="sticky top-6 z-50 mx-auto mt-6 mb-2 w-full max-w-7xl px-4">
             <nav className="flex h-16 items-center rounded-full border border-zinc-800 bg-black/60 px-4 shadow-[0_8px_30px_rgb(0,0,0,0.5)] backdrop-blur-xl md:px-6">
                 <Link href="/" className="mr-4 flex shrink-0 items-center gap-2 transition-opacity hover:opacity-80 md:mr-8">
                     <Gamepad2 className="text-primary h-6 w-6" />

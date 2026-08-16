@@ -20,7 +20,6 @@ export default function TemplatesPage() {
     const [templates, setTemplates] = useState([]);
     const [loading, setLoading] = useState(true);
     const [isDialogOpen, setIsDialogOpen] = useState(false);
-    const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
     const [selectedTemplate, setSelectedTemplate] = useState(null);
 
     // Form State
@@ -106,14 +105,8 @@ export default function TemplatesPage() {
         }
     };
 
-    const confirmDelete = (tmpl) => {
-        setSelectedTemplate(tmpl);
-        setIsDeleteDialogOpen(true);
-    };
-
-    const handleDelete = async () => {
-        if (!selectedTemplate) return;
-        const { error } = await supabase.from("chat_templates").delete().eq("id", selectedTemplate.id);
+    const handleDelete = async (id) => {
+        const { error } = await supabase.from("chat_templates").delete().eq("id", id);
 
         if (error) {
             toast.error("Gagal hapus: " + error.message);
@@ -170,7 +163,13 @@ export default function TemplatesPage() {
                                     </div>
                                     <div className="flex gap-1">
                                         <ActionIcon icon={Pencil} onClick={() => openEditModal(tmpl)} className="hover:text-blue-400" />
-                                        <ActionIcon icon={Trash2} onClick={() => confirmDelete(tmpl)} className="hover:text-red-400" />
+                                        <ConfirmDialog 
+                                            trigger={<ActionIcon icon={Trash2} className="hover:text-red-400" />}
+                                            title="Hapus Template" 
+                                            description={`Yakin mau hapus template "${tmpl.title}"?`} 
+                                            onConfirm={() => handleDelete(tmpl.id)}
+                                            confirmText="Hapus" 
+                                        />
                                     </div>
                                 </div>
                             </div>
@@ -226,7 +225,6 @@ export default function TemplatesPage() {
                 </DialogContent>
             </Dialog>
 
-            <ConfirmDialog isOpen={isDeleteDialogOpen} onClose={() => setIsDeleteDialogOpen(false)} onConfirm={handleDelete} title="Hapus Template" description={`Yakin mau hapus template "${selectedTemplate?.title}"?`} confirmText="Hapus" cancelText="Batal" />
         </PageContainer>
     );
 }

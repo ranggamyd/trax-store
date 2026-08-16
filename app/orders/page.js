@@ -57,7 +57,30 @@ export default function OrdersPage() {
                 const orderData = Array.isArray(res.data) ? res.data : [];
 
                 if (append) {
-                    setActiveOrders((prev) => [...prev, ...orderData]);
+                    setActiveOrders((prev) => {
+                        const prevIds = new Set(prev.map((o) => o.id));
+                        const uniqueNewOrders = [];
+                        for (const o of orderData) {
+                            if (!prevIds.has(o.id)) {
+                                uniqueNewOrders.push(o);
+                                prevIds.add(o.id);
+                            }
+                        }
+                        return [...prev, ...uniqueNewOrders];
+                    });
+                } else if (silent) {
+                    setActiveOrders((prev) => {
+                        const prevMap = new Map(prev.map((o) => [o.id, o]));
+                        const newItems = [];
+                        for (const o of orderData) {
+                            if (prevMap.has(o.id)) {
+                                prevMap.set(o.id, o); // update existing
+                            } else {
+                                newItems.push(o); // new item at top
+                            }
+                        }
+                        return [...newItems, ...Array.from(prevMap.values())];
+                    });
                 } else {
                     setActiveOrders(orderData);
                     if (orderData.length > 0) {
@@ -73,7 +96,7 @@ export default function OrdersPage() {
             } else {
                 setApiError(res.error);
                 if (res.error === "TOKEN_EXPIRED_401") {
-                    toast.info("Token basi! TraxStore lagi minta tolong Extension buat nyari token baru diem-diem...", { duration: 8000 });
+                    // toast.info("Token basi! TraxStore lagi minta tolong Extension buat nyari token baru diem-diem...", { duration: 8000 });
                     window.postMessage({ type: "TRAX_FORCE_REFRESH" }, "*");
                 } else {
                     toast.error("Gagal narik pesanan: " + res.error);
@@ -94,7 +117,7 @@ export default function OrdersPage() {
                         body: JSON.stringify({ token: event.data.token }),
                     });
                 }
-                toast.success("🔥 Token berhasil dicolong otomatis! Nge-refresh pesanan...");
+                // toast.success("🔥 Token berhasil dicolong otomatis! Nge-refresh pesanan...");
                 fetchOrders("", false);
             }
         };
@@ -153,12 +176,12 @@ export default function OrdersPage() {
         setOrderStateFilter(e.target.value); // Trigger fetchOrders
     };
 
-    const loadOrderDetails = useCallback(async () => {
+    const loadOrderDetails = useCallback(async (silent = false) => {
         if (!activeOrderId) return;
 
-        setIsLoadingOrderDetails(true);
+        if (!silent) setIsLoadingOrderDetails(true);
         const res = await getEldoradoOrderDetails(activeOrderId);
-        setIsLoadingOrderDetails(false);
+        if (!silent) setIsLoadingOrderDetails(false);
 
         if (res.success) {
             setActiveOrderFullDetails(res.data);
@@ -182,7 +205,7 @@ export default function OrdersPage() {
             toast.success("Cakep! Pesanan udah ditandai terkirim ke Eldorado.");
             setIsDeliverDialogOpen(false);
             setActiveOrders((prev) => prev.map((o) => (o.id === activeOrderId ? { ...o, status: "Delivered" } : o)));
-            loadOrderDetails();
+            loadOrderDetails(true); // Silent reload
         } else {
             toast.error(result.error || "Waduh gagal update status bro.");
         }
@@ -201,7 +224,7 @@ export default function OrdersPage() {
             setCancelReason("Buyer_Provided_Incorrect_Information");
             setIsCancelDialogOpen(false);
             setActiveOrders((prev) => prev.map((o) => (o.id === activeOrderId ? { ...o, status: "Canceled" } : o)));
-            loadOrderDetails();
+            loadOrderDetails(true); // Silent reload
         } else {
             toast.error(result.error || "Gagal cancel order bro.");
         }

@@ -5,6 +5,7 @@ import { GlobalSearch } from "@/components/GlobalSearch";
 import { Navbar } from "@/components/Navbar";
 import { CursorTrail } from "@/components/CursorTrail";
 import NextTopLoader from "nextjs-toploader";
+import { EldoradoLibraryProvider } from "@/contexts/EldoradoLibraryContext";
 
 const geistSans = Geist({
     variable: "--font-geist-sans",
@@ -27,9 +28,11 @@ export default function RootLayout({ children }) {
             <body className="bg-background text-foreground selection:bg-primary/30 flex min-h-full flex-col">
                 <CursorTrail />
                 <NextTopLoader color="#60a5fa" showSpinner={false} />
-                <Navbar />
-                {children}
-                <GlobalSearch />
+                <EldoradoLibraryProvider>
+                    <Navbar />
+                    {children}
+                    <GlobalSearch />
+                </EldoradoLibraryProvider>
                 <Toaster theme="dark" position="bottom-right" />
             </body>
         </html>

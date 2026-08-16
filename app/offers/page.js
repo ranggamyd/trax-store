@@ -12,7 +12,9 @@ import {
     updateEldoradoDeliveryTime,
     bulkPauseEldoradoOffers,
     bulkDeleteEldoradoOffers,
+    createEldoradoOffer,
 } from "@/app/actions";
+import { useEldoradoLibrary } from "@/contexts/EldoradoLibraryContext";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -41,6 +43,9 @@ import {
     Trash2Icon,
     PauseCircleIcon,
     PlusIcon,
+    CheckSquareIcon,
+    SquareIcon,
+    MinusSquareIcon,
     ChevronLeftIcon,
     ChevronRightIcon,
     ArrowUpDownIcon,
@@ -258,6 +263,8 @@ const OfferCardSkeleton = () => (
 // === Main Page ===
 
 export default function OffersPage() {
+    const { getGameName } = useEldoradoLibrary();
+
     // Data state
     const [offers, setOffers] = useState([]);
     const [activeOfferId, setActiveOfferId] = useState(null);
@@ -288,8 +295,28 @@ export default function OffersPage() {
     const [editDeliveryOpen, setEditDeliveryOpen] = useState(false);
     const [editDeliveryValue, setEditDeliveryValue] = useState("");
 
+    // Multi-select
+    const [selectedIds, setSelectedIds] = useState(new Set());
+    const [selectMode, setSelectMode] = useState(false);
+
+    // Create offer dialog
+    const [createOpen, setCreateOpen] = useState(false);
+    const [createLoading, setCreateLoading] = useState(false);
+    const [createForm, setCreateForm] = useState({
+        offerTitle: "",
+        description: "",
+        gameId: "",
+        category: "Currency",
+        guaranteedDeliveryTime: "Minute20",
+        quantity: 1,
+        minQuantity: 1,
+        priceAmount: 0,
+        priceCurrency: "USD",
+    });
+
     const offerList = Array.isArray(offers) ? offers : [];
     const activeOffer = offerList.find((o) => o.id === activeOfferId) || null;
+    const selectedCount = selectedIds.size;
 
     const fetchOffers = useCallback(async () => {
         setIsLoading(true);
@@ -422,6 +449,119 @@ export default function OffersPage() {
         }
     };
 
+    // === Multi-select actions ===
+    const toggleSelect = (id, e) => {
+        e.stopPropagation();
+        setSelectedIds((prev) => {
+            const next = new Set(prev);
+            if (next.has(id)) next.delete(id);
+            else next.add(id);
+            return next;
+        });
+        if (!selectMode) setSelectMode(true);
+    };
+
+    const toggleSelectAll = () => {
+        if (selectedIds.size === offerList.length) {
+            setSelectedIds(new Set());
+        } else {
+            setSelectedIds(new Set(offerList.map((o) => o.id)));
+        }
+    };
+
+    const clearSelection = () => {
+        setSelectedIds(new Set());
+        setSelectMode(false);
+    };
+
+    const handleSelectedPause = async () => {
+        if (selectedIds.size === 0) return;
+        setActionLoading("selected");
+        let successCount = 0;
+        let failCount = 0;
+        const promises = [...selectedIds].map(async (id) => {
+            const res = await pauseEldoradoOffer(id);
+            if (res.success) successCount++;
+            else failCount++;
+        });
+        await Promise.all(promises);
+        setActionLoading(null);
+        toast.success(`${successCount} offer di-pause${failCount > 0 ? `, ${failCount} gagal` : ""}`);
+        clearSelection();
+        fetchOffers();
+    };
+
+    const handleSelectedResume = async () => {
+        if (selectedIds.size === 0) return;
+        setActionLoading("selected");
+        let successCount = 0;
+        let failCount = 0;
+        const promises = [...selectedIds].map(async (id) => {
+            const res = await resumeEldoradoOffer(id);
+            if (res.success) successCount++;
+            else failCount++;
+        });
+        await Promise.all(promises);
+        setActionLoading(null);
+        toast.success(`${successCount} offer di-resume${failCount > 0 ? `, ${failCount} gagal` : ""}`);
+        clearSelection();
+        fetchOffers();
+    };
+
+    const handleSelectedDelete = async () => {
+        if (selectedIds.size === 0) return;
+        setActionLoading("selected");
+        let successCount = 0;
+        let failCount = 0;
+        const promises = [...selectedIds].map(async (id) => {
+            const res = await deleteEldoradoOffer(id);
+            if (res.success) successCount++;
+            else failCount++;
+        });
+        await Promise.all(promises);
+        setActionLoading(null);
+        toast.success(`${successCount} offer dihapus${failCount > 0 ? `, ${failCount} gagal` : ""}`);
+        if (selectedIds.has(activeOfferId)) setActiveOfferId(null);
+        clearSelection();
+        fetchOffers();
+    };
+
+    // === Create Offer ===
+    const handleCreateOffer = async () => {
+        setCreateLoading(true);
+        const body = {
+            details: {
+                offerTitle: createForm.offerTitle,
+                description: createForm.description,
+                guaranteedDeliveryTime: createForm.guaranteedDeliveryTime,
+                pricing: {
+                    quantity: parseInt(createForm.quantity) || 1,
+                    minQuantity: parseInt(createForm.minQuantity) || 1,
+                    volumeDiscounts: [],
+                    pricePerUnit: {
+                        amount: parseFloat(createForm.priceAmount) || 0,
+                        currency: createForm.priceCurrency,
+                    },
+                },
+            },
+            augmentedGame: {
+                gameId: createForm.gameId,
+                category: createForm.category,
+            },
+        };
+        const res = await createEldoradoOffer(body);
+        setCreateLoading(false);
+
+        if (res.success) {
+            toast.success("Offer baru berhasil dibuat!");
+            setCreateOpen(false);
+            setCreateForm({ offerTitle: "", description: "", gameId: "", category: "Currency", guaranteedDeliveryTime: "Minute20", quantity: 1, minQuantity: 1, priceAmount: 0, priceCurrency: "USD" });
+            fetchOffers();
+        } else {
+            toast.error("Gagal buat offer: " + res.error);
+        }
+    };
+
     const resetFilters = () => {
         setSearchInput("");
         setSearchQuery("");
@@ -449,11 +589,17 @@ export default function OffersPage() {
                                 {!isLoading && <p className="mt-0.5 text-[10px] text-zinc-500">{recordCount} total offers</p>}
                             </div>
                             <div className="flex items-center gap-1.5">
+                                <Button size="icon" variant="ghost" className="h-7 w-7 text-zinc-400 hover:text-white" onClick={() => setSelectMode(!selectMode)} title={selectMode ? "Exit Select" : "Select Mode"}>
+                                    {selectMode ? <MinusSquareIcon className="h-3.5 w-3.5 text-primary" /> : <CheckSquareIcon className="h-3.5 w-3.5" />}
+                                </Button>
                                 <Button size="icon" variant="ghost" className="h-7 w-7 text-zinc-400 hover:text-white" onClick={() => setShowAdvancedFilters(!showAdvancedFilters)} title="Advanced Filters">
                                     <SlidersHorizontalIcon className="h-3.5 w-3.5" />
                                 </Button>
                                 <Button size="icon" variant="ghost" className="h-7 w-7 text-zinc-400 hover:text-white" onClick={fetchOffers} title="Refresh">
                                     <RefreshCwIcon className="h-3.5 w-3.5" />
+                                </Button>
+                                <Button size="icon" variant="ghost" className="h-7 w-7 bg-primary/20 text-primary hover:bg-primary/30 hover:text-white" onClick={() => setCreateOpen(true)} title="Tambah Offer">
+                                    <PlusIcon className="h-3.5 w-3.5" />
                                 </Button>
                             </div>
                         </div>
@@ -502,7 +648,7 @@ export default function OffersPage() {
                         )}
 
                         {/* Bulk Actions */}
-                        {offerList.length > 0 && (
+                        {offerList.length > 0 && !selectMode && (
                             <div className="relative z-10 flex gap-1.5 border-t border-zinc-800/30 pt-2">
                                 <Button
                                     size="sm"
@@ -535,6 +681,65 @@ export default function OffersPage() {
                                 </AlertDialog>
                             </div>
                         )}
+
+                        {/* Select Mode Toolbar */}
+                        {selectMode && (
+                            <div className="relative z-10 flex flex-col gap-2 border-t border-primary/20 pt-2">
+                                <div className="flex items-center justify-between">
+                                    <button onClick={toggleSelectAll} className="flex items-center gap-1.5 text-[10px] font-medium text-zinc-300 transition-colors hover:text-white">
+                                        {selectedIds.size === offerList.length && offerList.length > 0 ? <CheckSquareIcon className="h-3.5 w-3.5 text-primary" /> : <SquareIcon className="h-3.5 w-3.5" />}
+                                        {selectedIds.size === offerList.length && offerList.length > 0 ? "Unselect All" : "Select All"}
+                                    </button>
+                                    <div className="flex items-center gap-2">
+                                        <span className="rounded-full bg-primary/20 px-2 py-0.5 text-[10px] font-bold text-primary">{selectedCount} dipilih</span>
+                                        <button onClick={clearSelection} className="text-[10px] text-zinc-500 hover:text-zinc-300"><XIcon className="h-3 w-3" /></button>
+                                    </div>
+                                </div>
+                                {selectedCount > 0 && (
+                                    <div className="flex gap-1.5">
+                                        <Button
+                                            size="sm"
+                                            variant="ghost"
+                                            className="h-6 flex-1 gap-1 text-[10px] text-amber-400 hover:bg-amber-500/10"
+                                            onClick={handleSelectedPause}
+                                            disabled={actionLoading === "selected"}
+                                        >
+                                            {actionLoading === "selected" ? <Loader2Icon className="h-3 w-3 animate-spin" /> : <PauseCircleIcon className="h-3 w-3" />}
+                                            Pause
+                                        </Button>
+                                        <Button
+                                            size="sm"
+                                            variant="ghost"
+                                            className="h-6 flex-1 gap-1 text-[10px] text-emerald-400 hover:bg-emerald-500/10"
+                                            onClick={handleSelectedResume}
+                                            disabled={actionLoading === "selected"}
+                                        >
+                                            {actionLoading === "selected" ? <Loader2Icon className="h-3 w-3 animate-spin" /> : <PlayCircleIcon className="h-3 w-3" />}
+                                            Resume
+                                        </Button>
+                                        <AlertDialog>
+                                            <AlertDialogTrigger asChild>
+                                                <Button size="sm" variant="ghost" className="h-6 flex-1 gap-1 text-[10px] text-red-400 hover:bg-red-500/10">
+                                                    <Trash2Icon className="h-3 w-3" /> Hapus
+                                                </Button>
+                                            </AlertDialogTrigger>
+                                            <AlertDialogContent className="text-foreground border-zinc-800 bg-zinc-950">
+                                                <AlertDialogHeader>
+                                                    <AlertDialogTitle>Hapus {selectedCount} offer?</AlertDialogTitle>
+                                                    <AlertDialogDescription className="text-zinc-400">
+                                                        {selectedCount} offer yang dipilih bakal dihapus permanen. <span className="text-red-400 font-bold">Ga bisa di-undo!</span>
+                                                    </AlertDialogDescription>
+                                                </AlertDialogHeader>
+                                                <AlertDialogFooter>
+                                                    <AlertDialogCancel className="border-zinc-700 bg-zinc-900 text-zinc-300">Batal</AlertDialogCancel>
+                                                    <AlertDialogAction onClick={handleSelectedDelete} className="bg-red-500 font-bold text-white hover:bg-red-600">Ya, Hapus!</AlertDialogAction>
+                                                </AlertDialogFooter>
+                                            </AlertDialogContent>
+                                        </AlertDialog>
+                                    </div>
+                                )}
+                            </div>
+                        )}
                     </div>
 
                     {/* Offer List */}
@@ -557,55 +762,84 @@ export default function OffersPage() {
                                 )}
                             </div>
                         ) : (
-                            offerList.map((offer) => (
-                                <Card
-                                    key={offer.id}
-                                    className={`cursor-pointer border transition-all duration-200 ${
-                                        activeOfferId === offer.id
-                                            ? "border-primary/50 bg-zinc-800/80 shadow-[0_0_15px_rgba(248,28,229,0.08)]"
-                                            : "border-zinc-800 bg-zinc-900/40 hover:border-zinc-700 hover:bg-zinc-800/40"
-                                    }`}
-                                    onClick={() => setActiveOfferId(offer.id)}
-                                >
-                                    <CardHeader className="p-2.5 pb-1">
-                                        <CardTitle className="flex items-start justify-between text-sm font-bold text-zinc-200">
-                                            <div className="flex max-w-[60%] flex-col gap-1">
-                                                <span className="text-primary flex items-center gap-2 truncate text-xs font-bold">
-                                                    <PackageIcon className="h-3.5 w-3.5 shrink-0 text-zinc-400" />
-                                                    <span className="truncate">{offer.offerTitle}</span>
-                                                </span>
-                                                <span className="truncate pl-5 font-mono text-[9px] text-zinc-600">
-                                                    {offer.id?.substring(0, 8)}...
-                                                </span>
+                            offerList.map((offer) => {
+                                const isSelected = selectedIds.has(offer.id);
+                                return (
+                                    <Card
+                                        key={offer.id}
+                                        className={`cursor-pointer border transition-all duration-200 ${
+                                            isSelected
+                                                ? "border-primary/60 bg-primary/5 shadow-[0_0_15px_rgba(248,28,229,0.1)]"
+                                                : activeOfferId === offer.id
+                                                    ? "border-primary/50 bg-zinc-800/80 shadow-[0_0_15px_rgba(248,28,229,0.08)]"
+                                                    : "border-zinc-800 bg-zinc-900/40 hover:border-zinc-700 hover:bg-zinc-800/40"
+                                        }`}
+                                        onClick={() => {
+                                            if (selectMode) {
+                                                setSelectedIds((prev) => {
+                                                    const next = new Set(prev);
+                                                    if (next.has(offer.id)) next.delete(offer.id);
+                                                    else next.add(offer.id);
+                                                    return next;
+                                                });
+                                            } else {
+                                                setActiveOfferId(offer.id);
+                                            }
+                                        }}
+                                    >
+                                        <CardHeader className="p-2.5 pb-1">
+                                            <CardTitle className="flex items-start justify-between text-sm font-bold text-zinc-200">
+                                                <div className="flex max-w-[60%] flex-col gap-1">
+                                                    <span className="text-primary flex items-center gap-2 truncate text-xs font-bold">
+                                                        {selectMode ? (
+                                                            <button onClick={(e) => toggleSelect(offer.id, e)} className="shrink-0">
+                                                                {isSelected ? <CheckSquareIcon className="h-3.5 w-3.5 text-primary" /> : <SquareIcon className="h-3.5 w-3.5 text-zinc-500" />}
+                                                            </button>
+                                                        ) : (
+                                                            offer.gameId ? (
+                                                                <img src={`https://assetsdelivery.eldorado.gg/v7/_assets_/icons/v28/${offer.gameId}.png`} alt="Game" className="h-3.5 w-3.5 shrink-0 rounded-sm object-cover" />
+                                                            ) : (
+                                                                <PackageIcon className="h-3.5 w-3.5 shrink-0 text-zinc-400" />
+                                                            )
+                                                        )}
+                                                        <span className="truncate">
+                                                            {offer.gameId && <span className="text-[10px] text-zinc-400 font-normal uppercase tracking-widest mr-1">{getGameName(offer.gameId) || "Game"}</span>}
+                                                            {offer.offerTitle}
+                                                        </span>
+                                                    </span>
+                                                    <span className={`truncate ${selectMode ? "pl-5" : "pl-5"} font-mono text-[9px] text-zinc-600`}>
+                                                        {offer.id?.substring(0, 8)}...
+                                                    </span>
+                                                </div>
+                                                <div className="ml-2 flex shrink-0 flex-col items-end gap-1">
+                                                    <span className={`rounded-md border px-1.5 py-0.5 text-[9px] font-bold tracking-wider uppercase ${getStateBadgeClass(offer.offerState)}`}>
+                                                        {offer.offerState}
+                                                    </span>
+                                                    <span className="text-accent text-xs font-bold">{formatCurrency(offer.pricePerUnit?.amount)}</span>
+                                                </div>
+                                            </CardTitle>
+                                        </CardHeader>
+                                        <CardContent className="flex flex-col gap-1 p-2.5 pt-0">
+                                            <div className="flex items-center justify-between rounded-md border border-zinc-800/50 bg-zinc-950/50 p-1.5">
+                                                <p className="flex items-center gap-1.5 truncate text-[10px] font-medium text-zinc-400">
+                                                    <Gamepad2Icon className="h-3 w-3 shrink-0 text-zinc-600" />
+                                                    <span className="truncate">{offer.gameCategoryTitle}</span>
+                                                    <span className="text-zinc-600">·</span>
+                                                    <span className="text-zinc-500">{offer.category}</span>
+                                                </p>
+                                                <div className="ml-2 flex shrink-0 items-center gap-2">
+                                                    <span className="flex items-center gap-0.5 text-[9px] text-zinc-500">
+                                                        <ClockIcon className="h-2.5 w-2.5" />{formatDeliveryTime(offer.guaranteedDeliveryTime)}
+                                                    </span>
+                                                    <span className="bg-primary/15 text-primary rounded px-1.5 py-0.5 text-[9px] font-bold">
+                                                        ×{offer.quantity}
+                                                    </span>
+                                                </div>
                                             </div>
-                                            <div className="ml-2 flex shrink-0 flex-col items-end gap-1">
-                                                <span className={`rounded-md border px-1.5 py-0.5 text-[9px] font-bold tracking-wider uppercase ${getStateBadgeClass(offer.offerState)}`}>
-                                                    {offer.offerState}
-                                                </span>
-                                                <span className="text-accent text-xs font-bold">{formatCurrency(offer.pricePerUnit?.amount)}</span>
-                                            </div>
-                                        </CardTitle>
-                                    </CardHeader>
-                                    <CardContent className="flex flex-col gap-1 p-2.5 pt-0">
-                                        <div className="flex items-center justify-between rounded-md border border-zinc-800/50 bg-zinc-950/50 p-1.5">
-                                            <p className="flex items-center gap-1.5 truncate text-[10px] font-medium text-zinc-400">
-                                                <Gamepad2Icon className="h-3 w-3 shrink-0 text-zinc-600" />
-                                                <span className="truncate">{offer.gameCategoryTitle}</span>
-                                                <span className="text-zinc-600">·</span>
-                                                <span className="text-zinc-500">{offer.category}</span>
-                                            </p>
-                                            <div className="ml-2 flex shrink-0 items-center gap-2">
-                                                <span className="flex items-center gap-0.5 text-[9px] text-zinc-500">
-                                                    <ClockIcon className="h-2.5 w-2.5" />{formatDeliveryTime(offer.guaranteedDeliveryTime)}
-                                                </span>
-                                                <span className="bg-primary/15 text-primary rounded px-1.5 py-0.5 text-[9px] font-bold">
-                                                    ×{offer.quantity}
-                                                </span>
-                                            </div>
-                                        </div>
-                                    </CardContent>
-                                </Card>
-                            ))
+                                        </CardContent>
+                                    </Card>
+                                );
+                            })
                         )}
                     </div>
 
@@ -645,9 +879,16 @@ export default function OffersPage() {
                                     <div className="relative z-10 flex-1 overflow-hidden">
                                         <h1 className="flex items-center gap-2.5 text-lg font-bold text-white">
                                             <div className="bg-primary/20 border-primary/30 shrink-0 rounded-lg border p-1.5 shadow-[0_0_15px_rgba(248,28,229,0.2)]">
-                                                <PackageIcon className="text-primary h-4 w-4" />
+                                                {activeOffer.gameId ? (
+                                                    <img src={`https://assetsdelivery.eldorado.gg/v7/_assets_/icons/v28/${activeOffer.gameId}.png`} alt="Game" className="h-4 w-4 shrink-0 rounded-sm object-cover" />
+                                                ) : (
+                                                    <PackageIcon className="text-primary h-4 w-4" />
+                                                )}
                                             </div>
-                                            <span className="truncate">{activeOffer.offerTitle}</span>
+                                            <div className="flex flex-col">
+                                                {activeOffer.gameId && <span className="text-[10px] text-zinc-400 font-normal uppercase tracking-widest">{getGameName(activeOffer.gameId) || "Game"}</span>}
+                                                <span className="truncate">{activeOffer.offerTitle}</span>
+                                            </div>
                                         </h1>
                                         <div className="mt-1 flex items-center gap-2 pl-9">
                                             <span className="font-mono text-[10px] text-zinc-600">{activeOffer.id}</span>
@@ -871,6 +1112,126 @@ export default function OffersPage() {
                     )}
                 </div>
             </div>
+
+            {/* ===== CREATE OFFER DIALOG ===== */}
+            <AlertDialog open={createOpen} onOpenChange={setCreateOpen}>
+                <AlertDialogContent className="text-foreground max-h-[85vh] overflow-y-auto border-zinc-800 bg-zinc-950 sm:max-w-lg">
+                    <AlertDialogHeader>
+                        <AlertDialogTitle className="flex items-center gap-2 text-xl">
+                            <div className="bg-primary/20 border-primary/30 rounded-lg border p-1.5">
+                                <PlusIcon className="text-primary h-4 w-4" />
+                            </div>
+                            Buat Offer Baru
+                        </AlertDialogTitle>
+                        <AlertDialogDescription className="text-zinc-400">Isi detail offer baru yang mau ditambahin ke Eldorado.</AlertDialogDescription>
+                    </AlertDialogHeader>
+
+                    <div className="mt-2 flex flex-col gap-3">
+                        <div>
+                            <label className="mb-1 block text-[10px] font-bold tracking-widest text-zinc-500 uppercase">Offer Title *</label>
+                            <input
+                                type="text"
+                                value={createForm.offerTitle}
+                                onChange={(e) => setCreateForm({ ...createForm, offerTitle: e.target.value })}
+                                className="focus:border-primary/50 h-9 w-full rounded-lg border border-zinc-700 bg-zinc-900 px-3 text-sm text-zinc-200 focus:outline-none"
+                                placeholder="Contoh: 1M Robux"
+                            />
+                        </div>
+                        <div>
+                            <label className="mb-1 block text-[10px] font-bold tracking-widest text-zinc-500 uppercase">Description</label>
+                            <textarea
+                                value={createForm.description}
+                                onChange={(e) => setCreateForm({ ...createForm, description: e.target.value })}
+                                className="focus:border-primary/50 h-20 w-full resize-none rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-zinc-200 focus:outline-none"
+                                placeholder="Deskripsi offer..."
+                            />
+                        </div>
+                        <div className="grid grid-cols-2 gap-3">
+                            <div>
+                                <label className="mb-1 block text-[10px] font-bold tracking-widest text-zinc-500 uppercase">Game ID *</label>
+                                <input
+                                    type="text"
+                                    value={createForm.gameId}
+                                    onChange={(e) => setCreateForm({ ...createForm, gameId: e.target.value })}
+                                    className="focus:border-primary/50 h-9 w-full rounded-lg border border-zinc-700 bg-zinc-900 px-3 text-sm text-zinc-200 focus:outline-none"
+                                    placeholder="Game ID"
+                                />
+                            </div>
+                            <div>
+                                <label className="mb-1 block text-[10px] font-bold tracking-widest text-zinc-500 uppercase">Category</label>
+                                <select
+                                    value={createForm.category}
+                                    onChange={(e) => setCreateForm({ ...createForm, category: e.target.value })}
+                                    className="focus:border-primary/50 h-9 w-full cursor-pointer rounded-lg border border-zinc-700 bg-zinc-900 px-3 text-sm text-zinc-200 focus:outline-none"
+                                >
+                                    {CATEGORY_OPTIONS.filter((o) => o.value).map((o) => (
+                                        <option key={o.value} value={o.value}>{o.label}</option>
+                                    ))}
+                                </select>
+                            </div>
+                        </div>
+                        <div className="grid grid-cols-2 gap-3">
+                            <div>
+                                <label className="mb-1 block text-[10px] font-bold tracking-widest text-zinc-500 uppercase">Price (USD) *</label>
+                                <input
+                                    type="number"
+                                    step="0.01"
+                                    value={createForm.priceAmount}
+                                    onChange={(e) => setCreateForm({ ...createForm, priceAmount: e.target.value })}
+                                    className="focus:border-primary/50 h-9 w-full rounded-lg border border-zinc-700 bg-zinc-900 px-3 text-sm text-zinc-200 focus:outline-none"
+                                    placeholder="0.00"
+                                />
+                            </div>
+                            <div>
+                                <label className="mb-1 block text-[10px] font-bold tracking-widest text-zinc-500 uppercase">Delivery Time</label>
+                                <select
+                                    value={createForm.guaranteedDeliveryTime}
+                                    onChange={(e) => setCreateForm({ ...createForm, guaranteedDeliveryTime: e.target.value })}
+                                    className="focus:border-primary/50 h-9 w-full cursor-pointer rounded-lg border border-zinc-700 bg-zinc-900 px-3 text-sm text-zinc-200 focus:outline-none"
+                                >
+                                    {DELIVERY_TIME_OPTIONS.filter((o) => o.value).map((o) => (
+                                        <option key={o.value} value={o.value}>{o.label}</option>
+                                    ))}
+                                </select>
+                            </div>
+                        </div>
+                        <div className="grid grid-cols-2 gap-3">
+                            <div>
+                                <label className="mb-1 block text-[10px] font-bold tracking-widest text-zinc-500 uppercase">Quantity</label>
+                                <input
+                                    type="number"
+                                    value={createForm.quantity}
+                                    onChange={(e) => setCreateForm({ ...createForm, quantity: e.target.value })}
+                                    className="focus:border-primary/50 h-9 w-full rounded-lg border border-zinc-700 bg-zinc-900 px-3 text-sm text-zinc-200 focus:outline-none"
+                                    placeholder="1"
+                                />
+                            </div>
+                            <div>
+                                <label className="mb-1 block text-[10px] font-bold tracking-widest text-zinc-500 uppercase">Min Quantity</label>
+                                <input
+                                    type="number"
+                                    value={createForm.minQuantity}
+                                    onChange={(e) => setCreateForm({ ...createForm, minQuantity: e.target.value })}
+                                    className="focus:border-primary/50 h-9 w-full rounded-lg border border-zinc-700 bg-zinc-900 px-3 text-sm text-zinc-200 focus:outline-none"
+                                    placeholder="1"
+                                />
+                            </div>
+                        </div>
+                    </div>
+
+                    <AlertDialogFooter className="mt-4">
+                        <AlertDialogCancel className="border-zinc-700 bg-zinc-900 text-zinc-300">Batal</AlertDialogCancel>
+                        <Button
+                            onClick={handleCreateOffer}
+                            disabled={createLoading || !createForm.offerTitle || !createForm.gameId}
+                            className="bg-primary hover:bg-primary/80 font-bold text-white"
+                        >
+                            {createLoading ? <Loader2Icon className="mr-2 h-4 w-4 animate-spin" /> : <PlusIcon className="mr-2 h-4 w-4" />}
+                            Buat Offer
+                        </Button>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
         </div>
     );
 }

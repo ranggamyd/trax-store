@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { toast } from "sonner";
 import { Session, Chatbox } from "@talkjs/react";
 import { Button } from "@/components/ui/button";
@@ -10,6 +10,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { InfoIcon, CheckIcon, CopyIcon, UserIcon, Gamepad2Icon, CalendarIcon, XCircleIcon, CheckCircleIcon, Loader2Icon, TimerIcon, SparklesIcon, SearchIcon, SendIcon } from "lucide-react";
 import { getStatusIcon, formatDeliveryTime, CANCEL_REASONS } from "./utils";
 import { supabase } from "@/lib/supabase";
+import { useEldoradoLibrary } from "@/contexts/EldoradoLibraryContext";
 function ChatTemplateCard({ tmpl, onSend, isRecommended }) {
     const [copied, setCopied] = useState(false);
     const [isSending, setIsSending] = useState(false);
@@ -39,7 +40,13 @@ function ChatTemplateCard({ tmpl, onSend, isRecommended }) {
                         {copied ? <CheckIcon className="mr-1 h-3.5 w-3.5 shrink-0 text-green-400" /> : <CopyIcon className="mr-1 h-3.5 w-3.5 shrink-0 text-zinc-400" />}
                         Copy
                     </Button>
-                    <Button className="h-8 flex-1 cursor-not-allowed bg-zinc-800 px-2 text-xs text-zinc-500" disabled title="Sementara dinonaktifkan">
+                    <Button 
+                        className="bg-primary hover:bg-primary/90 text-primary-foreground h-8 flex-1 px-2 text-xs" 
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            onSend(tmpl);
+                        }}
+                    >
                         <SendIcon className="mr-1 h-3.5 w-3.5 shrink-0" />
                         Send
                     </Button>
@@ -49,10 +56,12 @@ function ChatTemplateCard({ tmpl, onSend, isRecommended }) {
     );
 }
 
-function QuickRepliesPopover({ activeOrderDetails }) {
+function QuickRepliesPopover({ activeOrderDetails, onSend }) {
     const [search, setSearch] = useState("");
     const [templates, setTemplates] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
+
+    const currentStatus = activeOrderDetails?.status?.toLowerCase() || "";
 
     useEffect(() => {
         async function fetchTemplates() {
@@ -61,8 +70,6 @@ function QuickRepliesPopover({ activeOrderDetails }) {
             if (error) {
                 toast.error("Gagal load templates: " + error.message);
             } else {
-                const currentStatus = activeOrderDetails?.status?.toLowerCase() || "";
-
                 // Recommendation logic
                 let sorted = (data || []).sort((a, b) => {
                     const aRec = a.triggers?.includes(currentStatus) ? 1 : 0;
@@ -75,19 +82,11 @@ function QuickRepliesPopover({ activeOrderDetails }) {
             setIsLoading(false);
         }
 
-        if (activeOrderDetails) {
-            fetchTemplates();
-        }
-    }, [activeOrderDetails]);
+        fetchTemplates();
+    }, [currentStatus]);
 
     const filtered = templates.filter((t) => t.text.toLowerCase().includes(search.toLowerCase()) || t.type.toLowerCase().includes(search.toLowerCase()) || t.title.toLowerCase().includes(search.toLowerCase()));
 
-    const currentStatus = activeOrderDetails?.status?.toLowerCase() || "";
-
-    const handleSend = (tmpl) => {
-        // TODO: implement actual talkjs programmatic send when session is available globally.
-        toast.success(`Direct send: "${tmpl.title}" (Mock)`);
-    };
 
     return (
         <div className="absolute right-6 bottom-24 z-50">
@@ -129,7 +128,14 @@ function QuickRepliesPopover({ activeOrderDetails }) {
                                         <div key={rowIdx} className={`flex gap-6 ${rowIdx % 2 !== 0 ? "ml-12" : ""}`}>
                                             {rowItems.map((tmpl) => (
                                                 <div key={tmpl.id} className="group/card relative max-w-[260px] min-w-[240px] flex-1 pt-3">
-                                                    <ChatTemplateCard tmpl={tmpl} onSend={handleSend} isRecommended={tmpl.triggers?.includes(currentStatus)} />
+                                                    <ChatTemplateCard 
+                                                        tmpl={tmpl} 
+                                                        onSend={(t) => {
+                                                            onSend(t);
+                                                            setTemplates((prev) => prev.filter((x) => x.id !== t.id));
+                                                        }} 
+                                                        isRecommended={tmpl.triggers?.includes(currentStatus)} 
+                                                    />
                                                 </div>
                                             ))}
                                         </div>
@@ -148,7 +154,24 @@ function QuickRepliesPopover({ activeOrderDetails }) {
 import { CopyablePill } from "./SharedUI";
 
 export default function OrderDetail({ activeOrderId, activeOrderDetails, activeOrderFullDetails, isLoadingOrderDetails, handleMarkDelivered, isDelivering, handleCancelOrder, isCanceling, cancelReason, setCancelReason, cancelMessage, setCancelMessage, isCancelDialogOpen, setIsCancelDialogOpen, talkData, robloxUsernames }) {
+    console.log(activeOrderDetails, activeOrderFullDetails)
+    const { getGameName } = useEldoradoLibrary();
     const [isLinkCopied, setIsLinkCopied] = useState(false);
+    const sessionRef = useRef(null);
+
+    const handleQuickReplySend = (tmpl) => {
+        if (!sessionRef.current || !activeOrderDetails?.talkJsConversationId) {
+            toast.error("Chat belum siap!");
+            return;
+        }
+        try {
+            const conversation = sessionRef.current.getOrCreateConversation(activeOrderDetails.talkJsConversationId);
+            conversation.sendMessage(tmpl.text);
+            // toast.success("Pesan terkirim ke chat!");
+        } catch (err) {
+            toast.error("Gagal ngirim pesan: " + err.message);
+        }
+    };
 
     if (!activeOrderDetails) {
         return (
@@ -157,6 +180,8 @@ export default function OrderDetail({ activeOrderId, activeOrderDetails, activeO
             </div>
         );
     }
+
+    const review = activeOrderDetails?.raw?.review || activeOrderFullDetails?.review || activeOrderDetails?.review;
 
     return (
         <div className="relative flex h-full flex-1 flex-col overflow-hidden rounded-2xl border border-zinc-800 bg-zinc-900/40 backdrop-blur-sm">
@@ -171,29 +196,55 @@ export default function OrderDetail({ activeOrderId, activeOrderDetails, activeO
                     <div className="relative z-10 min-w-0 flex-1">
                         {/* Title */}
                         <h1 className="flex min-w-0 items-center gap-3 text-2xl font-bold text-white">
-                            <div className="bg-primary/20 border-primary/30 shrink-0 rounded-xl border p-2 shadow-[0_0_20px_rgba(var(--primary),0.3)]">
-                                <InfoIcon className="text-primary h-6 w-6 shrink-0" />
-                            </div>
+                            {activeOrderDetails?.raw?.orderOfferDetails?.mainOfferImage?.smallImage ? (
+                                <img 
+                                    src={`https://assetsdelivery.eldorado.gg/v7/_offers-v2_/${activeOrderDetails.raw.orderOfferDetails.mainOfferImage.smallImage}`}
+                                    alt="Item"
+                                    className="h-10 w-10 shrink-0 rounded-xl object-cover shadow-[0_0_20px_rgba(var(--primary),0.3)]"
+                                />
+                            ) : (
+                                <div className="bg-primary/20 border-primary/30 shrink-0 rounded-xl border p-2 shadow-[0_0_20px_rgba(var(--primary),0.3)]">
+                                    <InfoIcon className="text-primary h-6 w-6 shrink-0" />
+                                </div>
+                            )}
                             <Popover>
                                 <PopoverTrigger asChild>
-                                    <button type="button" className="cursor-pointer truncate text-left transition-colors hover:text-white" title={activeOrderDetails?.game || activeOrderDetails?.gameName || "Detail Order"} onClick={(e) => e.stopPropagation()}>
-                                        {activeOrderDetails?.game || activeOrderDetails?.gameName || "Detail Order"}
+                                    <button type="button" className="flex cursor-pointer flex-col truncate text-left transition-colors hover:text-white" title={activeOrderDetails?.game || activeOrderDetails?.gameName || "Detail Order"} onClick={(e) => e.stopPropagation()}>
+                                        <span className="flex items-center gap-2 text-sm font-bold tracking-wider text-zinc-400 uppercase">
+                                            {(activeOrderDetails?.raw?.orderOfferDetails?.gameId || activeOrderDetails?.raw?.gameId) && (
+                                                <img src={`https://assetsdelivery.eldorado.gg/v7/_assets_/icons/v28/${activeOrderDetails?.raw?.orderOfferDetails?.gameId || activeOrderDetails?.raw?.gameId}.png`} alt="Game" className="h-5 w-5 rounded-md object-cover shadow-sm" />
+                                            )}
+                                            {getGameName(activeOrderDetails?.raw?.orderOfferDetails?.gameId || activeOrderDetails?.raw?.gameId) || "Game"}
+                                        </span>
+                                        <span className="truncate">
+                                            {activeOrderDetails?.game || activeOrderDetails?.gameName || "Detail Order"}
+                                        </span>
                                     </button>
                                 </PopoverTrigger>
-                                <PopoverContent className="z-50 flex w-auto items-center gap-2 border-zinc-700 bg-zinc-900 p-3 shadow-xl" onClick={(e) => e.stopPropagation()}>
-                                    <span className="max-w-xs text-sm font-medium break-all text-white">{activeOrderDetails?.game || activeOrderDetails?.gameName || "Detail Order"}</span>
-                                    <Button
-                                        size="icon"
-                                        variant="ghost"
-                                        className="h-6 w-6 shrink-0 text-zinc-400 hover:text-white"
-                                        onClick={(e) => {
-                                            e.stopPropagation();
-                                            navigator.clipboard.writeText(activeOrderDetails?.game || activeOrderDetails?.gameName || "Detail Order");
-                                            toast.success("Game name dicopy!");
-                                        }}
-                                    >
-                                        <CopyIcon className="h-3.5 w-3.5" />
-                                    </Button>
+                                <PopoverContent className="z-50 flex w-auto flex-col gap-2 border-zinc-700 bg-zinc-900 p-3 shadow-xl" onClick={(e) => e.stopPropagation()}>
+                                    <div className="flex flex-col gap-1">
+                                        <span className="flex items-center gap-1.5 text-xs font-bold text-zinc-400 uppercase">
+                                            {(activeOrderDetails?.raw?.orderOfferDetails?.gameId || activeOrderDetails?.raw?.gameId) && (
+                                                <img src={`https://assetsdelivery.eldorado.gg/v7/_assets_/icons/v28/${activeOrderDetails?.raw?.orderOfferDetails?.gameId || activeOrderDetails?.raw?.gameId}.png`} alt="Game" className="h-4 w-4 rounded-sm object-cover opacity-90" />
+                                            )}
+                                            {getGameName(activeOrderDetails?.raw?.orderOfferDetails?.gameId || activeOrderDetails?.raw?.gameId) || "Game"}
+                                        </span>
+                                        <div className="flex items-center gap-2">
+                                            <span className="max-w-xs text-sm font-medium break-all text-white">{activeOrderDetails?.game || activeOrderDetails?.gameName || "Detail Order"}</span>
+                                            <Button
+                                                size="icon"
+                                                variant="ghost"
+                                                className="h-6 w-6 shrink-0 text-zinc-400 hover:text-white"
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    navigator.clipboard.writeText(activeOrderDetails?.game || activeOrderDetails?.gameName || "Detail Order");
+                                                    toast.success("Item name dicopy!");
+                                                }}
+                                            >
+                                                <CopyIcon className="h-3.5 w-3.5" />
+                                            </Button>
+                                        </div>
+                                    </div>
                                 </PopoverContent>
                             </Popover>
                             <span className="shrink-0 rounded-md border border-zinc-800 bg-zinc-900 px-2 py-0.5 font-mono text-lg text-zinc-400">x{activeOrderDetails?.quantity || 1}</span>
@@ -244,6 +295,40 @@ export default function OrderDetail({ activeOrderId, activeOrderDetails, activeO
                                     {activeOrderDetails.createdDate || activeOrderDetails.raw?.createdDate ? new Date(activeOrderDetails.createdDate || activeOrderDetails.raw.createdDate).toLocaleString() : "-"}
                                 </div>
                             </div>
+
+                            {/* Review Box */}
+                            {activeOrderDetails.status === "Completed" && review && (review.reviewMessage || review.feedbackTags?.length > 0) && (
+                                <div className="mt-1 flex flex-col gap-2 rounded-xl border border-zinc-800/60 bg-zinc-900/60 p-3 shadow-inner">
+                                    {review.reviewMessage && (
+                                        <div className="flex items-start gap-2.5">
+                                            <div className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full shadow-sm ${
+                                                review.feedbackRating === "Positive" 
+                                                ? "border border-green-500/20 bg-green-500/20 text-green-400" 
+                                                : "border border-red-500/20 bg-red-500/20 text-red-400"
+                                            }`}>
+                                                {review.feedbackRating === "Positive" ? (
+                                                    <CheckIcon className="h-3 w-3" />
+                                                ) : (
+                                                    <XCircleIcon className="h-3 w-3" />
+                                                )}
+                                            </div>
+                                            <p className="text-sm italic leading-relaxed text-zinc-300">
+                                                "{review.reviewMessage}"
+                                            </p>
+                                        </div>
+                                    )}
+                                    
+                                    {review.feedbackTags && review.feedbackTags.length > 0 && (
+                                        <div className={`flex flex-wrap gap-1.5 ${review.reviewMessage ? "pl-7" : ""}`}>
+                                            {review.feedbackTags.map((tag, idx) => (
+                                                <span key={idx} className="rounded-md border border-zinc-700/50 bg-zinc-800/80 px-2 py-0.5 text-[10px] font-medium text-zinc-400 shadow-sm transition-colors hover:bg-zinc-700 hover:text-zinc-200">
+                                                    {tag.replace(/([A-Z])/g, ' $1').trim()}
+                                                </span>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
+                            )}
 
                             {/* Actions */}
                             <div className="flex items-center gap-2">
@@ -306,7 +391,7 @@ export default function OrderDetail({ activeOrderId, activeOrderDetails, activeO
                             </div>
 
                             {/* Delivery Time Below Status */}
-                            {activeOrderDetails?.raw?.deliveryTime && ["Delivered", "Completed"].includes(activeOrderDetails.status) && (
+                            {activeOrderDetails?.raw?.deliveryTime && ["Delivered", "Received", "Completed"].includes(activeOrderDetails.status) && (
                                 <div className="flex w-full items-center justify-center gap-1.5 rounded-md border border-zinc-800 bg-zinc-900/50 px-2.5 py-1 text-xs font-bold text-zinc-300 shadow-inner">
                                     <TimerIcon className="text-primary h-3.5 w-3.5" />
                                     {formatDeliveryTime(activeOrderDetails.raw.deliveryTime)}
@@ -317,36 +402,36 @@ export default function OrderDetail({ activeOrderId, activeOrderDetails, activeO
                 </div>
 
                 {/* Floating Quick Replies */}
-                {activeOrderDetails && !isLoadingOrderDetails && <QuickRepliesPopover activeOrderDetails={activeOrderDetails} />}
+                {activeOrderDetails && !isLoadingOrderDetails && <QuickRepliesPopover activeOrderDetails={activeOrderDetails} onSend={handleQuickReplySend} />}
 
                 {/* Live Chat is rendered below details */}
                 {/* Scrollable Content */}
-                <div className="flex min-h-0 flex-1 flex-col">
-                    {isLoadingOrderDetails ? (
-                        <div className="flex min-h-0 w-full flex-1 flex-col p-4">
+                <div className="relative flex min-h-0 flex-1 flex-col">
+                    {isLoadingOrderDetails && (
+                        <div className="absolute inset-0 z-20 flex min-h-0 w-full flex-1 flex-col bg-zinc-900/50 p-4 backdrop-blur-sm">
                             <Skeleton className="w-full flex-1 rounded-xl bg-zinc-800/50" />
                         </div>
-                    ) : activeOrderFullDetails ? (
-                        <div className="flex min-h-0 w-full flex-1 flex-col">
-                            {talkData && activeOrderDetails.talkJsConversationId ? (
-                                <div className="min-h-0 w-full flex-1 overflow-hidden">
-                                    <Session appId={process.env.NEXT_PUBLIC_TALKJS_APP_ID} userId={talkData.userId} tokenFetcher={() => talkData.token}>
-                                        <Chatbox conversationId={activeOrderDetails.talkJsConversationId} showChatHeader={false} messageFilter={{ type: ["!=", "SystemMessage"] }} style={{ width: "100%", height: "100%" }} />
-                                    </Session>
-                                </div>
-                            ) : (
-                                <div className="flex h-full items-center justify-center text-zinc-500">
-                                    {!talkData ? (
-                                        <>
-                                            <Loader2Icon className="mr-2 h-5 w-5 animate-spin" /> Loading Chat...
-                                        </>
-                                    ) : (
-                                        "Tidak ada percakapan untuk order ini."
-                                    )}
-                                </div>
-                            )}
-                        </div>
-                    ) : null}
+                    )}
+                    
+                    <div className="flex min-h-0 w-full flex-1 flex-col">
+                        {talkData && activeOrderDetails.talkJsConversationId ? (
+                            <div className="min-h-0 w-full flex-1 overflow-hidden">
+                                <Session sessionRef={sessionRef} appId={process.env.NEXT_PUBLIC_TALKJS_APP_ID} userId={talkData.userId} tokenFetcher={() => talkData.token}>
+                                    <Chatbox syncId="chatbox" conversationId={activeOrderDetails.talkJsConversationId} showChatHeader={false} messageFilter={{ type: ["!=", "SystemMessage"] }} style={{ width: "100%", height: "100%" }} />
+                                </Session>
+                            </div>
+                        ) : (
+                            <div className="flex h-full items-center justify-center text-zinc-500">
+                                {!talkData ? (
+                                    <>
+                                        <Loader2Icon className="mr-2 h-5 w-5 animate-spin" /> Loading Chat...
+                                    </>
+                                ) : (
+                                    "Tidak ada percakapan untuk order ini."
+                                )}
+                            </div>
+                        )}
+                    </div>
                 </div>
             </div>
         </div>

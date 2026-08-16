@@ -6,6 +6,7 @@ import Link from "next/link";
 import { supabase } from "@/lib/supabase";
 import { TableCell } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -24,6 +25,7 @@ import { ConfirmDialog } from "@/components/molecules/ConfirmDialog";
 import { GameFormDialog } from "@/components/organisms/GameFormDialog";
 import { MissingLinksDialog } from "@/components/organisms/MissingLinksDialog";
 import { Plus, Gamepad2, Pencil, Trash2, Eye } from "lucide-react";
+import { useEldoradoLibrary } from "@/contexts/EldoradoLibraryContext";
 
 export default function Dashboard() {
     const [games, setGames] = useState([]);
@@ -35,6 +37,7 @@ export default function Dashboard() {
     const [pendingGameData, setPendingGameData] = useState(null);
     const [searchTerm, setSearchTerm] = useState("");
     const router = useRouter();
+    const { library } = useEldoradoLibrary();
 
     const {
         register,
@@ -157,6 +160,14 @@ export default function Dashboard() {
     if (!session) return <GlobalLoading text="Mengecek sesi..." />;
 
     const filteredGames = games.filter((g) => g.name.toLowerCase().includes(searchTerm.toLowerCase()));
+    const filteredEldoradoGames = Array.from(
+        new Map(
+            (library || [])
+                .filter((g) => g.gameGroup?.toLowerCase() === 'roblox' && (g.menuGameTitle || g.gameName || "").toLowerCase().includes(searchTerm.toLowerCase()))
+                .map((g) => [g.gameId, g])
+        ).values()
+    ).sort((a, b) => (a.menuGameTitle || a.gameName || "").localeCompare(b.menuGameTitle || b.gameName || ""));
+    console.log({filteredEldoradoGames})
 
     return (
         <PageContainer>
@@ -186,44 +197,73 @@ export default function Dashboard() {
             <MissingLinksDialog open={isMissingLinksOpen} onOpenChange={setIsMissingLinksOpen} missingLinks={missingLinks} setMissingLinks={setMissingLinks} onSubmit={handleSaveMissingLinksSubmit} />
 
             <div className="w-full">
-                <DataTable
-                    loading={loading}
-                    data={filteredGames}
-                    emptyMessage="Game belom ada atau gak ketemu bro."
-                    columns={[{ label: "Nama Game" }, { label: "Opsi Join" }, { label: "Aksi", className: "text-right" }]}
-                    renderRow={(game) => (
-                        <ClickableTableRow key={game.id} href={`/games/${game.id}`} className="group">
-                            <TableCell className="flex items-center gap-3 font-medium">
-                                <div className="group-hover:border-primary/50 flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-zinc-700/50 bg-zinc-800/80 font-bold text-zinc-400 shadow-inner transition-colors">{game.image_url ? <img src={game.image_url} alt={game.name} className="h-full w-full object-cover" /> : <Gamepad2 className="h-5 w-5" />}</div>
-                                <span className="group-hover:text-primary text-base font-bold text-white transition-colors">{game.name}</span>
-                            </TableCell>
-                            <TableCell>{game.requires_private_server ? <StatusBadge variant="accent">Wajib Private Server</StatusBadge> : <StatusBadge variant="default">Public / Bebas</StatusBadge>}</TableCell>
-                            <TableCell className="text-right">
-                                <div className="flex items-center justify-end gap-2">
-                                    <Link href={`/games/${game.id}`}>
-                                        <ActionIcon icon={Eye} title="Detail Game" onClick={(e) => e.stopPropagation()} />
-                                    </Link>
-                                    <ActionIcon
-                                        icon={Pencil}
-                                        title="Edit Game"
-                                        variant="edit"
-                                        onClick={(e) => {
-                                            e.stopPropagation();
-                                            setEditGameId(game.id);
-                                            reset({
-                                                name: game.name,
-                                                image_url: game.image_url || "",
-                                                requires_private_server: game.requires_private_server || false,
-                                            });
-                                            setIsDialogOpen(true);
-                                        }}
-                                    />
-                                    <ConfirmDialog trigger={<ActionIcon icon={Trash2} title="Hapus Game" variant="delete" />} title="Yakin mau hapus game ini?" description="Semua item dan kaitan akun di game ini bakal ikut kehapus permanen loh." onConfirm={() => handleDelete(game.id)} confirmText="Hapus!" cancelText="Gak Jadi" />
-                                </div>
-                            </TableCell>
-                        </ClickableTableRow>
-                    )}
-                />
+                <Tabs defaultValue="local" className="w-full">
+                    <TabsList className="mb-6 grid w-full max-w-md grid-cols-2 bg-zinc-900/50 p-1 backdrop-blur-md">
+                        <TabsTrigger value="local" className="data-[state=active]:bg-zinc-800 data-[state=active]:text-primary rounded-lg font-bold transition-all">My Games (Local)</TabsTrigger>
+                        <TabsTrigger value="eldorado" className="data-[state=active]:bg-zinc-800 data-[state=active]:text-primary rounded-lg font-bold transition-all">Eldorado Library</TabsTrigger>
+                    </TabsList>
+                    
+                    <TabsContent value="local" className="m-0 border-none p-0 outline-none">
+                        <DataTable
+                            loading={loading}
+                            data={filteredGames}
+                            emptyMessage="Game belom ada atau gak ketemu bro."
+                            columns={[{ label: "Nama Game" }, { label: "Opsi Join" }, { label: "Aksi", className: "text-right" }]}
+                            renderRow={(game) => (
+                                <ClickableTableRow key={game.id} href={`/games/${game.id}`} className="group">
+                                    <TableCell className="flex items-center gap-3 font-medium">
+                                        <div className="group-hover:border-primary/50 flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-zinc-700/50 bg-zinc-800/80 font-bold text-zinc-400 shadow-inner transition-colors">{game.image_url ? <img src={game.image_url} alt={game.name} className="h-full w-full object-cover" /> : <Gamepad2 className="h-5 w-5" />}</div>
+                                        <span className="group-hover:text-primary text-base font-bold text-white transition-colors">{game.name}</span>
+                                    </TableCell>
+                                    <TableCell>{game.requires_private_server ? <StatusBadge variant="accent">Wajib Private Server</StatusBadge> : <StatusBadge variant="default">Public / Bebas</StatusBadge>}</TableCell>
+                                    <TableCell className="text-right">
+                                        <div className="flex items-center justify-end gap-2">
+                                            <Link href={`/games/${game.id}`}>
+                                                <ActionIcon icon={Eye} title="Detail Game" onClick={(e) => e.stopPropagation()} />
+                                            </Link>
+                                            <ActionIcon
+                                                icon={Pencil}
+                                                title="Edit Game"
+                                                variant="edit"
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    setEditGameId(game.id);
+                                                    reset({
+                                                        name: game.name,
+                                                        image_url: game.image_url || "",
+                                                        requires_private_server: game.requires_private_server || false,
+                                                    });
+                                                    setIsDialogOpen(true);
+                                                }}
+                                            />
+                                            <ConfirmDialog trigger={<ActionIcon icon={Trash2} title="Hapus Game" variant="delete" />} title="Yakin mau hapus game ini?" description="Semua item dan kaitan akun di game ini bakal ikut kehapus permanen loh." onConfirm={() => handleDelete(game.id)} confirmText="Hapus!" cancelText="Gak Jadi" />
+                                        </div>
+                                    </TableCell>
+                                </ClickableTableRow>
+                            )}
+                        />
+                    </TabsContent>
+
+                    <TabsContent value="eldorado" className="m-0 border-none p-0 outline-none">
+                        <DataTable
+                            loading={loading}
+                            data={filteredEldoradoGames}
+                            emptyMessage="Game dari eldorado gak ketemu bro."
+                            columns={[{ label: "Game ID", className: "w-[150px]" }, { label: "Nama Game" }]}
+                            renderRow={(game, index) => (
+                                <ClickableTableRow key={`eldo-${game.gameId || '0'}-${index}`} href="#" className="group cursor-default">
+                                    <TableCell className="font-mono text-zinc-400">{game.gameId}</TableCell>
+                                    <TableCell className="flex items-center gap-3 font-medium">
+                                        <div className="group-hover:border-primary/50 flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-zinc-700/50 bg-zinc-800/80 font-bold text-zinc-400 shadow-inner transition-colors">
+                                            <img src={`https://assetsdelivery.eldorado.gg/v7/_assets_/icons/v28/${game.gameId}.png`} alt={game.menuGameTitle || game.gameName} className="h-full w-full object-cover" />
+                                        </div>
+                                        <span className="group-hover:text-primary text-base font-bold text-white transition-colors">{game.menuGameTitle || game.gameName}</span>
+                                    </TableCell>
+                                </ClickableTableRow>
+                            )}
+                        />
+                    </TabsContent>
+                </Tabs>
             </div>
         </PageContainer>
     );
