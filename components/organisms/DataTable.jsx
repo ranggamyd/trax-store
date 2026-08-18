@@ -1,5 +1,5 @@
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { TableSkeleton } from "@/components/TableSkeleton";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
 
 export function DataTable({ columns, data, loading = false, emptyMessage = "Data nggak ketemu bro.", keyExtractor = (item) => item.id, renderRow }) {

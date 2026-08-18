@@ -4,12 +4,8 @@ const PROD_DOMAIN = "trax-store.vercel.app"; // Ganti sama domain asli Vercel lu
 const DEV_DOMAIN = "localhost:3000";
 
 const TARGET_DOMAIN = IS_PRODUCTION ? PROD_DOMAIN : DEV_DOMAIN;
-const SYNC_ENDPOINT = IS_PRODUCTION 
-    ? `https://${TARGET_DOMAIN}/api/sync-token`
-    : `http://${TARGET_DOMAIN}/api/sync-token`;
-const TRAX_TAB_MATCH = IS_PRODUCTION
-    ? `https://${TARGET_DOMAIN}/*`
-    : `http://${TARGET_DOMAIN}/*`;
+const SYNC_ENDPOINT = IS_PRODUCTION ? `https://${TARGET_DOMAIN}/api/sync-token` : `http://${TARGET_DOMAIN}/api/sync-token`;
+const TRAX_TAB_MATCH = IS_PRODUCTION ? `https://${TARGET_DOMAIN}/*` : `http://${TARGET_DOMAIN}/*`;
 // =========================
 
 const TARGET_COOKIE_NAME = "__Host-EldoradoIdToken";

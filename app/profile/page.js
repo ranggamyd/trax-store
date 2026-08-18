@@ -1,17 +1,18 @@
 "use client";
+import { Key, Save, User } from "lucide-react";
 import { useState } from "react";
-import { supabase } from "@/lib/supabase";
-import { useAuthGuard } from "@/hooks/useAuthGuard";
+import { toast } from "sonner";
+
+import { updateUser } from "@/app/actions/users";
 import { GlobalLoading } from "@/components/GlobalLoading";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { EmailListInput } from "@/components/molecules/EmailListInput";
+import { PasswordInput } from "@/components/molecules/PasswordInput";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { PasswordInput } from "@/components/molecules/PasswordInput";
-import { EmailListInput } from "@/components/molecules/EmailListInput";
-import { toast } from "sonner";
-import { User, Key, Save } from "lucide-react";
-import { updateUser } from "@/app/actions/users";
+import { useAuthGuard } from "@/hooks/useAuthGuard";
+import { supabase } from "@/lib/supabase";
 
 export default function ProfilePage() {
     const [profile, setProfile] = useState(null);
@@ -46,9 +47,9 @@ export default function ProfilePage() {
             emails: emailList,
         });
         if (error) {
-            toast.error("Gagal update profil: " + error);
+            // toast.error("Gagal update profil: " + error);
         } else {
-            toast.success("Profil berhasil diperbarui!");
+            // toast.success("Profil berhasil diperbarui!");
             setProfile((prev) => ({
                 ...prev,
                 username: editUsername,
@@ -69,9 +70,9 @@ export default function ProfilePage() {
         setIsUpdating(true);
         const { error } = await supabase.auth.updateUser({ password });
         if (error) {
-            toast.error(error.message);
+            // toast.error(error.message);
         } else {
-            toast.success("Password berhasil diubah!");
+            // toast.success("Password berhasil diubah!");
             setPassword("");
             setConfirmPassword("");
         }

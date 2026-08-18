@@ -1,8 +1,9 @@
 import { ArrowLeft } from "lucide-react";
 import { useRouter } from "next/navigation";
+
+import { CopyButton } from "@/components/CopyButton";
 import { Button } from "@/components/ui/button";
 import { getInitials } from "@/lib/utils";
-import { CopyButton } from "@/components/CopyButton";
 
 export function DetailHeader({ title, subtitle, initialsText, imageUrl, avatarShape = "square", rightContent }) {
     const router = useRouter();

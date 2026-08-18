@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
 import { Eye, EyeOff } from "lucide-react";
+import { useState } from "react";
+
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
@@ -9,7 +10,7 @@ import { Label } from "@/components/ui/label";
  * Password input with show/hide toggle.
  * Replaces 3 duplicate implementations in login, users, and profile pages.
  */
-export function PasswordInput({ label = "Password", value, onChange, required = false, placeholder = "Minimal 6 karakter", minLength = 6, className = "bg-zinc-900 border-zinc-800" }) {
+export function PasswordInput({ label = "Password", value, onChange, required = false, placeholder = "", minLength = 6, className = "bg-zinc-900 border-zinc-800" }) {
     const [show, setShow] = useState(false);
 
     return (

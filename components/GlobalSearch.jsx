@@ -1,10 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Gamepad2, Package, Search,User } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+
 import { Command, CommandDialog, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { supabase } from "@/lib/supabase";
-import { Gamepad2, User, Package, Search } from "lucide-react";
 
 export function GlobalSearch() {
     const [open, setOpen] = useState(false);

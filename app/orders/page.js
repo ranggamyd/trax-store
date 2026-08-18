@@ -1,11 +1,13 @@
 "use client";
 
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import Talk from "talkjs";
-import { markOrderDelivered, cancelOrder, getEldoradoOrders, getEldoradoOrderDetails, getTalkJsToken } from "@/app/actions";
-import OrderList from "./components/OrderList";
+
+import { cancelOrder, getEldoradoOrderDetails, getEldoradoOrders, getTalkJsToken, markOrderDelivered } from "@/app/actions";
+
 import OrderDetail from "./components/OrderDetail";
+import OrderList from "./components/OrderList";
 
 export default function OrdersPage() {
     const [activeOrders, setActiveOrders] = useState([]);
@@ -102,7 +104,7 @@ export default function OrdersPage() {
                     // toast.info("Token basi! TraxStore lagi minta tolong Extension buat nyari token baru diem-diem...", { duration: 8000 });
                     window.postMessage({ type: "TRAX_FORCE_REFRESH" }, "*");
                 } else {
-                    toast.error("Gagal narik pesanan: " + res.error);
+                    // toast.error("Gagal narik pesanan: " + res.error);
                 }
             }
         },
@@ -186,7 +188,6 @@ export default function OrdersPage() {
             return; // will re-trigger effect when fetchOrders changes due to searchQuery update
         }
 
-         
         fetchOrders();
 
         // Auto-Polling Realtime for Orders List (Every 15s)
@@ -217,19 +218,22 @@ export default function OrdersPage() {
         setOrderStateFilter(e.target.value); // Trigger fetchOrders
     };
 
-    const loadOrderDetails = useCallback(async (silent = false) => {
-        if (!activeOrderId) return;
+    const loadOrderDetails = useCallback(
+        async (silent = false) => {
+            if (!activeOrderId) return;
 
-        if (!silent) setIsLoadingOrderDetails(true);
-        const res = await getEldoradoOrderDetails(activeOrderId);
-        if (!silent) setIsLoadingOrderDetails(false);
+            if (!silent) setIsLoadingOrderDetails(true);
+            const res = await getEldoradoOrderDetails(activeOrderId);
+            if (!silent) setIsLoadingOrderDetails(false);
 
-        if (res.success) {
-            setActiveOrderFullDetails(res.data);
-        } else {
-            setActiveOrderFullDetails(null);
-        }
-    }, [activeOrderId]);
+            if (res.success) {
+                setActiveOrderFullDetails(res.data);
+            } else {
+                setActiveOrderFullDetails(null);
+            }
+        },
+        [activeOrderId]
+    );
 
     useEffect(() => {
         loadOrderDetails();
@@ -243,12 +247,12 @@ export default function OrdersPage() {
         setIsDelivering(false);
 
         if (result.success) {
-            toast.success("Cakep! Pesanan udah ditandai terkirim ke Eldorado.");
+            // toast.success("Cakep! Pesanan udah ditandai terkirim ke Eldorado.");
             setIsDeliverDialogOpen(false);
             setActiveOrders((prev) => prev.map((o) => (o.id === activeOrderId ? { ...o, status: "Delivered" } : o)));
             loadOrderDetails(true); // Silent reload
         } else {
-            toast.error(result.error || "Waduh gagal update status bro.");
+            // toast.error(result.error || "Waduh gagal update status bro.");
         }
     }
 
@@ -260,14 +264,14 @@ export default function OrdersPage() {
         setIsCanceling(false);
 
         if (result.success) {
-            toast.success("Order berhasil di-cancel!");
+            // toast.success("Order berhasil di-cancel!");
             setCancelMessage("");
             setCancelReason("Buyer_Provided_Incorrect_Information");
             setIsCancelDialogOpen(false);
             setActiveOrders((prev) => prev.map((o) => (o.id === activeOrderId ? { ...o, status: "Canceled" } : o)));
             loadOrderDetails(true); // Silent reload
         } else {
-            toast.error(result.error || "Gagal cancel order bro.");
+            // toast.error(result.error || "Gagal cancel order bro.");
         }
     }
 

@@ -1,16 +1,17 @@
 "use client";
 
-import { useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { supabase } from "@/lib/supabase";
+import { useState } from "react";
+import { toast } from "sonner";
+
 import { resolveLoginIdentifier } from "@/app/actions/users";
-import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
+import { PasswordInput } from "@/components/molecules/PasswordInput";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Button } from "@/components/ui/button";
-import { PasswordInput } from "@/components/molecules/PasswordInput";
-import { toast } from "sonner";
-import Link from "next/link";
+import { supabase } from "@/lib/supabase";
 
 export default function LoginPage() {
     const [identifier, setIdentifier] = useState("");
@@ -26,10 +27,9 @@ export default function LoginPage() {
         const { error } = await supabase.auth.signInWithPassword({ email: resolvedEmail, password });
 
         if (error) {
-            toast.error("Waduh, gagal login nih.", { description: error.message });
+            toast.error("Gagal.", { description: error.message });
             setLoading(false);
         } else {
-            toast.success("Welcome bossku!", { description: "Gass ngabers" });
             router.push("/");
             router.refresh();
         }

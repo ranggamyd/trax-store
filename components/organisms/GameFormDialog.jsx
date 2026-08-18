@@ -1,10 +1,10 @@
 "use client";
 
+import { FormDialog } from "@/components/molecules/FormDialog";
+import { FormField } from "@/components/molecules/FormField";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { FormDialog } from "@/components/molecules/FormDialog";
-import { FormField } from "@/components/molecules/FormField";
 
 /**
  * Game create/edit form dialog.

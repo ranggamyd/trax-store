@@ -1,10 +1,12 @@
-import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import { Toaster } from "@/components/ui/sonner";
+
+import { Geist, Geist_Mono } from "next/font/google";
+import NextTopLoader from "nextjs-toploader";
+
+import { CursorTrail } from "@/components/CursorTrail";
 import { GlobalSearch } from "@/components/GlobalSearch";
 import { Navbar } from "@/components/Navbar";
-import { CursorTrail } from "@/components/CursorTrail";
-import NextTopLoader from "nextjs-toploader";
+import { Toaster } from "@/components/ui/sonner";
 import { EldoradoLibraryProvider } from "@/contexts/EldoradoLibraryContext";
 
 const geistSans = Geist({

@@ -29,4 +29,4 @@ function TooltipContent({ className, side = "top", sideOffset = 4, align = "cent
     );
 }
 
-export { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider };
+export { Tooltip, TooltipContent, TooltipProvider,TooltipTrigger };

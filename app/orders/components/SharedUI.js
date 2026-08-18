@@ -1,8 +1,8 @@
 "use client";
 
+import { CheckIcon, CopyIcon } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
-import { CheckIcon, CopyIcon } from "lucide-react";
 
 export const DetailSection = ({ title, icon, children }) => (
     <div className="group/section relative mb-5 rounded-2xl border border-white/[0.03] bg-zinc-950/40 p-4 shadow-lg sm:p-5">

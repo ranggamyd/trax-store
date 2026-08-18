@@ -1,9 +1,10 @@
 "use client";
 
 import { Plus, X } from "lucide-react";
+
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Button } from "@/components/ui/button";
 
 /**
  * Dynamic email list input with add/remove rows.
@@ -37,9 +38,9 @@ export function EmailListInput({ emails, setEmails, label = "Daftar Email", prim
                 ))}
             </div>
             <Button type="button" variant="outline" size="sm" onClick={() => setEmails([...emails, ""])} className={`mt-2 w-full ${inputClassName} border-dashed text-zinc-400 hover:text-white`}>
-                <Plus className="mr-2 h-4 w-4" /> Tambah Email Lain
+                <Plus className="mr-2 h-4 w-4" /> Tambah
             </Button>
-            <p className="mt-1 text-xs text-zinc-500">Email baris pertama akan jadi email utama.</p>
+            <p className="mt-1 text-xs text-zinc-500">Email pertama jadi email utama</p>
         </div>
     );
 }

@@ -1,29 +1,30 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Pencil, Plus, ShieldAlert, ShieldCheck, Trash2 } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
-import { supabase } from "@/lib/supabase";
-import { Button } from "@/components/ui/button";
-import { TableCell, TableRow } from "@/components/ui/table";
-import { CopyButton } from "@/components/CopyButton";
-import { Pencil, ShieldCheck, ShieldAlert, Plus, Trash2 } from "lucide-react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { Switch } from "@/components/ui/switch";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { getInitials } from "@/lib/utils";
-import { isDuplicateError, createAccountFromCombo } from "@/lib/supabaseHelpers";
-import { useAuthGuard } from "@/hooks/useAuthGuard";
-import { GlobalLoading } from "@/components/GlobalLoading";
-import { PageContainer } from "@/components/templates/PageContainer";
-import { DetailHeader } from "@/components/molecules/DetailHeader";
-import { SearchBar } from "@/components/molecules/SearchBar";
-import { DataTable } from "@/components/organisms/DataTable";
+
 import { ActionIcon } from "@/components/atoms/ActionIcon";
+import { CopyButton } from "@/components/CopyButton";
+import { GlobalLoading } from "@/components/GlobalLoading";
 import { ComboboxSelect } from "@/components/molecules/ComboboxSelect";
 import { ConfirmDialog } from "@/components/molecules/ConfirmDialog";
+import { DetailHeader } from "@/components/molecules/DetailHeader";
 import { FormDialog } from "@/components/molecules/FormDialog";
+import { SearchBar } from "@/components/molecules/SearchBar";
+import { DataTable } from "@/components/organisms/DataTable";
+import { PageContainer } from "@/components/templates/PageContainer";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Switch } from "@/components/ui/switch";
+import { TableCell, TableRow } from "@/components/ui/table";
+import { useAuthGuard } from "@/hooks/useAuthGuard";
+import { supabase } from "@/lib/supabase";
+import { createAccountFromCombo,isDuplicateError } from "@/lib/supabaseHelpers";
+import { getInitials } from "@/lib/utils";
 
 export default function ItemDetail() {
     const params = useParams();

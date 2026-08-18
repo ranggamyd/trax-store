@@ -1,15 +1,16 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Bell, BookOpen, Clock,Gamepad2, List, LogOut, MessageSquare, Shield, ShoppingCart, User, Users } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { Gamepad2, Users, Package, LogOut, Shield, User, MessageSquare, ShoppingCart, List, Bell, BookOpen } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { supabase } from "@/lib/supabase";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { getUnreadNotificationCount, getEldoradoNotifications } from "@/app/actions";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
+
+import { getEldoradoNotifications,getUnreadNotificationCount } from "@/app/actions";
+import { Button } from "@/components/ui/button";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Skeleton } from "@/components/ui/skeleton";
+import { supabase } from "@/lib/supabase";
 
 export function Navbar() {
     const pathname = usePathname();
@@ -88,9 +89,10 @@ export function Navbar() {
     const group1 = [
         { name: "Games", href: "/games", icon: Gamepad2 },
         { name: "Accounts", href: "/accounts", icon: Users },
-        { name: "Items", href: "/items", icon: Package },
+        // { name: "Items", href: "/items", icon: Package },
         { name: "Templates", href: "/templates", icon: MessageSquare },
         { name: "Users", href: "/users", icon: Shield },
+        { name: "Shifts", href: "/shifts", icon: Clock },
     ];
 
     const group2 = [

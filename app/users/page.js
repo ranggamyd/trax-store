@@ -1,23 +1,23 @@
 "use client";
+import { Pencil, Plus, Shield, Trash2, Users as UsersIcon } from "lucide-react";
 import { useState } from "react";
-import { listUsers, createUser, deleteUser, updateUser } from "@/app/actions/users";
-import { useAuthGuard } from "@/hooks/useAuthGuard";
-import { GlobalLoading } from "@/components/GlobalLoading";
-import { PageContainer } from "@/components/templates/PageContainer";
-import { PageHeader } from "@/components/molecules/PageHeader";
-import { SearchBar } from "@/components/molecules/SearchBar";
-import { DataTable } from "@/components/organisms/DataTable";
+import { toast } from "sonner";
+
+import { createUser, deleteUser, listUsers, updateUser } from "@/app/actions/users";
 import { ActionIcon } from "@/components/atoms/ActionIcon";
 import { ConfirmDialog } from "@/components/molecules/ConfirmDialog";
-import { FormDialog } from "@/components/molecules/FormDialog";
-import { PasswordInput } from "@/components/molecules/PasswordInput";
 import { EmailListInput } from "@/components/molecules/EmailListInput";
-import { TableRow, TableCell } from "@/components/ui/table";
+import { FormDialog } from "@/components/molecules/FormDialog";
+import { PageHeader } from "@/components/molecules/PageHeader";
+import { PasswordInput } from "@/components/molecules/PasswordInput";
+import { SearchBar } from "@/components/molecules/SearchBar";
+import { DataTable } from "@/components/organisms/DataTable";
+import { PageContainer } from "@/components/templates/PageContainer";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { toast } from "sonner";
-import { Shield, Trash2, Plus, Users as UsersIcon, Pencil } from "lucide-react";
+import { TableCell, TableRow } from "@/components/ui/table";
+import { useAuthGuard } from "@/hooks/useAuthGuard";
 
 export default function UsersPage() {
     const [users, setUsers] = useState([]);
@@ -34,12 +34,8 @@ export default function UsersPage() {
 
     const fetchUsers = async () => {
         setLoading(true);
-        const { users: data, error } = await listUsers();
-        if (error) {
-            toast.error("Gagal ambil data user: " + error);
-        } else {
-            setUsers(data || []);
-        }
+        const { users: data } = await listUsers();
+        setUsers(data || []);
         setLoading(false);
     };
 
@@ -48,9 +44,7 @@ export default function UsersPage() {
     const onSubmit = async (e) => {
         e.preventDefault();
         if (password && password !== confirmPassword) {
-            return toast.error("Password gak sama bro!", {
-                description: "Cek lagi konfirmasi password lu.",
-            });
+            return toast.error("Password gak sama!");
         }
 
         setIsCreating(true);
@@ -61,7 +55,6 @@ export default function UsersPage() {
             if (error) {
                 toast.error(error);
             } else {
-                toast.success("Data admin berhasil diupdate!");
                 closeDialog();
                 fetchUsers();
             }
@@ -80,7 +73,7 @@ export default function UsersPage() {
 
     const openEditDialog = (user) => {
         setEditUserId(user.id);
-        setUsername(user.username === "Belum diatur (Akun Lama)" ? "" : user.username);
+        setUsername(user.username);
         setEmails(user.emails && user.emails.length > 0 ? user.emails : [""]);
         setPassword("");
         setConfirmPassword("");
@@ -98,30 +91,24 @@ export default function UsersPage() {
 
     const handleDeleteUser = async (id) => {
         if (id === session?.user?.id) {
-            return toast.error("Bro, lu ga bisa hapus diri sendiri!");
+            return toast.error("Ngapain ngapus diri sendiri?");
         }
-        const { error } = await deleteUser(id);
-        if (error) {
-            toast.error(error);
-        } else {
-            toast.success("Admin berhasil dihapus!");
-            fetchUsers();
-        }
+
+        await deleteUser(id);
+        fetchUsers();
     };
 
     const filteredUsers = users.filter((user) => user.username?.toLowerCase().includes(search.toLowerCase()) || user.primary_email?.toLowerCase().includes(search.toLowerCase()));
 
-    if (!session) return <GlobalLoading text="Mengecek sesi..." />;
-
     return (
         <PageContainer>
             <PageHeader
-                title="Manajemen Admin"
-                subtitle="Atur siapa aja yang punya akses ke markas besar ini."
+                title="Users"
+                subtitle="Anggota geng"
                 icon={Shield}
                 rightContent={
                     <div className="flex w-full items-center gap-2 md:w-auto">
-                        <SearchBar value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Cari admin..." containerClassName="w-full md:w-64" />
+                        <SearchBar value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Username/Email..." containerClassName="w-full md:w-64" />
                         <Button
                             className="bg-accent hover:bg-accent/80 w-full font-bold text-black md:w-auto"
                             onClick={() => {
@@ -129,23 +116,23 @@ export default function UsersPage() {
                                 setIsDialogOpen(true);
                             }}
                         >
-                            <Plus className="mr-2 h-4 w-4" /> Tambah Admin
+                            <Plus className="mr-2 h-4 w-4" /> Tambah
                         </Button>
                     </div>
                 }
             />
 
-            <FormDialog open={isDialogOpen} onOpenChange={(open) => (open ? setIsDialogOpen(true) : closeDialog())} title={editUserId ? "Edit Admin" : "Tambah Admin Baru"} titleClassName="text-2xl font-bold text-accent" maxWidth="sm:max-w-md">
+            <FormDialog open={isDialogOpen} onOpenChange={(open) => (open ? setIsDialogOpen(true) : closeDialog())} title={editUserId ? "Edit" : "Tambah"} titleClassName="text-2xl font-bold text-accent" maxWidth="sm:max-w-md">
                 <form onSubmit={onSubmit} className="mt-4 space-y-4">
                     <div className="space-y-2">
                         <Label>Username</Label>
-                        <Input type="text" required value={username} onChange={(e) => setUsername(e.target.value)} className="border-zinc-800 bg-zinc-900" placeholder="Contoh: admin123" />
+                        <Input type="text" required value={username} onChange={(e) => setUsername(e.target.value)} className="border-zinc-800 bg-zinc-900" />
                     </div>
-                    <EmailListInput emails={emails} setEmails={setEmails} primaryPlaceholder="admin@traxstore.gg (Utama)" secondaryPlaceholder="Email cadangan" />
+                    <EmailListInput emails={emails} setEmails={setEmails} />
                     <PasswordInput label={editUserId ? "Password Baru (Opsional)" : "Password"} value={password} onChange={(e) => setPassword(e.target.value)} required={!editUserId} />
-                    {(password || !editUserId) && <PasswordInput label="Konfirmasi Password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} required={!editUserId || password.length > 0} placeholder="Ulangi password" />}
+                    {(password || !editUserId) && <PasswordInput label="Konfirmasi Password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} required={!editUserId || password.length > 0} placeholder="" />}
                     <Button type="submit" disabled={isCreating} className="bg-accent hover:bg-accent/80 h-12 w-full font-bold text-black">
-                        {isCreating ? "Menyimpan..." : editUserId ? "Update Admin" : "Daftarkan Admin"}
+                        {isCreating ? "Menyimpan..." : editUserId ? "Edit" : "Tambah"}
                     </Button>
                 </form>
             </FormDialog>
