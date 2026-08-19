@@ -25,9 +25,10 @@ import { cn } from "@/lib/utils";
  * - onCreateNew: (searchTerm) => void (optional, for inline creation)
  * - createNewLabel: (searchTerm) => string (button label for create)
  * - triggerClassName: Additional classes for trigger button
+ * - contentClassName: Additional classes for the dropdown (buat trigger kecil yang butuh list lebih lebar)
  * - open/onOpenChange: Optional controlled open state
  */
-export function ComboboxSelect({ items = [], value, onSelect, getItemValue = (item) => item.name || item.username || item.item_name || "", getItemId = (item) => item.id, renderItem, placeholder = "-- Pilih --", searchPlaceholder = "Cari...", emptyText = "Gak ketemu bro.", onCreateNew, createNewLabel = (term) => `Tambah "${term}"`, triggerClassName, open: controlledOpen, onOpenChange: controlledOnOpenChange }) {
+export function ComboboxSelect({ items = [], value, onSelect, getItemValue = (item) => item.name || item.username || item.item_name || "", getItemId = (item) => item.id, renderItem, placeholder = "-- Pilih --", searchPlaceholder = "Cari...", emptyText = "Gak ketemu bro.", onCreateNew, createNewLabel = (term) => `Tambah "${term}"`, triggerClassName, contentClassName, open: controlledOpen, onOpenChange: controlledOnOpenChange }) {
     const [internalOpen, setInternalOpen] = useState(false);
     const [search, setSearch] = useState("");
 
@@ -46,7 +47,7 @@ export function ComboboxSelect({ items = [], value, onSelect, getItemValue = (it
                     <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                 </Button>
             </PopoverTrigger>
-            <PopoverContent className="w-[var(--radix-popover-trigger-width)] border-zinc-800 bg-zinc-950 p-0">
+            <PopoverContent className={cn("w-[var(--radix-popover-trigger-width)] border-zinc-800 bg-zinc-950 p-0", contentClassName)}>
                 <Command>
                     <CommandInput placeholder={searchPlaceholder} className="text-foreground" value={search} onValueChange={setSearch} />
                     <CommandList>

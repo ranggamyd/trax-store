@@ -2,20 +2,77 @@
 
 import { Chatbox, Session } from "@talkjs/react";
 import { CalendarIcon, CheckCircleIcon, CheckIcon, CopyIcon, Gamepad2Icon, InfoIcon, Loader2Icon, PencilIcon, SearchIcon, SendIcon, SparklesIcon, TimerIcon, UserIcon, XCircleIcon } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 
+import { ComboboxSelect } from "@/components/molecules/ComboboxSelect";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useEldoradoLibrary } from "@/contexts/EldoradoLibraryContext";
 import { supabase } from "@/lib/supabase";
+import { attachLibraryInfo, buildTemplateVars, fetchGamesWithAccounts, resolveTemplateText, unresolvedPlaceholders } from "@/lib/templateVars";
 import { cn } from "@/lib/utils";
 
 import { CANCEL_REASONS, formatDeliveryTime, getStatusIcon } from "./utils";
-function ChatTemplateCard({ tmpl, onSend, isRecommended, compact = false, chatboxRef }) {
+function ChatTemplateCard({ tmpl, onSend, isRecommended, compact = false, chatboxRef, game }) {
     const [copied, setCopied] = useState(false);
+    // Template Specific: akun default dari template, tapi bisa diganti sebelum kirim.
+    const [accountId, setAccountId] = useState(tmpl.account_id || "");
+
+    const accounts = game?.accounts || [];
+    const account = accounts.find((a) => a.account_id === accountId) || null;
+    const templateVars = buildTemplateVars(game, account);
+    const resolvedText = resolveTemplateText(tmpl.text, templateVars);
+    // Placeholder yang belum kebisi (biasanya link private server kosong) — tahan dulu jangan kekirim.
+    const blocked = unresolvedPlaceholders(tmpl.text, templateVars).length > 0;
+
+    const handleInsertToChat = (e) => {
+        e.stopPropagation();
+        if (blocked) return;
+        if (chatboxRef.current?.isAlive) {
+            chatboxRef.current.messageField.setText(resolvedText);
+            chatboxRef.current.messageField.focus();
+        } else {
+            navigator.clipboard.writeText(resolvedText);
+        }
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+    };
+
+    const handleSendClick = (e) => {
+        e.stopPropagation();
+        if (blocked) return;
+        onSend({ ...tmpl, text: resolvedText });
+    };
+
+    const accountPicker =
+        tmpl.type === "Specific" && tmpl.game_id ? (
+            <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()} title={game ? `Akun buat ${game.name}` : "Game udah kehapus"}>
+                <UserIcon className="h-2.5 w-2.5 shrink-0 text-zinc-500" />
+                <ComboboxSelect
+                    items={accounts}
+                    value={accountId}
+                    onSelect={(acc) => setAccountId(acc.account_id)}
+                    getItemId={(acc) => acc.account_id}
+                    getItemValue={(acc) => acc.username}
+                    renderItem={(acc) => (
+                        <span className="flex w-full items-center justify-between gap-2">
+                            <span className="truncate">{acc.username}</span>
+                            {!acc.private_server_link && <span className="shrink-0 text-[10px] text-yellow-600">link kosong</span>}
+                        </span>
+                    )}
+                    placeholder="-- pilih akun --"
+                    searchPlaceholder="Cari akun..."
+                    emptyText="Game ini belum ada akunnya."
+                    triggerClassName="h-6 min-w-0 overflow-hidden px-1.5 text-[9px] font-normal [&_svg]:size-3"
+                    contentClassName="w-auto min-w-[180px]"
+                />
+            </div>
+        ) : null;
+
+    const blockedNote = blocked ? <p className="text-[9px] leading-tight text-yellow-600">{accounts.length === 0 ? "Game ini belum ada akunnya — tautin dulu di /games." : account ? "Akun ini belum ada link private server-nya." : "Pilih akun dulu buat dapetin link-nya."}</p> : null;
 
     if (compact) {
         return (
@@ -26,38 +83,14 @@ function ChatTemplateCard({ tmpl, onSend, isRecommended, compact = false, chatbo
                         <span className="rounded bg-zinc-800 px-1 text-[7px] font-extrabold uppercase text-zinc-500">{tmpl.type}</span>
                     </div>
                 </div> */}
-                <p className="line-clamp-2 text-[10px] leading-tight break-words text-zinc-400">"{tmpl.text}"</p>
+                <p className="line-clamp-2 text-[10px] leading-tight break-words text-zinc-400">"{resolvedText}"</p>
+                {accountPicker}
+                {blockedNote}
                 <div className="mt-auto flex items-center gap-1 border-t border-zinc-800/60 pt-1">
-                    <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-6 w-6 shrink-0 text-zinc-400 hover:text-white"
-                        onClick={(e) => {
-                            e.stopPropagation();
-                            if (chatboxRef.current?.isAlive) {
-                                chatboxRef.current.messageField.setText(tmpl.text);
-                                chatboxRef.current.messageField.focus();
-                                setCopied(true);
-                                // toast.success("Template masuk ke chat!");
-                                setTimeout(() => setCopied(false), 2000);
-                            } else {
-                                navigator.clipboard.writeText(tmpl.text);
-                                setCopied(true);
-                                // toast.success("Template dicopy!");
-                                setTimeout(() => setCopied(false), 2000);
-                            }
-                        }}
-                    >
+                    <Button variant="ghost" size="icon" disabled={blocked} className="h-6 w-6 shrink-0 text-zinc-400 hover:text-white" onClick={handleInsertToChat}>
                         <PencilIcon className="h-3 w-3" />
                     </Button>
-                    <Button
-                        size="sm"
-                        className="bg-primary hover:bg-primary/90 text-primary-foreground h-6 min-w-0 flex-1 gap-1 px-1.5 text-[9px] font-bold"
-                        onClick={(e) => {
-                            e.stopPropagation();
-                            onSend(tmpl);
-                        }}
-                    >
+                    <Button size="sm" disabled={blocked} className="bg-primary hover:bg-primary/90 text-primary-foreground h-6 min-w-0 flex-1 gap-1 px-1.5 text-[9px] font-bold" onClick={handleSendClick}>
                         <SendIcon className="h-2.5 w-2.5 shrink-0" />
                         <span className="truncate">Kirim</span>
                     </Button>
@@ -73,40 +106,15 @@ function ChatTemplateCard({ tmpl, onSend, isRecommended, compact = false, chatbo
                     <span className="truncate text-xs font-bold text-zinc-200">{tmpl.title}</span>
                     <span className="rounded bg-zinc-800 px-1 py-0.2 text-[8px] font-extrabold uppercase text-zinc-400">{tmpl.type}</span>
                 </div> */}
-                <p className="truncate text-[10px] text-zinc-400">"{tmpl.text}"</p>
+                <p className="truncate text-[10px] text-zinc-400">"{resolvedText}"</p>
+                {accountPicker}
+                {blockedNote}
             </div>
             <div className="flex shrink-0 items-center gap-1.5">
-                <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-6 w-6 text-zinc-400 hover:text-white"
-                    onClick={(e) => {
-                        e.stopPropagation();
-                        if (chatboxRef.current?.isAlive) {
-                            chatboxRef.current.messageField.setText(tmpl.text);
-                            chatboxRef.current.messageField.focus();
-                            setCopied(true);
-                            // toast.success("Template masuk ke chat!");
-                            setTimeout(() => setCopied(false), 2000);
-                        } else {
-                            navigator.clipboard.writeText(tmpl.text);
-                            setCopied(true);
-                            // toast.success("Template dicopy!");
-                            setTimeout(() => setCopied(false), 2000);
-                        }
-                    }}
-                >
+                <Button variant="ghost" size="icon" disabled={blocked} className="h-6 w-6 text-zinc-400 hover:text-white" onClick={handleInsertToChat}>
                     <PencilIcon className="h-3 w-3" />
                 </Button>
-                <Button
-                    size="sm"
-                    variant="outline-primary"
-                    className="bg-primary hover:bg-primary/90 text-primary-foreground h-6.5 gap-1 px-2 text-[10px] font-bold"
-                    onClick={(e) => {
-                        e.stopPropagation();
-                        onSend(tmpl);
-                    }}
-                >
+                <Button size="sm" variant="outline-primary" disabled={blocked} className="bg-primary hover:bg-primary/90 text-primary-foreground h-6.5 gap-1 px-2 text-[10px] font-bold" onClick={handleSendClick}>
                     <SendIcon className="h-2.5 w-2.5 shrink-0" />
                     Kirim
                 </Button>
@@ -116,15 +124,28 @@ function ChatTemplateCard({ tmpl, onSend, isRecommended, compact = false, chatbo
 }
 
 function QuickRepliesPopover({ activeOrderDetails, onSend, chatboxRef }) {
+    const { library } = useEldoradoLibrary();
     const [search, setSearch] = useState("");
     const [templates, setTemplates] = useState([]);
+    const [linkedGames, setLinkedGames] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
 
+    // Nama game diambil dari Eldorado library, baris `games` cuma penghubung ke akun + link.
+    const gamesByUuid = useMemo(() => Object.fromEntries(attachLibraryInfo(linkedGames, library).map((g) => [g.id, g])), [linkedGames, library]);
+
     const currentStatus = activeOrderDetails?.status?.toLowerCase() || "";
+    const orderGameId = String(activeOrderDetails?.raw?.orderOfferDetails?.gameId || activeOrderDetails?.raw?.gameId || "");
+
+    // Template Specific ini buat game yang sama kayak ordernya?
+    const isForThisOrderGame = (tmpl) => {
+        const eldoradoId = gamesByUuid[tmpl.game_id]?.eldorado_game_id;
+        return Boolean(tmpl.game_id && orderGameId && eldoradoId && eldoradoId === orderGameId);
+    };
 
     const fetchTemplates = async () => {
         setIsLoading(true);
-        const { data, error } = await supabase.from("chat_templates").select("*").order("sort_order", { ascending: true });
+        const [{ data, error }, gamesList] = await Promise.all([supabase.from("chat_templates").select("*").order("sort_order", { ascending: true }), fetchGamesWithAccounts()]);
+        setLinkedGames(gamesList);
         if (error) {
             // toast.error("Gagal load templates: " + error.message);
         } else {
@@ -168,12 +189,17 @@ function QuickRepliesPopover({ activeOrderDetails, onSend, chatboxRef }) {
     };
 
     const filtered = templates.filter((t) => {
+        // Template Specific yang nempel ke game lain gak nyambung sama order ini.
+        const eldoradoId = gamesByUuid[t.game_id]?.eldorado_game_id;
+        if (t.game_id && orderGameId && eldoradoId && eldoradoId !== orderGameId) return false;
+
         if (search.trim() === "") {
-            return t.triggers?.includes(currentStatus);
+            return t.triggers?.includes(currentStatus) || isForThisOrderGame(t);
         }
         return t.text.toLowerCase().includes(search.toLowerCase()) || t.type.toLowerCase().includes(search.toLowerCase()) || t.title.toLowerCase().includes(search.toLowerCase());
     });
-    const displayedTemplates = filtered.slice(0, 5);
+    // Gak dibates jumlahnya — listnya udah scrollable (max-h-80), jadi semua rekomendasi kelihatan.
+    const displayedTemplates = filtered;
 
     return (
         <div className="absolute right-6 bottom-24 z-50">
@@ -195,7 +221,7 @@ function QuickRepliesPopover({ activeOrderDetails, onSend, chatboxRef }) {
                         </div>
                     </div>
 
-                    <div className="custom-scrollbar -mr-1 flex max-h-80 flex-col gap-1.5 overflow-y-auto overflow-x-hidden pr-1">
+                    <div className="custom-scrollbar -mr-1 flex max-h-80 flex-col gap-1.5 overflow-x-hidden overflow-y-auto pr-1">
                         {isLoading ? (
                             <div className="flex justify-center py-6">
                                 <Loader2Icon className="h-5 w-5 animate-spin text-zinc-500" />
@@ -222,12 +248,13 @@ function QuickRepliesPopover({ activeOrderDetails, onSend, chatboxRef }) {
                                                 <div key={tmpl.id} className="min-w-0">
                                                     <ChatTemplateCard
                                                         tmpl={tmpl}
+                                                        game={gamesByUuid[tmpl.game_id] || null}
                                                         chatboxRef={chatboxRef}
                                                         onSend={(t) => {
                                                             onSend(t);
                                                             setTemplates((prev) => prev.filter((x) => x.id !== t.id));
                                                         }}
-                                                        isRecommended={tmpl.triggers?.includes(currentStatus)}
+                                                        isRecommended={tmpl.triggers?.includes(currentStatus) || isForThisOrderGame(tmpl)}
                                                         compact={group.length > 1}
                                                     />
                                                 </div>
