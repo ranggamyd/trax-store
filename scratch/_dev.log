@@ -1220,3 +1220,7 @@ Import traces:
   └─ ƒ getEldoradoOrderDetails("e8c9b0f4-8fb7-47df-6d14-08defd188a20") in 684ms app/actions.js
  POST /orders 200 in 854ms (next.js: 4ms, application-code: 850ms)
   └─ ƒ getEldoradoOrders({"cursorValue":"","orderState":"","query":""}) in 819ms app/actions.js
+ POST /orders 200 in 940ms (next.js: 3ms, application-code: 937ms)
+  └─ ƒ getUnreadNotificationCount() in 926ms app/actions.js
+ POST /orders 200 in 840ms (next.js: 5ms, application-code: 836ms)
+  └─ ƒ getEldoradoOrders({"cursorValue":"","orderState":"","query":""}) in 816ms app/actions.js
