@@ -3,13 +3,14 @@
 import { Bell, BookOpen, Clock,Gamepad2, List, LogOut, MessageSquare, Shield, ShoppingCart, User, Users } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 
 import { getEldoradoNotifications,getUnreadNotificationCount } from "@/app/actions";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useTokenRecovery } from "@/hooks/useTokenRecovery";
 import { supabase } from "@/lib/supabase";
 
 export function Navbar() {
@@ -21,43 +22,36 @@ export function Navbar() {
     const [isLoadingNotifs, setIsLoadingNotifs] = useState(false);
     const [isPopoverOpen, setIsPopoverOpen] = useState(false);
 
-    useEffect(() => {
+    // Retry-nya lewat ref biar hook-nya bisa dipanggil duluan tanpa muter-muter dependensi
+    const fetchUnreadRef = useRef(null);
+    const { reportTokenExpired, reportTokenOk } = useTokenRecovery(useCallback(() => fetchUnreadRef.current?.(), []));
+
+    const fetchUnread = useCallback(async () => {
         if (pathname === "/login" || pathname === "/reset-password") return;
 
-        async function fetchUnread() {
-            const res = await getUnreadNotificationCount();
-            if (res.success) {
-                setUnreadCount(res.count);
-            } else if (res.error === "TOKEN_EXPIRED_401") {
-                window.postMessage({ type: "TRAX_FORCE_REFRESH" }, "*");
-            }
+        const res = await getUnreadNotificationCount();
+        if (res.success) {
+            setUnreadCount(res.count);
+            reportTokenOk();
+        } else if (res.error === "TOKEN_EXPIRED_401") {
+            // Biarin recovery yang urus: dia bakal nyuruh extension jemput token & retry sendiri
+            reportTokenExpired();
         }
+    }, [pathname, reportTokenExpired, reportTokenOk]);
+
+    useEffect(() => {
+        fetchUnreadRef.current = fetchUnread;
+    }, [fetchUnread]);
+
+    useEffect(() => {
+        if (pathname === "/login" || pathname === "/reset-password") return;
 
         fetchUnread();
 
         // Poll every 30 seconds
         const interval = setInterval(fetchUnread, 30000);
-
-        // Listen for extension auto-refresh
-        const handleMessage = async (event) => {
-            if (event.data?.type === "TRAX_TOKEN_REFRESHED") {
-                if (event.data.token) {
-                    await fetch("/api/sync-token", {
-                        method: "POST",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({ token: event.data.token }),
-                    });
-                }
-                fetchUnread();
-            }
-        };
-        window.addEventListener("message", handleMessage);
-
-        return () => {
-            clearInterval(interval);
-            window.removeEventListener("message", handleMessage);
-        };
-    }, [pathname]);
+        return () => clearInterval(interval);
+    }, [pathname, fetchUnread]);
 
     const fetchLatestNotifs = async () => {
         if (pathname === "/login" || pathname === "/reset-password") return;
@@ -66,7 +60,7 @@ export function Navbar() {
         if (res.success && res.data?.results) {
             setLatestNotifs(res.data.results.slice(0, 10)); // Top 10
         } else if (res.error === "TOKEN_EXPIRED_401") {
-            window.postMessage({ type: "TRAX_FORCE_REFRESH" }, "*");
+            reportTokenExpired();
         }
         setIsLoadingNotifs(false);
     };

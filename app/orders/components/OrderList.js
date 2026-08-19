@@ -3,6 +3,7 @@
 import { CalendarIcon, CheckIcon, ChevronsUpDownIcon, CopyIcon, FilterIcon, Gamepad2Icon, Loader2Icon, MessageSquareIcon, RefreshCwIcon, SearchIcon, TimerIcon, UserIcon } from "lucide-react";
 import { toast } from "sonner";
 
+import TokenStatusNotice from "@/components/molecules/TokenStatusNotice";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -12,7 +13,7 @@ import { cn } from "@/lib/utils";
 
 import { formatDeliveryTime, getStatusIcon, timeAgo } from "./utils";
 
-export default function OrderList({ activeOrderList, activeOrderId, setActiveOrderId, isLoadingOrders, fetchOrders, apiError, searchInput, setSearchInput, handleSearchSubmit, openFilter, setOpenFilter, orderStateFilter, setOrderStateFilter, handleScroll, isFetchingNextPage, hasNextPage, chatPreviews = {}, talkUserId }) {
+export default function OrderList({ activeOrderList, activeOrderId, setActiveOrderId, isLoadingOrders, fetchOrders, apiError, tokenStatus = "ok", tokenFailure = null, tokenRetryCount = 0, searchInput, setSearchInput, handleSearchSubmit, openFilter, setOpenFilter, orderStateFilter, setOrderStateFilter, handleScroll, isFetchingNextPage, hasNextPage, chatPreviews = {}, talkUserId }) {
     const { getGameName } = useEldoradoLibrary();
     return (
         <div className="flex h-full w-full shrink-0 flex-col gap-3 md:w-1/3">
@@ -109,10 +110,12 @@ export default function OrderList({ activeOrderList, activeOrderId, setActiveOrd
                             </Card>
                         ))}
                     </div>
+                ) : tokenStatus !== "ok" && activeOrderList.length === 0 ? (
+                    <TokenStatusNotice status={tokenStatus} failure={tokenFailure} retryCount={tokenRetryCount} />
                 ) : apiError ? (
                     <div className="rounded-xl border border-red-900/50 bg-red-950/30 p-4 text-sm text-red-400">
                         {apiError}
-                        <p className="mt-2 text-xs opacity-70">Pastiin ELDORADO_ID_TOKEN udah ada di .env.local bro!</p>
+                        <p className="mt-2 text-xs opacity-70">Coba refresh bentar lagi ya bro.</p>
                     </div>
                 ) : activeOrderList.length === 0 ? (
                     <div className="p-4 text-center text-sm text-zinc-500">Nggak ada pesanan aktif saat ini bro.</div>

@@ -1,16 +1,18 @@
 "use client";
 
 import { ArrowUpDownIcon, CalendarIcon, CheckIcon, CheckSquareIcon, ChevronDownIcon, ChevronLeftIcon, ChevronRightIcon, ClockIcon, DollarSign, FilterIcon, Gamepad2Icon, GlobeIcon, HashIcon, HistoryIcon, ImageIcon, InfoIcon, LayersIcon, Loader2Icon, MinusSquareIcon, PackageIcon, PauseCircleIcon, PauseIcon, PencilIcon, PercentIcon, PlayCircleIcon, RefreshCwIcon, SearchIcon, ShoppingCartIcon, SlidersHorizontalIcon, SquareIcon, TagIcon, Trash2Icon, TrendingUpIcon, XIcon } from "lucide-react";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 
 import { bulkDeleteEldoradoOffers, bulkPauseEldoradoOffers, deleteEldoradoOffer, getEldoradoOffers, pauseEldoradoOffer, resumeEldoradoOffer, updateEldoradoOfferDetails, updateEldoradoOfferPrice } from "@/app/actions";
+import TokenStatusNotice from "@/components/molecules/TokenStatusNotice";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useEldoradoLibrary } from "@/contexts/EldoradoLibraryContext";
+import { useTokenRecovery } from "@/hooks/useTokenRecovery";
 import { cn } from "@/lib/utils";
 
 // === Constants ===
@@ -289,6 +291,10 @@ export default function OffersPage() {
     const activeOffer = offerList.find((o) => o.id === activeOfferId) || null;
     const selectedCount = selectedIds.size;
 
+    // Token recovery: 401 gak langsung jadi error, extension dikasih kesempatan jemput token dulu
+    const fetchOffersRef = useRef(null);
+    const { tokenStatus, tokenFailure, retryCount, reportTokenExpired, reportTokenOk } = useTokenRecovery(useCallback(() => fetchOffersRef.current?.(), []));
+
     const fetchOffers = useCallback(async () => {
         setIsLoading(true);
         setApiError(null);
@@ -305,16 +311,23 @@ export default function OffersPage() {
         setIsLoading(false);
 
         if (res.success) {
+            reportTokenOk();
             setOffers(res.data);
             setTotalPages(res.totalPages || 0);
             setRecordCount(res.recordCount || 0);
             if (res.data.length > 0 && !activeOfferId) {
                 setActiveOfferId(res.data[0].id);
             }
+        } else if (res.error === "TOKEN_EXPIRED_401") {
+            reportTokenExpired();
         } else {
             setApiError(res.error);
         }
-    }, [searchQuery, offerStateFilter, categoryFilter, deliveryTimeFilter, pageIndex, pageSize, sortBy, sortAsc]);
+    }, [searchQuery, offerStateFilter, categoryFilter, deliveryTimeFilter, pageIndex, pageSize, sortBy, sortAsc, reportTokenExpired, reportTokenOk]);
+
+    useEffect(() => {
+        fetchOffersRef.current = fetchOffers;
+    }, [fetchOffers]);
 
     useEffect(() => {
         fetchOffers();
@@ -672,10 +685,12 @@ export default function OffersPage() {
                                     <OfferCardSkeleton key={i} />
                                 ))}
                             </div>
+                        ) : tokenStatus !== "ok" && offerList.length === 0 ? (
+                            <TokenStatusNotice status={tokenStatus} failure={tokenFailure} retryCount={retryCount} />
                         ) : apiError ? (
                             <div className="rounded-xl border border-red-900/50 bg-red-950/30 p-4 text-sm text-red-400">
                                 {apiError}
-                                <p className="mt-2 text-xs opacity-70">Pastiin ELDORADO_ID_TOKEN bener bro!</p>
+                                <p className="mt-2 text-xs opacity-70">Coba refresh bentar lagi ya bro.</p>
                             </div>
                         ) : offerList.length === 0 ? (
                             <div className="flex flex-col items-center gap-3 py-12 text-center">

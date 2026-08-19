@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import Talk from "talkjs";
 
 import { cancelOrder, getEldoradoOrderDetails, getEldoradoOrders, getTalkJsToken, markOrderDelivered } from "@/app/actions";
+import { useTokenRecovery } from "@/hooks/useTokenRecovery";
 
 import OrderDetail from "./components/OrderDetail";
 import OrderList from "./components/OrderList";
@@ -42,6 +43,12 @@ export default function OrdersPage() {
     const activeOrderList = Array.isArray(activeOrders) ? activeOrders : [];
     const activeOrderDetails = activeOrderList.find((o) => o.id === activeOrderId) || null;
 
+    // Token recovery: selama extension ada & Eldorado masih login, retry terus sampe token kejemput
+    const fetchOrdersRef = useRef(null);
+    const { tokenStatus, tokenFailure, retryCount, reportTokenExpired, reportTokenOk } = useTokenRecovery(
+        useCallback(() => fetchOrdersRef.current?.("", false, true), [])
+    );
+
     const fetchOrders = useCallback(
         async (cursor = "", append = false, silent = false) => {
             if (append) setIsFetchingNextPage(true);
@@ -58,6 +65,7 @@ export default function OrdersPage() {
 
             if (res.success) {
                 setApiError(null);
+                reportTokenOk();
                 // The API returns the results array inside res.data based on our action mapping
                 const orderData = Array.isArray(res.data) ? res.data : [];
 
@@ -98,36 +106,20 @@ export default function OrdersPage() {
                 // Update cursor for infinite scroll
                 setCursorValue(res.nextPageCursor);
                 setHasNextPage(!!res.nextPageCursor && orderData.length > 0);
+            } else if (res.error === "TOKEN_EXPIRED_401") {
+                // Jangan langsung teriak error: serahin ke recovery, dia yang nentuin bisa ditolong apa nggak
+                setApiError(null);
+                reportTokenExpired();
             } else {
                 setApiError(res.error);
-                if (res.error === "TOKEN_EXPIRED_401") {
-                    // toast.info("Token basi! TraxStore lagi minta tolong Extension buat nyari token baru diem-diem...", { duration: 8000 });
-                    window.postMessage({ type: "TRAX_FORCE_REFRESH" }, "*");
-                } else {
-                    // toast.error("Gagal narik pesanan: " + res.error);
-                }
+                // toast.error("Gagal narik pesanan: " + res.error);
             }
         },
-        [searchQuery, orderStateFilter]
+        [searchQuery, orderStateFilter, reportTokenExpired, reportTokenOk]
     );
 
-    // Listen for successful token refresh from Chrome Extension
     useEffect(() => {
-        const handleMessage = async (event) => {
-            if (event.data?.type === "TRAX_TOKEN_REFRESHED") {
-                if (event.data.token) {
-                    await fetch("/api/sync-token", {
-                        method: "POST",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({ token: event.data.token }),
-                    });
-                }
-                // toast.success("🔥 Token berhasil dicolong otomatis! Nge-refresh pesanan...");
-                fetchOrders("", false);
-            }
-        };
-        window.addEventListener("message", handleMessage);
-        return () => window.removeEventListener("message", handleMessage);
+        fetchOrdersRef.current = fetchOrders;
     }, [fetchOrders]);
 
     // Init TalkJS session for unreads tracking
@@ -168,16 +160,20 @@ export default function OrdersPage() {
         };
     }, [talkData]);
 
+    // Fetch TalkJS token for Live Chat; dicoba lagi tiap token Eldorado udah bener
     useEffect(() => {
-        // Fetch TalkJS token for Live Chat
+        if (talkData || tokenStatus !== "ok") return;
+
         getTalkJsToken().then((res) => {
             if (res && res.success) {
                 setTalkData(res);
             } else if (res && res.error === "TOKEN_EXPIRED_401") {
-                window.postMessage({ type: "TRAX_FORCE_REFRESH" }, "*");
+                reportTokenExpired();
             }
         });
+    }, [talkData, tokenStatus, reportTokenExpired]);
 
+    useEffect(() => {
         const urlParams = new URLSearchParams(window.location.search);
         const openId = urlParams.get("openOrderId");
 
@@ -229,15 +225,17 @@ export default function OrdersPage() {
             if (res.success) {
                 setActiveOrderFullDetails(res.data);
             } else {
+                if (res.error === "TOKEN_EXPIRED_401") reportTokenExpired();
                 setActiveOrderFullDetails(null);
             }
         },
-        [activeOrderId]
+        [activeOrderId, reportTokenExpired]
     );
 
     useEffect(() => {
         loadOrderDetails();
-    }, [loadOrderDetails]);
+        // tokenStatus ikut dipantau biar detail-nya ke-load ulang begitu token baru masuk
+    }, [loadOrderDetails, tokenStatus]);
 
     async function handleMarkDelivered(e) {
         e?.preventDefault();
@@ -289,7 +287,7 @@ export default function OrdersPage() {
     return (
         <div className="text-foreground bg-black p-4 pb-20 md:p-8">
             <div className="mx-auto flex h-[80vh] w-full max-w-7xl flex-col gap-6 md:flex-row">
-                <OrderList activeOrderList={activeOrderList} activeOrderId={activeOrderId} setActiveOrderId={setActiveOrderId} isLoadingOrders={isLoadingOrders} fetchOrders={fetchOrders} apiError={apiError} searchInput={searchInput} setSearchInput={setSearchInput} handleSearchSubmit={handleSearchSubmit} openFilter={openFilter} setOpenFilter={setOpenFilter} orderStateFilter={orderStateFilter} setOrderStateFilter={setOrderStateFilter} handleScroll={handleScroll} isFetchingNextPage={isFetchingNextPage} hasNextPage={hasNextPage} chatPreviews={chatPreviews} talkUserId={talkData?.userId} />
+                <OrderList activeOrderList={activeOrderList} activeOrderId={activeOrderId} setActiveOrderId={setActiveOrderId} isLoadingOrders={isLoadingOrders} fetchOrders={fetchOrders} apiError={apiError} tokenStatus={tokenStatus} tokenFailure={tokenFailure} tokenRetryCount={retryCount} searchInput={searchInput} setSearchInput={setSearchInput} handleSearchSubmit={handleSearchSubmit} openFilter={openFilter} setOpenFilter={setOpenFilter} orderStateFilter={orderStateFilter} setOrderStateFilter={setOrderStateFilter} handleScroll={handleScroll} isFetchingNextPage={isFetchingNextPage} hasNextPage={hasNextPage} chatPreviews={chatPreviews} talkUserId={talkData?.userId} />
 
                 <OrderDetail activeOrderId={activeOrderId} activeOrderDetails={activeOrderDetails} activeOrderFullDetails={activeOrderFullDetails} isLoadingOrderDetails={isLoadingOrderDetails} handleMarkDelivered={handleMarkDelivered} isDelivering={isDelivering} handleCancelOrder={handleCancelOrder} isCanceling={isCanceling} cancelReason={cancelReason} setCancelReason={setCancelReason} cancelMessage={cancelMessage} setCancelMessage={setCancelMessage} isCancelDialogOpen={isCancelDialogOpen} setIsCancelDialogOpen={setIsCancelDialogOpen} talkData={talkData} robloxUsernames={robloxUsernames} />
             </div>
