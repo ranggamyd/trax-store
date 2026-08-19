@@ -40,7 +40,7 @@ export function GamePrivateServerDialog({ open, onOpenChange, game, onSaved }) {
             setRows([]);
             setRemovedRows([]);
 
-            const [{ data: accData }, { data: gData }] = await Promise.all([supabase.from("accounts").select("id, username, status").order("username"), supabase.from("games").select("id, name, requires_private_server").eq("eldorado_game_id", eldoradoGameId).maybeSingle()]);
+            const [{ data: accData }, { data: gData }] = await Promise.all([supabase.from("accounts").select("id, username").order("username"), supabase.from("games").select("id, name, requires_private_server").eq("eldorado_game_id", eldoradoGameId).maybeSingle()]);
 
             let linked = [];
             if (gData) {
@@ -193,23 +193,7 @@ export function GamePrivateServerDialog({ open, onOpenChange, game, onSaved }) {
                     <>
                         <div className="space-y-2">
                             <Label className="text-zinc-400">Tambah akun</Label>
-                            <ComboboxSelect
-                                items={availableAccounts}
-                                value=""
-                                onSelect={handleAddAccount}
-                                getItemValue={(acc) => acc.username}
-                                renderItem={(acc) => (
-                                    <>
-                                        {acc.username}
-                                        {acc.status === "EMPTY_ROBUX" && <span className="ml-2 inline-flex items-center rounded-sm border border-red-900 bg-red-950 px-2 py-0.5 text-[10px] font-bold text-red-500">HABIS</span>}
-                                    </>
-                                )}
-                                placeholder={availableAccounts.length > 0 ? "-- Pilih akun --" : "Semua akun udah ditautin"}
-                                searchPlaceholder="Cari atau ketik akun baru..."
-                                emptyText="Gak ada akun yang cocok."
-                                onCreateNew={handleCreateAccount}
-                                createNewLabel={(term) => `Daftarin "${term}"`}
-                            />
+                            <ComboboxSelect items={availableAccounts} value="" onSelect={handleAddAccount} getItemValue={(acc) => acc.username} placeholder={availableAccounts.length > 0 ? "-- Pilih akun --" : "Semua akun udah ditautin"} searchPlaceholder="Cari atau ketik akun baru..." emptyText="Gak ada akun yang cocok." onCreateNew={handleCreateAccount} createNewLabel={(term) => `Daftarin "${term}"`} />
                         </div>
 
                         <div className="space-y-2">

@@ -1,6 +1,6 @@
 "use client";
 
-import { Gamepad2, Link2, Loader2Icon, MessageSquare, Minus, Pencil, Plus, Trash2, TriangleAlert, UserRound } from "lucide-react";
+import { Copy, Gamepad2, Link2, Loader2Icon, MessageSquare, Minus, Pencil, Plus, Trash2, TriangleAlert, UserRound } from "lucide-react";
 import { useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 
@@ -143,6 +143,17 @@ export default function TemplatesPage() {
         fetchTemplates();
     };
 
+    const handleDuplicate = async (tmpl) => {
+        // Copy semua kolom apa adanya kecuali identitas barisnya, biar relasi game/akun ikut kebawa.
+        const { id: _id, created_at: _createdAt, ...copy } = tmpl;
+        const { error } = await supabase.from("chat_templates").insert({ ...copy, title: `${tmpl.title} (copy)` });
+
+        if (error) return toast.error("Gagal nyalin template", { description: error.message });
+
+        toast.success("Template disalin!", { description: `"${tmpl.title} (copy)" udah kebikin, tinggal diedit.` });
+        fetchTemplates();
+    };
+
     const handleDelete = async (id) => {
         await supabase.from("chat_templates").delete().eq("id", id);
 
@@ -222,7 +233,8 @@ export default function TemplatesPage() {
                                             </div>
                                         </div>
                                         <div className="flex gap-1">
-                                            <ActionIcon icon={Pencil} onClick={() => openEditModal(tmpl)} className="hover:text-blue-400" />
+                                            <ActionIcon icon={Pencil} onClick={() => openEditModal(tmpl)} title="Edit template" className="hover:text-blue-400" />
+                                            <ActionIcon icon={Copy} onClick={() => handleDuplicate(tmpl)} title="Duplikat template" className="hover:text-primary" />
                                             <ConfirmDialog trigger={<ActionIcon icon={Trash2} className="hover:text-red-400" />} title="Hapus Template" description={`Yakin mau hapus template "${tmpl.title}"?`} onConfirm={() => handleDelete(tmpl.id)} confirmText="Hapus" />
                                         </div>
                                     </div>

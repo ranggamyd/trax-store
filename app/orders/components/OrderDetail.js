@@ -136,12 +136,6 @@ function QuickRepliesPopover({ activeOrderDetails, onSend, chatboxRef }) {
     const currentStatus = activeOrderDetails?.status?.toLowerCase() || "";
     const orderGameId = String(activeOrderDetails?.raw?.orderOfferDetails?.gameId || activeOrderDetails?.raw?.gameId || "");
 
-    // Template Specific ini buat game yang sama kayak ordernya?
-    const isForThisOrderGame = (tmpl) => {
-        const eldoradoId = gamesByUuid[tmpl.game_id]?.eldorado_game_id;
-        return Boolean(tmpl.game_id && orderGameId && eldoradoId && eldoradoId === orderGameId);
-    };
-
     const fetchTemplates = async () => {
         setIsLoading(true);
         const [{ data, error }, gamesList] = await Promise.all([supabase.from("chat_templates").select("*").order("sort_order", { ascending: true }), fetchGamesWithAccounts()]);
@@ -193,8 +187,9 @@ function QuickRepliesPopover({ activeOrderDetails, onSend, chatboxRef }) {
         const eldoradoId = gamesByUuid[t.game_id]?.eldorado_game_id;
         if (t.game_id && orderGameId && eldoradoId && eldoradoId !== orderGameId) return false;
 
+        // Rekomendasi murni ngikutin trigger yang dipilih pas bikin template.
         if (search.trim() === "") {
-            return t.triggers?.includes(currentStatus) || isForThisOrderGame(t);
+            return t.triggers?.includes(currentStatus);
         }
         return t.text.toLowerCase().includes(search.toLowerCase()) || t.type.toLowerCase().includes(search.toLowerCase()) || t.title.toLowerCase().includes(search.toLowerCase());
     });
@@ -254,7 +249,7 @@ function QuickRepliesPopover({ activeOrderDetails, onSend, chatboxRef }) {
                                                             onSend(t);
                                                             setTemplates((prev) => prev.filter((x) => x.id !== t.id));
                                                         }}
-                                                        isRecommended={tmpl.triggers?.includes(currentStatus) || isForThisOrderGame(tmpl)}
+                                                        isRecommended={tmpl.triggers?.includes(currentStatus)}
                                                         compact={group.length > 1}
                                                     />
                                                 </div>
