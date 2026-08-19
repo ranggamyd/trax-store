@@ -26,12 +26,12 @@ function ChatTemplateCard({ tmpl, onSend, isRecommended, compact = false, chatbo
                         <span className="rounded bg-zinc-800 px-1 text-[7px] font-extrabold uppercase text-zinc-500">{tmpl.type}</span>
                     </div>
                 </div> */}
-                <p className="line-clamp-2 text-[10px] leading-tight text-zinc-400">"{tmpl.text}"</p>
+                <p className="line-clamp-2 text-[10px] leading-tight break-words text-zinc-400">"{tmpl.text}"</p>
                 <div className="mt-auto flex items-center gap-1 border-t border-zinc-800/60 pt-1">
                     <Button
                         variant="ghost"
                         size="icon"
-                        className="h-5 w-5 shrink-0 text-zinc-400 hover:text-white"
+                        className="h-6 w-6 shrink-0 text-zinc-400 hover:text-white"
                         onClick={(e) => {
                             e.stopPropagation();
                             if (chatboxRef.current?.isAlive) {
@@ -52,14 +52,14 @@ function ChatTemplateCard({ tmpl, onSend, isRecommended, compact = false, chatbo
                     </Button>
                     <Button
                         size="sm"
-                        className="bg-primary hover:bg-primary/90 text-primary-foreground h-6 flex-1 gap-1 px-2 text-[9px] font-bold"
+                        className="bg-primary hover:bg-primary/90 text-primary-foreground h-6 min-w-0 flex-1 gap-1 px-1.5 text-[9px] font-bold"
                         onClick={(e) => {
                             e.stopPropagation();
                             onSend(tmpl);
                         }}
                     >
-                        <SendIcon className="h-2 w-2 shrink-0" />
-                        Kirim
+                        <SendIcon className="h-2.5 w-2.5 shrink-0" />
+                        <span className="truncate">Kirim</span>
                     </Button>
                 </div>
             </div>
@@ -183,19 +183,19 @@ function QuickRepliesPopover({ activeOrderDetails, onSend, chatboxRef }) {
                         <SparklesIcon className="h-5 w-5" />
                     </Button>
                 </PopoverTrigger>
-                <PopoverContent side="top" align="end" className="mb-3 flex w-[360px] flex-col gap-2 overflow-hidden rounded-2xl border border-zinc-800 bg-zinc-950/95 p-3 shadow-2xl backdrop-blur-xl">
+                <PopoverContent side="top" align="end" sideOffset={8} collisionPadding={16} className="mb-3 flex w-[380px] max-w-[calc(100vw-2rem)] flex-col gap-2.5 overflow-hidden rounded-2xl border border-zinc-800 bg-zinc-950/95 p-3 shadow-2xl backdrop-blur-xl">
                     <div className="flex items-center justify-between gap-2">
                         <div className="flex items-center gap-2">
                             <SparklesIcon className="text-primary h-4 w-4" />
                             <h3 className="text-sm font-bold text-white">Quick Replies</h3>
                         </div>
-                        <div className="relative w-40">
-                            <SearchIcon className="absolute top-2 left-2 h-3.5 w-3.5 text-zinc-500" />
-                            <input type="text" placeholder="Cari..." value={search} onChange={(e) => setSearch(e.target.value)} className="focus:border-primary h-7.5 w-full rounded-md border border-zinc-800 bg-zinc-900 pr-2 pl-7.5 text-xs text-white transition-colors focus:outline-none" />
+                        <div className="relative w-40 shrink-0">
+                            <SearchIcon className="pointer-events-none absolute top-1/2 left-2 h-3.5 w-3.5 -translate-y-1/2 text-zinc-500" />
+                            <input type="text" placeholder="Cari..." value={search} onChange={(e) => setSearch(e.target.value)} className="focus:border-primary h-7.5 w-full rounded-md border border-zinc-800 bg-zinc-900 pr-2 pl-7.5 text-xs text-white transition-colors placeholder:text-zinc-500 focus:outline-none" />
                         </div>
                     </div>
 
-                    <div className="custom-scrollbar flex max-h-80 flex-col gap-1.5 overflow-y-auto">
+                    <div className="custom-scrollbar -mr-1 flex max-h-80 flex-col gap-1.5 overflow-y-auto overflow-x-hidden pr-1">
                         {isLoading ? (
                             <div className="flex justify-center py-6">
                                 <Loader2Icon className="h-5 w-5 animate-spin text-zinc-500" />
@@ -217,9 +217,9 @@ function QuickRepliesPopover({ activeOrderDetails, onSend, chatboxRef }) {
                                         return aOrder - bOrder;
                                     })
                                     .map(([order, group]) => (
-                                        <div key={order} className={`flex gap-1.5 ${group.length > 1 ? "flex-row items-stretch" : "flex-col"}`}>
+                                        <div key={order} className={cn("gap-1.5", group.length === 1 ? "flex flex-col" : group.length === 3 ? "grid grid-cols-3 items-stretch" : "grid grid-cols-2 items-stretch")}>
                                             {group.map((tmpl) => (
-                                                <div key={tmpl.id} className={group.length > 1 ? "min-w-0 flex-1" : ""}>
+                                                <div key={tmpl.id} className="min-w-0">
                                                     <ChatTemplateCard
                                                         tmpl={tmpl}
                                                         chatboxRef={chatboxRef}

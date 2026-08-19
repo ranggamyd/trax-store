@@ -708,8 +708,8 @@ export default function OffersPage() {
                                         }}
                                     >
                                         <CardHeader className="p-2.5 pb-1">
-                                            <CardTitle className="flex items-start justify-between text-sm font-bold text-zinc-200">
-                                                <div className="flex max-w-[65%] items-center gap-2">
+                                            <CardTitle className="flex min-w-0 items-start justify-between gap-2 text-sm font-bold text-zinc-200">
+                                                <div className="flex min-w-0 flex-1 items-center gap-2">
                                                     {selectMode ? (
                                                         <button onClick={(e) => toggleSelect(offer.id, e)} className="shrink-0">
                                                             {isSelected ? <CheckSquareIcon className="text-primary h-4 w-4" /> : <SquareIcon className="h-4 w-4 text-zinc-500" />}
@@ -719,9 +719,9 @@ export default function OffersPage() {
                                                     ) : (
                                                         <PackageIcon className="h-8 w-8 shrink-0 text-zinc-500" />
                                                     )}
-                                                    <div className="flex flex-col gap-0.5 truncate">
+                                                    <div className="flex min-w-0 flex-1 flex-col gap-0.5">
                                                         {offer.gameId && (
-                                                            <div className="flex items-center gap-1">
+                                                            <div className="flex min-w-0 items-center gap-1">
                                                                 <img src={`https://assetsdelivery.eldorado.gg/v7/_assets_/icons/v28/${offer.gameId}.png`} alt="Game" className="h-3 w-3 shrink-0 rounded-sm object-cover opacity-60" />
                                                                 <span className="truncate text-[9px] font-bold tracking-widest text-zinc-500 uppercase">{getGameName(offer.gameId) || "Game"}</span>
                                                             </div>
@@ -729,9 +729,9 @@ export default function OffersPage() {
                                                         <span className="text-primary truncate text-xs font-medium sm:text-sm">{offer.offerTitle}</span>
                                                     </div>
                                                 </div>
-                                                <div className="ml-2 flex shrink-0 flex-col items-end gap-1">
-                                                    <span className={`rounded-md border px-1.5 py-0.5 text-[9px] font-bold tracking-wider uppercase ${getStateBadgeClass(offer.offerState)}`}>{offer.offerState}</span>
-                                                    <span className="text-accent text-xs font-bold">{formatCurrency(offer.pricePerUnit?.amount)}</span>
+                                                <div className="flex shrink-0 flex-col items-end gap-1">
+                                                    <span className={`rounded-md border px-1.5 py-0.5 text-[9px] font-bold tracking-wider whitespace-nowrap uppercase ${getStateBadgeClass(offer.offerState)}`}>{offer.offerState}</span>
+                                                    <span className="text-accent text-xs font-bold whitespace-nowrap tabular-nums">{formatCurrency(offer.pricePerUnit?.amount)}</span>
                                                 </div>
                                             </CardTitle>
                                         </CardHeader>
