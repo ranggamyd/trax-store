@@ -636,3 +636,76 @@ Import traces:
  POST /games 200 in 394ms (next.js: 3ms, application-code: 391ms)
   └─ ƒ getUnreadNotificationCount() in 384ms app/actions.js
  GET /games 200 in 75ms (next.js: 6ms, application-code: 70ms)
+ POST /games 200 in 400ms (next.js: 2ms, application-code: 397ms)
+  └─ ƒ getUnreadNotificationCount() in 389ms app/actions.js
+ GET /games 200 in 610ms (next.js: 19ms, application-code: 590ms)
+ POST /games 200 in 1937ms (next.js: 16ms, application-code: 1921ms)
+  └─ ƒ getUnreadNotificationCount() in 1873ms app/actions.js
+ POST /games 200 in 75ms (next.js: 6ms, application-code: 69ms)
+  └─ ƒ getEldoradoLibrary() in 3ms app/actions.js
+ POST /games 200 in 398ms (next.js: 12ms, application-code: 386ms)
+  └─ ƒ getUnreadNotificationCount() in 340ms app/actions.js
+ POST /games 200 in 53ms (next.js: 11ms, application-code: 42ms)
+  └─ ƒ getEldoradoLibrary() in 2ms app/actions.js
+ POST /games 200 in 601ms (next.js: 13ms, application-code: 587ms)
+  └─ ƒ getUnreadNotificationCount() in 564ms app/actions.js
+ GET /orders 200 in 67ms (next.js: 12ms, application-code: 55ms)
+ POST /api/sync-token 200 in 107ms (next.js: 34ms, application-code: 73ms)
+ POST /orders 200 in 582ms (next.js: 113ms, application-code: 469ms)
+  └─ ƒ getUnreadNotificationCount() in 333ms app/actions.js
+ POST /orders 200 in 700ms (next.js: 63ms, application-code: 637ms)
+  └─ ƒ getTalkJsToken() in 579ms app/actions.js
+[browser] [TalkJS] No role is set for user 350d62e9-b7b0-4f71-8374-2e0daf98a8e6. TalkJS will work, but with some features disabled (such as email notifications). (https://cdn.talkjs.com/talk.js:1:101676)
+ POST /orders 200 in 802ms (next.js: 21ms, application-code: 781ms)
+  └─ ƒ getEldoradoOrders({"cursorValue":"","orderState":"","query":""}) in 717ms app/actions.js
+ POST /orders 200 in 355ms (next.js: 11ms, application-code: 344ms)
+  └─ ƒ getTalkJsToken() in 312ms app/actions.js
+[browser] [TalkJS] No role is set for user 350d62e9-b7b0-4f71-8374-2e0daf98a8e6. TalkJS will work, but with some features disabled (such as email notifications). (https://cdn.talkjs.com/talk.js:1:101676)
+ POST /orders 200 in 1598ms (next.js: 19ms, application-code: 1579ms)
+  └─ ƒ getEldoradoOrders({"cursorValue":"","orderState":"","query":""}) in 1396ms app/actions.js
+ POST /orders 200 in 356ms (next.js: 8ms, application-code: 348ms)
+  └─ ƒ getUnreadNotificationCount() in 290ms app/actions.js
+ POST /orders 200 in 750ms (next.js: 18ms, application-code: 732ms)
+  └─ ƒ getEldoradoOrders({"cursorValue":"","orderState":"","query":""}) in 560ms app/actions.js
+ POST /orders 200 in 739ms (next.js: 52ms, application-code: 688ms)
+  └─ ƒ getEldoradoOrderDetails("e8c9b0f4-8fb7-47df-6d14-08defd188a20") in 648ms app/actions.js
+ POST /orders 200 in 1002ms (next.js: 14ms, application-code: 988ms)
+  └─ ƒ getEldoradoOrders({"cursorValue":"","orderState":"","query":""}) in 864ms app/actions.js
+ POST /orders 200 in 1082ms (next.js: 29ms, application-code: 1053ms)
+  └─ ƒ getUnreadNotificationCount() in 974ms app/actions.js
+ POST /orders 200 in 1051ms (next.js: 35ms, application-code: 1016ms)
+  └─ ƒ getEldoradoOrders({"cursorValue":"","orderState":"","query":""}) in 896ms app/actions.js
+ POST /orders 200 in 2.9s (next.js: 2ms, application-code: 2.9s)
+  └─ ƒ getEldoradoOrders({"cursorValue":"","orderState":"","query":""}) in 2864ms app/actions.js
+ POST /orders 200 in 470ms (next.js: 11ms, application-code: 460ms)
+  └─ ƒ getUnreadNotificationCount() in 425ms app/actions.js
+ POST /orders 200 in 406ms (next.js: 5ms, application-code: 401ms)
+  └─ ƒ getEldoradoOrders({"cursorValue":"","orderState":"","query":""}) in 368ms app/actions.js
+ POST /orders 200 in 667ms (next.js: 4ms, application-code: 663ms)
+  └─ ƒ getEldoradoOrders({"cursorValue":"","orderState":"","query":""}) in 643ms app/actions.js
+ POST /orders 200 in 393ms (next.js: 3ms, application-code: 390ms)
+  └─ ƒ getUnreadNotificationCount() in 382ms app/actions.js
+ POST /orders 200 in 443ms (next.js: 2ms, application-code: 441ms)
+  └─ ƒ getEldoradoOrders({"cursorValue":"","orderState":"","query":""}) in 419ms app/actions.js
+ GET /games 200 in 102ms (next.js: 18ms, application-code: 84ms)
+ POST /games 200 in 1255ms (next.js: 186ms, application-code: 1069ms)
+  └─ ƒ getUnreadNotificationCount() in 984ms app/actions.js
+ POST /games 200 in 442ms (next.js: 37ms, application-code: 405ms)
+  └─ ƒ getUnreadNotificationCount() in 316ms app/actions.js
+ GET /orders 200 in 61ms (next.js: 12ms, application-code: 49ms)
+ POST /orders 200 in 1029ms (next.js: 27ms, application-code: 1003ms)
+  └─ ƒ getUnreadNotificationCount() in 986ms app/actions.js
+ POST /orders 200 in 425ms (next.js: 10ms, application-code: 415ms)
+  └─ ƒ getTalkJsToken() in 386ms app/actions.js
+[browser] [TalkJS] No role is set for user 350d62e9-b7b0-4f71-8374-2e0daf98a8e6. TalkJS will work, but with some features disabled (such as email notifications). (https://cdn.talkjs.com/talk.js:1:101676)
+ POST /orders 200 in 1161ms (next.js: 11ms, application-code: 1149ms)
+  └─ ƒ getEldoradoOrders({"cursorValue":"","orderState":"","query":""}) in 1099ms app/actions.js
+ POST /orders 200 in 429ms (next.js: 11ms, application-code: 418ms)
+  └─ ƒ getTalkJsToken() in 381ms app/actions.js
+[browser] [TalkJS] No role is set for user 350d62e9-b7b0-4f71-8374-2e0daf98a8e6. TalkJS will work, but with some features disabled (such as email notifications). (https://cdn.talkjs.com/talk.js:1:101676)
+ POST /orders 200 in 651ms (next.js: 32ms, application-code: 620ms)
+  └─ ƒ getEldoradoOrders({"cursorValue":"","orderState":"","query":""}) in 502ms app/actions.js
+ POST /orders 200 in 613ms (next.js: 33ms, application-code: 580ms)
+  └─ ƒ getEldoradoOrderDetails("e8c9b0f4-8fb7-47df-6d14-08defd188a20") in 484ms app/actions.js
+ POST /orders 200 in 2.1s (next.js: 9ms, application-code: 2.1s)
+  └─ ƒ getEldoradoOrders({"cursorValue":"","orderState":"","query":""}) in 2088ms app/actions.js
