@@ -382,16 +382,29 @@ export default function OrderDetail({ activeOrderId, activeOrderDetails, activeO
                                     {activeOrderDetails.buyer || activeOrderDetails.buyerName || "Buyer"}
                                 </div>
 
-                                {robloxUsernames?.length > 0 && (
+                                {/* Waktu detail order baru masih loading, JANGAN render username sisa
+                                    order sebelumnya — salah copy username = salah kirim barang.
+                                    Skeleton dulu sampai username punya order ini bener-bener nyampe. */}
+                                {isLoadingOrderDetails ? (
                                     <>
                                         <span className="h-1 w-1 rounded-full bg-zinc-700"></span>
                                         <div className="flex flex-wrap items-center gap-1.5">
                                             <Gamepad2Icon className="h-4 w-4 text-zinc-400" />
-                                            {robloxUsernames.map((uname, idx) => (
-                                                <CopyablePill key={idx} value={uname} />
-                                            ))}
+                                            <Skeleton className="h-[26px] w-28 rounded-full bg-zinc-800" />
                                         </div>
                                     </>
+                                ) : (
+                                    robloxUsernames?.length > 0 && (
+                                        <>
+                                            <span className="h-1 w-1 rounded-full bg-zinc-700"></span>
+                                            <div className="flex flex-wrap items-center gap-1.5">
+                                                <Gamepad2Icon className="h-4 w-4 text-zinc-400" />
+                                                {robloxUsernames.map((uname, idx) => (
+                                                    <CopyablePill key={idx} value={uname} />
+                                                ))}
+                                            </div>
+                                        </>
+                                    )
                                 )}
 
                                 <span className="h-1 w-1 rounded-full bg-zinc-700"></span>

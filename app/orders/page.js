@@ -214,12 +214,29 @@ export default function OrdersPage() {
         setOrderStateFilter(e.target.value); // Trigger fetchOrders
     };
 
+    // Nandain order mana yang detail-nya paling terakhir diminta
+    const detailRequestRef = useRef(null);
+
     const loadOrderDetails = useCallback(
         async (silent = false) => {
             if (!activeOrderId) return;
 
-            if (!silent) setIsLoadingOrderDetails(true);
-            const res = await getEldoradoOrderDetails(activeOrderId);
+            const requestedId = activeOrderId;
+            detailRequestRef.current = requestedId;
+
+            if (!silent) {
+                // Buang detail order sebelumnya DULUAN. Kalau ga, selama request jalan
+                // panel masih megang data order lama sementara header udah ganti order baru.
+                setActiveOrderFullDetails(null);
+                setIsLoadingOrderDetails(true);
+            }
+
+            const res = await getEldoradoOrderDetails(requestedId);
+
+            // Klik cepet A lalu B bisa bikin response A nyampe belakangan dan nimpa B.
+            // Abaikan response yang udah ga relevan.
+            if (detailRequestRef.current !== requestedId) return;
+
             if (!silent) setIsLoadingOrderDetails(false);
 
             if (res.success) {

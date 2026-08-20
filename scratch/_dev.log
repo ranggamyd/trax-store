@@ -1224,3 +1224,21 @@ Import traces:
   └─ ƒ getUnreadNotificationCount() in 926ms app/actions.js
  POST /orders 200 in 840ms (next.js: 5ms, application-code: 836ms)
   └─ ƒ getEldoradoOrders({"cursorValue":"","orderState":"","query":""}) in 816ms app/actions.js
+ POST /orders 200 in 2.7s (next.js: 4ms, application-code: 2.7s)
+  └─ ƒ getEldoradoOrders({"cursorValue":"","orderState":"","query":""}) in 2569ms app/actions.js
+ POST /orders 200 in 408ms (next.js: 3ms, application-code: 405ms)
+  └─ ƒ getUnreadNotificationCount() in 396ms app/actions.js
+ POST /orders 200 in 767ms (next.js: 3ms, application-code: 764ms)
+  └─ ƒ getEldoradoOrders({"cursorValue":"","orderState":"","query":""}) in 728ms app/actions.js
+ POST /orders 200 in 598ms (next.js: 2ms, application-code: 596ms)
+  └─ ƒ getEldoradoOrders({"cursorValue":"","orderState":"","query":""}) in 583ms app/actions.js
+ POST /orders 200 in 927ms (next.js: 3ms, application-code: 924ms)
+  └─ ƒ getUnreadNotificationCount() in 917ms app/actions.js
+ POST /orders 200 in 1022ms (next.js: 2ms, application-code: 1020ms)
+  └─ ƒ getEldoradoOrders({"cursorValue":"","orderState":"","query":""}) in 1004ms app/actions.js
+ POST /orders 200 in 1303ms (next.js: 3ms, application-code: 1300ms)
+  └─ ƒ getEldoradoOrders({"cursorValue":"","orderState":"","query":""}) in 1287ms app/actions.js
+ POST /orders 200 in 563ms (next.js: 9ms, application-code: 554ms)
+  └─ ƒ getUnreadNotificationCount() in 534ms app/actions.js
+ POST /orders 200 in 511ms (next.js: 3ms, application-code: 508ms)
+  └─ ƒ getEldoradoOrders({"cursorValue":"","orderState":"","query":""}) in 357ms app/actions.js

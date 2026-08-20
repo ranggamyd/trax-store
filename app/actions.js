@@ -118,6 +118,105 @@ async function fetchEldorado(endpoint, options = {}) {
     return text ? JSON.parse(text) : null;
 }
 
+function isRobloxDetail(detail) {
+    return detail?.type === "RobloxUsername" || detail?.name === "RobloxUsername";
+}
+
+// Value delivery detail sifatnya immutable begitu buyer submit, jadi aman di-cache.
+// Ini nahan spam request pas order list auto-refresh tiap beberapa detik.
+const deliveryDetailCache = new Map();
+const DELIVERY_DETAIL_CACHE_MAX = 500;
+
+async function fetchDeliveryDetailValue(orderId, detailId) {
+    const cacheKey = `${orderId}:${detailId}`;
+    if (deliveryDetailCache.has(cacheKey)) return deliveryDetailCache.get(cacheKey);
+
+    try {
+        // Response-nya cuma { "value": "em4qi" }
+        const res = await fetchEldorado(`/v1/orders/me/${orderId}/delivery-details/${detailId}`);
+        const value = typeof res?.value === "string" && res.value.trim() ? res.value.trim() : null;
+
+        if (value) {
+            if (deliveryDetailCache.size >= DELIVERY_DETAIL_CACHE_MAX) {
+                deliveryDetailCache.delete(deliveryDetailCache.keys().next().value);
+            }
+            deliveryDetailCache.set(cacheKey, value);
+        }
+        return value;
+    } catch (error) {
+        // Satu detail gagal jangan sampai bikin seluruh list order gagal
+        console.error(`[fetchDeliveryDetailValue] ${orderId}/${detailId}:`, error.message);
+        return null;
+    }
+}
+
+/**
+ * Roblox username bisa dateng dari dua bentuk payload:
+ *  1. `deliveryDetails[]` -> value-nya udah inline, langsung pake.
+ *  2. `deliveryDetails: null` + `deliveryDetailsSubmission.details[]` -> di situ cuma
+ *     ada { id, type }, value-nya harus dihit satu-satu ke /delivery-details/{id}.
+ * Balikin { details, inline } biar caller tau perlu backfill `deliveryDetails` atau ga.
+ */
+async function resolveRobloxDetails(order) {
+    if (!order) return { details: [], inline: true };
+
+    const inlineDetails = (Array.isArray(order.deliveryDetails) ? order.deliveryDetails : []).filter((d) => isRobloxDetail(d) && typeof d.value === "string" && d.value.trim());
+    if (inlineDetails.length > 0) return { details: inlineDetails, inline: true };
+
+    const submitted = order.deliveryDetailsSubmission?.details;
+    if (!order.id || !Array.isArray(submitted)) return { details: [], inline: true };
+
+    const pending = submitted.filter((d) => isRobloxDetail(d) && d.id);
+    if (pending.length === 0) return { details: [], inline: true };
+
+    const fetched = [];
+    for (const detail of pending) {
+        const value = await fetchDeliveryDetailValue(order.id, detail.id);
+        if (value) fetched.push({ ...detail, value });
+    }
+    return { details: fetched, inline: false };
+}
+
+/** Jalanin worker paralel tapi dibatesin, biar 50 order ga nembak 50 request sekaligus. */
+async function mapWithLimit(items, limit, worker) {
+    const results = new Array(items.length);
+    let cursor = 0;
+
+    const runners = Array.from({ length: Math.min(limit, items.length) }, async () => {
+        while (cursor < items.length) {
+            const index = cursor++;
+            results[index] = await worker(items[index], index);
+        }
+    });
+
+    await Promise.all(runners);
+    return results;
+}
+
+/** Bentuk order mentah dari API jadi shape yang dipake UI. */
+async function mapOrder(order) {
+    const { details: robloxDetails, inline } = await resolveRobloxDetails(order);
+
+    // Backfill `raw.deliveryDetails` kalau value-nya hasil hit terpisah, supaya UI yang
+    // baca raw.deliveryDetails (app/orders/page.js) tetep jalan tanpa perlu diubah.
+    if (robloxDetails.length > 0 && !inline) {
+        order.deliveryDetails = [...(Array.isArray(order.deliveryDetails) ? order.deliveryDetails : []), ...robloxDetails];
+    }
+
+    const robloxUser = robloxDetails.map((d) => d.value).join(" ") || order.userRequestDetails?.robloxUsername || order.robloxUsername || null;
+
+    return {
+        id: order.id,
+        buyer: order.buyerUsername,
+        game: order.orderOfferDetails?.offerTitle || order.orderOfferDetails?.gameCategoryTitle || "Item",
+        quantity: order.purchaseQuantity || 1,
+        robloxUsername: robloxUser,
+        status: order.state?.state,
+        talkJsConversationId: order.talkJsConversationId,
+        raw: order,
+    };
+}
+
 export async function getEldoradoOrders(params = {}) {
     try {
         const { query = "", orderState = "", cursorValue = "", pageSize = 50 } = params;
@@ -137,23 +236,7 @@ export async function getEldoradoOrders(params = {}) {
 
         let parsedOrders = [];
         if (data && data.results && Array.isArray(data.results)) {
-            parsedOrders = data.results.map((order) => {
-                // Roblox username biasanya dikirim via custom field atau chat,
-                // tapi kita mapping aja kalau-kalau API-nya ngirim di `userRequestDetails` atau `deliveryDetails`
-                const deliveryDetailRoblox = order.deliveryDetails?.find((d) => d.type === "RobloxUsername")?.value;
-                const robloxUser = deliveryDetailRoblox || order.userRequestDetails?.robloxUsername || order.robloxUsername || null;
-
-                return {
-                    id: order.id,
-                    buyer: order.buyerUsername,
-                    game: order.orderOfferDetails?.offerTitle || order.orderOfferDetails?.gameCategoryTitle || "Item",
-                    quantity: order.purchaseQuantity || 1,
-                    robloxUsername: robloxUser,
-                    status: order.state?.state,
-                    talkJsConversationId: order.talkJsConversationId,
-                    raw: order,
-                };
-            });
+            parsedOrders = await mapWithLimit(data.results, 6, (order) => mapOrder(order));
         }
 
         return {
@@ -258,21 +341,10 @@ export async function getEldoradoOrderDetails(orderId) {
 
     try {
         const order = await fetchEldorado(`/v1/orders/me/${orderId}`);
-        const deliveryDetailRoblox = order.deliveryDetails?.find((d) => d.type === "RobloxUsername")?.value;
-        const robloxUser = deliveryDetailRoblox || order.userRequestDetails?.robloxUsername || order.robloxUsername || null;
 
         return {
             success: true,
-            data: {
-                id: order.id,
-                buyer: order.buyerUsername,
-                game: order.orderOfferDetails?.offerTitle || order.orderOfferDetails?.gameCategoryTitle || "Item",
-                quantity: order.purchaseQuantity || 1,
-                robloxUsername: robloxUser,
-                status: order.state?.state,
-                talkJsConversationId: order.talkJsConversationId,
-                raw: order,
-            },
+            data: await mapOrder(order),
         };
     } catch (error) {
         console.error(`[getEldoradoOrderDetails] Error for ${orderId}:`, error.message);

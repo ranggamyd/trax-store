@@ -12,6 +12,8 @@ import { Label } from "@/components/ui/label";
 import { TableCell, TableRow } from "@/components/ui/table";
 import { formatDurationText, getDefaultDateRange } from "@/lib/utils";
 
+const PAGE_SIZE = 20;
+
 export function ShiftHistoryTable({ refreshTrigger }) {
     const [history, setHistory] = useState([]);
     const [historyTotal, setHistoryTotal] = useState(0);
@@ -35,7 +37,7 @@ export function ShiftHistoryTable({ refreshTrigger }) {
             endDate: filterEndDate,
             userId: filterUserId || undefined,
             page: historyPage,
-            pageSize: 20,
+            pageSize: PAGE_SIZE,
         });
         if (res.error) {
             // toast.error(res.error);
@@ -57,7 +59,7 @@ export function ShiftHistoryTable({ refreshTrigger }) {
         return () => clearTimeout(timeoutId);
     }, [fetchHistory, refreshTrigger]);
 
-    const totalPages = Math.ceil(historyTotal / 20);
+    const totalPages = Math.ceil(historyTotal / PAGE_SIZE);
 
     return (
         <div className="mt-8">

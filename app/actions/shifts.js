@@ -1,5 +1,6 @@
 "use server";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
+import { wibDayEnd, wibDayStart, wibMidnight, wibParts } from "@/lib/wib";
 
 // Helper buat ngambil mapping user_id -> username
 // Biar ga pusing urusan Foreign Key / Schema Cache di Supabase
@@ -142,14 +143,10 @@ export async function getShiftHistory({ startDate, endDate, userId, page = 0, pa
     let query = supabaseAdmin.from("shifts").select("*", { count: "exact" }).not("ended_at", "is", null).order("started_at", { ascending: false });
 
     if (startDate) {
-        const [year, month, day] = startDate.split("-").map(Number);
-        const start = new Date(year, month - 1, day, 0, 0, 0, 0);
-        query = query.gte("started_at", start.toISOString());
+        query = query.gte("started_at", wibDayStart(startDate));
     }
     if (endDate) {
-        const [year, month, day] = endDate.split("-").map(Number);
-        const end = new Date(year, month - 1, day, 23, 59, 59, 999);
-        query = query.lte("started_at", end.toISOString());
+        query = query.lte("started_at", wibDayEnd(endDate));
     }
     if (userId) {
         query = query.eq("user_id", userId);
@@ -177,14 +174,10 @@ export async function getShiftSummary({ startDate, endDate } = {}) {
     let query = supabaseAdmin.from("shifts").select("user_id, started_at, ended_at").not("ended_at", "is", null).order("started_at", { ascending: false });
 
     if (startDate) {
-        const [year, month, day] = startDate.split("-").map(Number);
-        const start = new Date(year, month - 1, day, 0, 0, 0, 0);
-        query = query.gte("started_at", start.toISOString());
+        query = query.gte("started_at", wibDayStart(startDate));
     }
     if (endDate) {
-        const [year, month, day] = endDate.split("-").map(Number);
-        const end = new Date(year, month - 1, day, 23, 59, 59, 999);
-        query = query.lte("started_at", end.toISOString());
+        query = query.lte("started_at", wibDayEnd(endDate));
     }
 
     const { data, error } = await query;
@@ -218,17 +211,12 @@ export async function getShiftSummary({ startDate, endDate } = {}) {
  * Week starts on Saturday 00:00:00 and ends on Friday 23:59:59.
  */
 export async function getWeeklyShiftSummary({ weekOffset = 0 } = {}) {
-    const now = new Date();
-    const dayOfWeek = now.getDay();
-    const daysSinceSaturday = (dayOfWeek + 1) % 7;
+    const nowWib = wibParts();
+    const daysSinceSaturday = (nowWib.dayOfWeek + 1) % 7;
+    const offsetDays = weekOffset * 7 - daysSinceSaturday;
 
-    const startBoundary = new Date(now);
-    startBoundary.setDate(now.getDate() - daysSinceSaturday);
-    startBoundary.setHours(0, 0, 0, 0);
-    startBoundary.setDate(startBoundary.getDate() + weekOffset * 7);
-
-    const endBoundary = new Date(startBoundary);
-    endBoundary.setDate(startBoundary.getDate() + 7);
+    const startBoundary = wibMidnight(nowWib, offsetDays);
+    const endBoundary = wibMidnight(nowWib, offsetDays + 7);
 
     const { data, error } = await supabaseAdmin.from("shifts").select("user_id, started_at, ended_at").lt("started_at", endBoundary.toISOString()).or(`ended_at.gt.${startBoundary.toISOString()},ended_at.is.null`);
 
