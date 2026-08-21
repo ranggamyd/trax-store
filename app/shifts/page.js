@@ -1,24 +1,24 @@
-"use client";
-
 import { Clock } from "lucide-react";
-import { useState } from "react";
 
+import { ShiftView } from "@/app/shifts/components/ShiftView";
+import { getShiftViewData } from "@/app/shifts/queries";
 import { PageHeader } from "@/components/molecules/PageHeader";
-import { ShiftHistoryTable } from "@/components/organisms/ShiftHistoryTable";
-import { ShiftOverview } from "@/components/organisms/ShiftOverview";
-import { WeeklyShiftSummary } from "@/components/organisms/WeeklyShiftSummary";
 import { PageContainer } from "@/components/templates/PageContainer";
 
-export default function ShiftsPage() {
-    const [refreshTick, setRefreshTick] = useState(0);
+export const metadata = {
+    title: "Shift",
+};
+
+/** SERVER COMPONENT. Sama kayak dashboard, tapi tanpa link "lihat riwayat". */
+export default async function ShiftsPage({ searchParams }) {
+    const params = await searchParams;
+    const data = await getShiftViewData(params ?? {});
 
     return (
         <PageContainer>
-            <PageHeader title="Shifts" subtitle="Jam Jaga" icon={Clock} color="primary" />
+            <PageHeader title="Shift" eyebrow="Jam jaga" subtitle={data.historyTotal > 0 ? `${data.historyTotal} shift kecatat di periode yang dipilih.` : "Siapa jaga kapan, dan berapa jam."} icon={Clock} />
 
-            <ShiftOverview onShiftEnded={() => setRefreshTick((t) => t + 1)} onShiftChange={() => setRefreshTick((t) => t + 1)} />
-            <WeeklyShiftSummary refreshTrigger={refreshTick} />
-            <ShiftHistoryTable refreshTrigger={refreshTick} />
+            <ShiftView data={data} basePath="/shifts" searchParams={params ?? {}} showHistoryLink={false} />
         </PageContainer>
     );
 }

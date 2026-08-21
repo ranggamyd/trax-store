@@ -1,23 +1,37 @@
-"use client";
+import { LayoutDashboard } from "lucide-react";
 
-import { useState } from "react";
-
-import { ShiftHistoryTable } from "@/components/organisms/ShiftHistoryTable";
-import { ShiftOverview } from "@/components/organisms/ShiftOverview";
-import { WeeklyShiftSummary } from "@/components/organisms/WeeklyShiftSummary";
+import { ShiftView } from "@/app/shifts/components/ShiftView";
+import { getShiftViewData } from "@/app/shifts/queries";
+import { PageHeader } from "@/components/molecules/PageHeader";
 import { PageContainer } from "@/components/templates/PageContainer";
 
-export default function DashboardOverview() {
-    // Counter ini masih prop-drilling buat maksa anak refetch. Diganti
-    // revalidatePath waktu halaman ini di-RSC-in di Fase 3 — dicatat, bukan dilupain.
-    const [refreshTick, setRefreshTick] = useState(0);
-    const bumpRefresh = () => setRefreshTick((t) => t + 1);
+export const metadata = {
+    title: "Dashboard",
+};
+
+/**
+ * SERVER COMPONENT.
+ *
+ * `refreshTick` HILANG. Versi lama nyimpen counter di sini dan nurunin
+ * `onShiftEnded` / `onShiftChange` / `refreshTrigger` ke tiga komponen anak,
+ * cuma supaya mereka mau nge-fetch ulang habis ada tombol diklik. Tiap komponen
+ * baru harus diinget buat disambungin ke rantai itu — dan lupa satu berarti
+ * ada panel yang nampilin data basi tanpa ada yang nyadar.
+ *
+ * Sekarang mutasi shift manggil `revalidatePath("/")` di server, jadi seluruh
+ * halaman dirender ulang dengan data segar. Nol prop, nol counter.
+ */
+export default async function DashboardPage({ searchParams }) {
+    const params = await searchParams;
+    const data = await getShiftViewData(params ?? {});
+
+    const onDuty = data.activeShift?.username;
 
     return (
         <PageContainer>
-            <ShiftOverview onShiftEnded={bumpRefresh} onShiftChange={bumpRefresh} />
-            <WeeklyShiftSummary refreshTrigger={refreshTick} />
-            <ShiftHistoryTable refreshTrigger={refreshTick} />
+            <PageHeader title="Markas Besar" eyebrow="Dashboard" subtitle={onDuty ? `${onDuty} yang lagi jaga sekarang.` : "Belum ada yang jaga — order masuk belum ada yang pegang."} icon={LayoutDashboard} />
+
+            <ShiftView data={data} basePath="/" searchParams={params ?? {}} showHistoryLink />
         </PageContainer>
     );
 }

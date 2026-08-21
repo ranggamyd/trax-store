@@ -1,82 +1,78 @@
-"use client";
-
 import { Gamepad2, Link2, Pencil } from "lucide-react";
-import { useCallback, useState } from "react";
+import Link from "next/link";
 
+import { GameLinkDialog } from "@/app/games/components/GameLinkDialog";
+import { getGamesPageData } from "@/app/games/queries";
 import { PageHeader } from "@/components/molecules/PageHeader";
-import { SearchBar } from "@/components/molecules/SearchBar";
-import { GamePrivateServerDialog } from "@/components/organisms/GamePrivateServerDialog";
+import { UrlSearchBar } from "@/components/molecules/UrlSearchBar";
 import { PageContainer } from "@/components/templates/PageContainer";
-import { useEldoradoLibrary } from "@/contexts/EldoradoLibraryContext";
-import { useAuthGuard } from "@/hooks/useAuthGuard";
-import { supabase } from "@/lib/supabase";
 
-export default function Dashboard() {
-    const [searchTerm, setSearchTerm] = useState("");
-    const { library } = useEldoradoLibrary();
+export const metadata = {
+    title: "Games",
+};
 
-    // Jumlah akun per game Eldorado, buat badge di kartu.
-    const [accountCounts, setAccountCounts] = useState({});
-    const [editingGame, setEditingGame] = useState(null);
+/**
+ * SERVER COMPONENT.
+ *
+ * Grid-nya dirender penuh di server. Yang jadi client cuma dua: kolom cari
+ * (UrlSearchBar) dan dialog private server. Kartunya <Link> biasa, jadi bisa
+ * dibuka di tab baru dan bisa di-prefetch Next.
+ */
+export default async function GamesPage({ searchParams }) {
+    const params = await searchParams;
+    const query = typeof params?.q === "string" ? params.q : "";
 
-    const fetchAccountCounts = useCallback(async () => {
-        const { data } = await supabase.from("games").select("eldorado_game_id, account_games(id)").not("eldorado_game_id", "is", null);
-        setAccountCounts(Object.fromEntries((data || []).map((g) => [g.eldorado_game_id, g.account_games?.length || 0])));
-    }, []);
-
-    useAuthGuard(fetchAccountCounts, []);
-
-    const filteredEldoradoGames = Array.from(new Map((library || []).filter((g) => g.gameGroup?.toLowerCase() === "roblox" && (g.menuGameTitle || g.gameName || "").toLowerCase().includes(searchTerm.toLowerCase())).map((g) => [g.gameId, g])).values()).sort((a, b) => (a.menuGameTitle || a.gameName || "").localeCompare(b.menuGameTitle || b.gameName || ""));
+    const { games, total, error } = await getGamesPageData({ query });
+    const isSearching = query.length > 0;
 
     return (
-        <PageContainer>
-            <PageHeader
-                title="Games"
-                subtitle="Dapet dari eldo library"
-                icon={Gamepad2}
-                rightContent={
-                    <div className="flex w-full flex-col items-center gap-4 md:flex-row">
-                        <SearchBar value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} placeholder="Nama game..." containerClassName="w-full md:w-64" />
-                    </div>
-                }
-            />
+        <PageContainer width="wide">
+            <PageHeader title="Games" eyebrow="Library Eldorado" subtitle={total > 0 ? `${total} game Roblox kebaca dari Eldorado.` : "Daftarnya dateng langsung dari Eldorado."} icon={Gamepad2} rightContent={<UrlSearchBar placeholder="Cari nama game..." containerClassName="w-full sm:w-72" />} />
 
-            <div className="mt-6 w-full">
-                {filteredEldoradoGames.length > 0 ? (
-                    <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
-                        {filteredEldoradoGames.map((game, index) => (
-                            <div key={`eldo-${game.gameId || "0"}-${index}`} className="group hover:border-primary/50 hover:shadow-primary/5 border-border bg-surface-2/50 hover:bg-surface-3/80 relative flex cursor-pointer flex-col items-center gap-3 rounded-xl border p-4 transition-all hover:shadow-lg" onClick={() => setEditingGame(game)}>
-                                <button type="button" title="Edit private server link" onClick={() => setEditingGame(game)} className="hover:text-accent hover:border-accent/50 border-border/50 bg-surface-1/80 text-muted-foreground absolute top-2 right-2 rounded-md border p-1.5 opacity-100 transition-all md:opacity-0 md:group-hover:opacity-100">
-                                    <Pencil className="h-3.5 w-3.5" />
-                                </button>
-                                <div className="border-border/50 bg-surface-3 text-muted-foreground flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-xl border font-bold shadow-inner transition-transform group-hover:scale-105">
-                                    <img src={`https://assetsdelivery.eldorado.gg/v7/_assets_/icons/v28/${game.gameId}.png`} alt={game.menuGameTitle || game.gameName} className="h-full w-full object-cover" />
-                                </div>
-                                <div className="w-full text-center">
-                                    <h3 className="group-hover:text-primary text-foreground line-clamp-2 text-sm font-bold transition-colors" title={game.menuGameTitle || game.gameName}>
-                                        {game.menuGameTitle || game.gameName}
-                                    </h3>
-                                    <p className="text-muted-foreground mt-1 font-mono text-xs">ID: {game.gameId}</p>
-                                    {accountCounts[String(game.gameId)] > 0 && (
-                                        <span className="text-primary border-primary/30 bg-primary/10 mt-2 inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-bold">
-                                            <Link2 className="h-3 w-3" />
-                                            {accountCounts[String(game.gameId)]} akun
-                                        </span>
-                                    )}
-                                </div>
+            {error && (
+                <div className="border-danger/25 bg-danger/[0.07] text-danger rounded-2xl border p-4 text-sm" role="alert">
+                    {error} — pastiin extension sync-nya aktif dan lu masih login di eldorado.gg.
+                </div>
+            )}
+
+            {games.length === 0 ? (
+                <div className="border-border bg-surface-2/30 flex flex-col items-center justify-center rounded-2xl border border-dashed px-6 py-16 text-center">
+                    <Gamepad2 className="text-muted-foreground/70 mb-4 h-12 w-12" />
+                    <p className="text-foreground text-base font-semibold">{isSearching ? `Gak ada game yang cocok sama "${query}"` : "Library Eldorado belum kebaca"}</p>
+                    <p className="text-muted-foreground mt-1 max-w-sm text-sm">{isSearching ? "Coba potong kata kuncinya — nama game di Eldorado sering beda dari nama populernya." : "Pastiin extension sync-nya aktif dan lu masih login di eldorado.gg."}</p>
+                </div>
+            ) : (
+                <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
+                    {games.map((game) => (
+                        <Link key={game.gameId} href={`/games?${new URLSearchParams({ ...(query ? { q: query } : {}), game: String(game.gameId) })}`} scroll={false} className="group glass-subtle hover:border-primary/40 relative flex flex-col items-center gap-3 rounded-2xl p-4 transition-colors">
+                            <span className="border-border bg-surface-1/80 text-muted-foreground group-hover:text-accent group-hover:border-accent/40 absolute top-2 right-2 rounded-md border p-1.5 transition-all md:opacity-0 md:group-hover:opacity-100" title="Atur akun & private server">
+                                <Pencil className="h-3.5 w-3.5" />
+                            </span>
+
+                            <div className="border-border bg-surface-3 flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-xl border transition-transform group-hover:scale-105">
+                                {/* Host gambarnya CDN Eldorado — next/image butuh allowlist domain, jadi <img> biasa dulu. */}
+                                <img src={game.iconUrl} alt="" loading="lazy" className="h-full w-full object-cover" />
                             </div>
-                        ))}
-                    </div>
-                ) : (
-                    <div className="border-border bg-surface-2/30 flex flex-col items-center justify-center rounded-xl border border-dashed py-16 text-center">
-                        <Gamepad2 className="text-muted-foreground/70 mb-4 h-12 w-12" />
-                        <h3 className="text-foreground text-base font-semibold">{searchTerm ? `Gak ada game yang cocok sama "${searchTerm}"` : "Library Eldorado belum kebaca"}</h3>
-                        <p className="text-muted-foreground mt-1 max-w-sm text-sm">{searchTerm ? "Coba potong kata kuncinya — nama game di Eldorado sering beda dari nama populernya." : "Pastiin extension sync-nya aktif dan lu masih login di eldorado.gg."}</p>
-                    </div>
-                )}
-            </div>
 
-            <GamePrivateServerDialog open={!!editingGame} onOpenChange={(open) => !open && setEditingGame(null)} game={editingGame} onSaved={fetchAccountCounts} />
+                            <div className="w-full text-center">
+                                <h3 className="text-foreground group-hover:text-primary line-clamp-2 text-sm font-semibold transition-colors" title={game.name}>
+                                    {game.name}
+                                </h3>
+                                <p className="text-muted-foreground mt-1 font-mono text-[10px]">ID {game.gameId}</p>
+
+                                {game.accountCount > 0 && (
+                                    <span className="text-primary border-primary/25 bg-primary/10 mt-2 inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-bold">
+                                        <Link2 className="h-3 w-3" />
+                                        {game.accountCount} akun
+                                    </span>
+                                )}
+                            </div>
+                        </Link>
+                    ))}
+                </div>
+            )}
+
+            <GameLinkDialog games={games} />
         </PageContainer>
     );
 }
