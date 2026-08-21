@@ -1,5 +1,7 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
+
 import { getCurrentAdmin, UNAUTHORIZED_MESSAGE } from "@/lib/auth";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 
@@ -97,6 +99,9 @@ export async function createUser(payload) {
         return { error: profileError.message };
     }
 
+    // Gantiin pola `fetchUsers()` manual di klien: server yang nandain cache-nya
+    // basi, jadi gak ada lagi kemungkinan lupa manggil refresh setelah simpan.
+    revalidatePath("/users");
     return { user: authData.user };
 }
 
@@ -110,6 +115,8 @@ export async function deleteUser(id) {
 
     const { error } = await supabaseAdmin.auth.admin.deleteUser(id);
     if (error) return { error: error.message };
+
+    revalidatePath("/users");
     return { success: true };
 }
 
@@ -149,5 +156,6 @@ export async function updateUser(id, payload) {
         return { error: profileError.message };
     }
 
+    revalidatePath("/users");
     return { success: true };
 }

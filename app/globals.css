@@ -53,6 +53,15 @@
     --color-destructive: var(--destructive);
     --color-destructive-foreground: var(--destructive-foreground);
 
+    /* Varian gelap: buat isian panel status, bukan buat teks/ikon. Ada karena
+       kelas lama kayak `bg-red-950/40` butuh padanan yang sama gelapnya —
+       kalau dipetain ke `bg-danger/40` hasilnya pink terang yang norak. */
+    --color-danger-muted: var(--danger-muted);
+    --color-success-muted: var(--success-muted);
+    --color-warning-muted: var(--warning-muted);
+    --color-accent-muted: var(--accent-muted);
+    --color-primary-muted: var(--primary-muted);
+
     --color-brand-from: var(--brand-from);
     --color-brand-to: var(--brand-to);
 
@@ -125,6 +134,12 @@
        jadi pesan error justru paling susah dibaca di seluruh app. */
     --destructive: #fb5f7e;
     --destructive-foreground: #2a0510;
+
+    --danger-muted: #2a1017;
+    --success-muted: #06231c;
+    --warning-muted: #241a05;
+    --accent-muted: #05222a;
+    --primary-muted: #17122f;
 
     --border: #23232e;
     --input: #1a1a24;

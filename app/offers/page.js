@@ -89,35 +89,35 @@ const formatCurrency = (amount) => {
 const getStateBadgeClass = (state) => {
     switch (state) {
         case "Active":
-            return "border-emerald-500/30 bg-emerald-500/15 text-emerald-400";
+            return "border-success/30 bg-success/15 text-success";
         case "Paused":
-            return "border-amber-500/30 bg-amber-500/15 text-amber-400";
+            return "border-warning/30 bg-warning/15 text-warning";
         case "Closed":
-            return "border-red-500/30 bg-red-500/15 text-red-400";
+            return "border-danger/30 bg-danger/15 text-danger";
         case "Offline":
-            return "border-zinc-600/30 bg-zinc-600/15 text-zinc-400";
+            return "border-border/30 bg-surface-3/15 text-muted-foreground";
         default:
-            return "border-zinc-700 bg-zinc-800 text-zinc-300";
+            return "border-border bg-surface-3 text-foreground/85";
     }
 };
 
 // === Sub-Components ===
 
 const DetailSection = ({ title, icon, children, className = "" }) => (
-    <div className={`group/section relative mb-4 rounded-2xl border border-white/[0.04] bg-zinc-950/50 p-4 shadow-lg sm:p-5 ${className}`}>
+    <div className={`group/section bg-surface-1/50 relative mb-4 rounded-2xl border border-white/[0.04] p-4 shadow-lg sm:p-5 ${className}`}>
         <div className="pointer-events-none absolute inset-0 rounded-2xl bg-gradient-to-br from-white/[0.02] via-transparent to-transparent opacity-0 transition-opacity duration-500 group-hover/section:opacity-100"></div>
         <div className="relative z-10 mb-3 flex items-center gap-3">
-            <div className="bg-primary/10 text-primary rounded-xl p-2 shadow-[0_0_15px_rgba(248,28,229,0.1)] transition-all">{icon}</div>
-            <h3 className="bg-gradient-to-r from-zinc-100 to-zinc-400 bg-clip-text text-sm font-bold tracking-tight text-transparent">{title}</h3>
+            <div className="bg-primary/10 text-primary rounded-xl p-2 shadow-[0_0_15px_rgb(124_92_255_/_0.1)] transition-all">{icon}</div>
+            <h3 className="from-foreground to-muted-foreground bg-gradient-to-r bg-clip-text text-sm font-bold tracking-tight text-transparent">{title}</h3>
         </div>
         <div className="relative z-10 grid grid-cols-1 gap-2 sm:grid-cols-2">{children}</div>
     </div>
 );
 
-const DetailItem = ({ label, value, valueClass = "text-zinc-200", icon, colSpan = false }) => (
-    <div className={`group/item flex flex-col gap-1 overflow-hidden rounded-lg border border-zinc-800/50 bg-zinc-900/40 p-2.5 transition-colors hover:bg-zinc-800/50 ${colSpan ? "sm:col-span-2" : ""}`}>
-        <span className="flex items-center gap-1.5 text-[9px] font-bold tracking-widest text-zinc-500 uppercase">
-            <div className="group-hover/item:text-primary text-zinc-500 transition-colors">{icon}</div>
+const DetailItem = ({ label, value, valueClass = "text-foreground", icon, colSpan = false }) => (
+    <div className={`group/item border-border/50 bg-surface-2/40 hover:bg-surface-3/50 flex flex-col gap-1 overflow-hidden rounded-lg border p-2.5 transition-colors ${colSpan ? "sm:col-span-2" : ""}`}>
+        <span className="text-muted-foreground flex items-center gap-1.5 text-[9px] font-bold tracking-widest uppercase">
+            <div className="group-hover/item:text-primary text-muted-foreground transition-colors">{icon}</div>
             {label}
         </span>
         <span className={`text-xs font-semibold ${valueClass} break-all`} title={typeof value === "string" ? value : ""}>
@@ -136,10 +136,10 @@ const EditableField = ({ label, value, icon, onSave, type = "text", isLoading = 
     };
 
     return (
-        <div className="group/item relative flex flex-col gap-1 overflow-hidden rounded-lg border border-zinc-800/50 bg-zinc-900/40 p-2.5 transition-colors hover:border-zinc-700/60 hover:bg-zinc-800/50">
+        <div className="group/item border-border/50 bg-surface-2/40 hover:border-border/60 hover:bg-surface-3/50 relative flex flex-col gap-1 overflow-hidden rounded-lg border p-2.5 transition-colors">
             <div className="flex items-center justify-between gap-2">
-                <span className="flex items-center gap-1.5 text-[9px] font-bold tracking-widest text-zinc-500 uppercase">
-                    <div className="group-hover/item:text-primary text-zinc-500 transition-colors">{icon}</div>
+                <span className="text-muted-foreground flex items-center gap-1.5 text-[9px] font-bold tracking-widest uppercase">
+                    <div className="group-hover/item:text-primary text-muted-foreground transition-colors">{icon}</div>
                     {label}
                 </span>
                 {!editing && (
@@ -152,20 +152,20 @@ const EditableField = ({ label, value, icon, onSave, type = "text", isLoading = 
                             setEditing(true);
                         }}
                     >
-                        <PencilIcon className="hover:text-accent h-3 w-3 text-zinc-400" />
+                        <PencilIcon className="hover:text-accent text-muted-foreground h-3 w-3" />
                     </Button>
                 )}
             </div>
             {editing ? (
                 <div className="flex items-center gap-1.5">
-                    <input type={type} value={editValue} onChange={(e) => setEditValue(e.target.value)} className="focus:border-primary/50 h-7 flex-1 rounded border border-zinc-700 bg-zinc-950 px-2 text-xs text-zinc-200 focus:outline-none" autoFocus onKeyDown={(e) => e.key === "Enter" && handleSave()} />
-                    <Button size="icon" variant="ghost" className="h-6 w-6 text-emerald-400 hover:text-emerald-300" onClick={handleSave} disabled={isLoading}>
+                    <input type={type} value={editValue} onChange={(e) => setEditValue(e.target.value)} className="focus:border-primary/50 border-border bg-surface-1 text-foreground h-7 flex-1 rounded border px-2 text-xs focus:outline-none" autoFocus onKeyDown={(e) => e.key === "Enter" && handleSave()} />
+                    <Button size="icon" variant="ghost" className="text-success hover:text-success h-6 w-6" onClick={handleSave} disabled={isLoading}>
                         {isLoading ? <Loader2Icon className="h-3 w-3 animate-spin" /> : <CheckIcon className="h-3 w-3" />}
                     </Button>
                     <Button
                         size="icon"
                         variant="ghost"
-                        className="h-6 w-6 text-zinc-400 hover:text-zinc-300"
+                        className="text-muted-foreground hover:text-foreground/85 h-6 w-6"
                         onClick={() => {
                             setEditing(false);
                             setEditValue(value);
@@ -198,22 +198,22 @@ const SelectFilter = ({ value, onChange, options, icon, className = "" }) => {
             }}
         >
             <PopoverTrigger asChild>
-                <Button variant="outline" role="combobox" aria-expanded={open} className={cn("focus:border-primary/50 h-8 w-full cursor-pointer justify-between border-zinc-800 bg-zinc-950/80 px-2.5 text-xs font-normal text-zinc-200 transition-colors hover:bg-zinc-900/50 focus:outline-none", className)}>
+                <Button variant="outline" role="combobox" aria-expanded={open} className={cn("focus:border-primary/50 border-border bg-surface-1/80 text-foreground hover:bg-surface-2/50 h-8 w-full cursor-pointer justify-between px-2.5 text-xs font-normal transition-colors focus:outline-none", className)}>
                     <span className="flex items-center gap-1.5 truncate">
-                        {icon && <span className="text-zinc-500">{icon}</span>}
+                        {icon && <span className="text-muted-foreground">{icon}</span>}
                         <span className="truncate">{selectedOption?.label || "Semua"}</span>
                     </span>
-                    <ChevronDownIcon className="h-3 w-3 shrink-0 text-zinc-500" />
+                    <ChevronDownIcon className="text-muted-foreground h-3 w-3 shrink-0" />
                 </Button>
             </PopoverTrigger>
-            <PopoverContent className="flex w-[180px] flex-col gap-1.5 border-zinc-800 bg-zinc-950 p-1.5 text-zinc-200 shadow-xl" align="start">
+            <PopoverContent className="border-border bg-surface-1 text-foreground flex w-[180px] flex-col gap-1.5 p-1.5 shadow-xl" align="start">
                 <div className="relative">
-                    <SearchIcon className="absolute top-2 left-2 h-3.5 w-3.5 text-zinc-500" />
-                    <input type="text" placeholder="Cari..." value={search} onChange={(e) => setSearch(e.target.value)} className="focus:border-primary/50 placeholder:text-zinc-650 h-7.5 w-full rounded-md border border-zinc-800 bg-zinc-900/50 pr-2 pl-7.5 text-xs text-zinc-200 transition-colors focus:outline-none" />
+                    <SearchIcon className="text-muted-foreground absolute top-2 left-2 h-3.5 w-3.5" />
+                    <input type="text" placeholder="Cari..." value={search} onChange={(e) => setSearch(e.target.value)} className="focus:border-primary/50 placeholder:text-muted-foreground/70 border-border bg-surface-2/50 text-foreground h-7.5 w-full rounded-md border pr-2 pl-7.5 text-xs transition-colors focus:outline-none" />
                 </div>
                 <div className="custom-scrollbar flex max-h-48 flex-col gap-0.5 overflow-y-auto">
                     {filteredOptions.length === 0 ? (
-                        <div className="py-3 text-center text-[11px] text-zinc-500">Tidak ditemukan</div>
+                        <div className="text-muted-foreground py-3 text-center text-[11px]">Tidak ditemukan</div>
                     ) : (
                         filteredOptions.map((o) => {
                             const isChecked = o.value === value;
@@ -224,7 +224,7 @@ const SelectFilter = ({ value, onChange, options, icon, className = "" }) => {
                                         onChange(o.value);
                                         setOpen(false);
                                     }}
-                                    className={cn("flex w-full cursor-pointer items-center justify-between rounded-md px-2 py-1 text-left text-xs text-zinc-400 transition-colors hover:bg-zinc-900 hover:text-white", isChecked && "text-primary bg-zinc-900 font-medium")}
+                                    className={cn("text-muted-foreground hover:bg-surface-2 hover:text-foreground flex w-full cursor-pointer items-center justify-between rounded-md px-2 py-1 text-left text-xs transition-colors", isChecked && "text-primary bg-surface-2 font-medium")}
                                 >
                                     <span className="truncate">{o.label}</span>
                                     {isChecked && <CheckIcon className="text-primary h-3 w-3 shrink-0" />}
@@ -239,20 +239,20 @@ const SelectFilter = ({ value, onChange, options, icon, className = "" }) => {
 };
 
 const OfferCardSkeleton = () => (
-    <Card className="border-zinc-800 bg-zinc-900/40 p-2.5">
+    <Card className="border-border bg-surface-2/40 p-2.5">
         <div className="mb-2 flex items-start justify-between">
             <div className="flex w-2/3 flex-col gap-1.5">
-                <Skeleton className="h-4 w-3/4 bg-zinc-800" />
-                <Skeleton className="h-3 w-1/3 bg-zinc-800" />
+                <Skeleton className="bg-surface-3 h-4 w-3/4" />
+                <Skeleton className="bg-surface-3 h-3 w-1/3" />
             </div>
             <div className="flex w-1/4 flex-col items-end gap-1.5">
-                <Skeleton className="h-4 w-full bg-zinc-800" />
-                <Skeleton className="h-4 w-2/3 bg-zinc-800" />
+                <Skeleton className="bg-surface-3 h-4 w-full" />
+                <Skeleton className="bg-surface-3 h-4 w-2/3" />
             </div>
         </div>
-        <div className="mt-2 flex items-center justify-between border-t border-zinc-800/50 pt-2">
-            <Skeleton className="h-3 w-1/2 bg-zinc-800" />
-            <Skeleton className="h-4 w-1/4 bg-zinc-800" />
+        <div className="border-border/50 mt-2 flex items-center justify-between border-t pt-2">
+            <Skeleton className="bg-surface-3 h-3 w-1/2" />
+            <Skeleton className="bg-surface-3 h-4 w-1/4" />
         </div>
     </Card>
 );
@@ -509,21 +509,21 @@ export default function OffersPage() {
             {/* ===== LEFT PANEL — Offer List ===== */}
             <div className="flex h-full w-full shrink-0 flex-col gap-3 md:w-[380px]">
                 {/* Header + Filters */}
-                <div className="relative flex shrink-0 flex-col gap-3 overflow-hidden rounded-2xl border border-zinc-800 bg-zinc-900/50 p-4 backdrop-blur-md">
+                <div className="border-border bg-surface-2/50 relative flex shrink-0 flex-col gap-3 overflow-hidden rounded-2xl border p-4 backdrop-blur-md">
                     <div className="from-primary/10 absolute inset-0 z-0 bg-gradient-to-br to-transparent"></div>
                     <div className="relative z-10 flex items-center justify-between">
                         <div>
                             <h1 className="text-glow-primary text-lg font-bold tracking-widest uppercase">Listingan Offers</h1>
-                            {!isLoading && <p className="mt-0.5 text-[10px] text-zinc-500">{recordCount} total offers</p>}
+                            {!isLoading && <p className="text-muted-foreground mt-0.5 text-[10px]">{recordCount} total offers</p>}
                         </div>
                         <div className="flex items-center gap-1.5">
-                            <Button size="icon" variant="ghost" className="h-7 w-7 text-zinc-400 hover:text-white" onClick={() => setSelectMode(!selectMode)} title={selectMode ? "Exit Select" : "Select Mode"}>
+                            <Button size="icon" variant="ghost" className="text-muted-foreground hover:text-foreground h-7 w-7" onClick={() => setSelectMode(!selectMode)} title={selectMode ? "Exit Select" : "Select Mode"}>
                                 {selectMode ? <MinusSquareIcon className="text-primary h-3.5 w-3.5" /> : <CheckSquareIcon className="h-3.5 w-3.5" />}
                             </Button>
-                            <Button size="icon" variant="ghost" className="h-7 w-7 text-zinc-400 hover:text-white" onClick={() => setShowAdvancedFilters(!showAdvancedFilters)} title="Advanced Filters">
+                            <Button size="icon" variant="ghost" className="text-muted-foreground hover:text-foreground h-7 w-7" onClick={() => setShowAdvancedFilters(!showAdvancedFilters)} title="Advanced Filters">
                                 <SlidersHorizontalIcon className="h-3.5 w-3.5" />
                             </Button>
-                            <Button size="icon" variant="ghost" className="h-7 w-7 text-zinc-400 hover:text-white" onClick={fetchOffers} title="Refresh">
+                            <Button size="icon" variant="ghost" className="text-muted-foreground hover:text-foreground h-7 w-7" onClick={fetchOffers} title="Refresh">
                                 <RefreshCwIcon className="h-3.5 w-3.5" />
                             </Button>
                         </div>
@@ -532,8 +532,8 @@ export default function OffersPage() {
                     {/* Search + State Filter */}
                     <div className="relative z-10 flex gap-2">
                         <form onSubmit={handleSearchSubmit} className="relative flex-1">
-                            <SearchIcon className="absolute top-2 left-2.5 h-4 w-4 text-zinc-500" />
-                            <input type="text" placeholder="Cari offer..." value={searchInput} onChange={(e) => setSearchInput(e.target.value)} className="focus:border-primary/50 h-8 w-full rounded-lg border border-zinc-800 bg-zinc-950/80 pr-3 pl-8 text-xs text-zinc-200 transition-colors placeholder:text-zinc-600 focus:outline-none" />
+                            <SearchIcon className="text-muted-foreground absolute top-2 left-2.5 h-4 w-4" />
+                            <input type="text" placeholder="Cari offer..." value={searchInput} onChange={(e) => setSearchInput(e.target.value)} className="focus:border-primary/50 border-border bg-surface-1/80 text-foreground placeholder:text-muted-foreground/70 h-8 w-full rounded-lg border pr-3 pl-8 text-xs transition-colors focus:outline-none" />
                         </form>
                         <SelectFilter
                             value={offerStateFilter}
@@ -549,7 +549,7 @@ export default function OffersPage() {
 
                     {/* Advanced Filters */}
                     {showAdvancedFilters && (
-                        <div className="relative z-10 flex flex-col gap-2 border-t border-zinc-800/50 pt-3">
+                        <div className="border-border/50 relative z-10 flex flex-col gap-2 border-t pt-3">
                             <div className="flex gap-2">
                                 <SelectFilter
                                     value={categoryFilter}
@@ -598,7 +598,7 @@ export default function OffersPage() {
                                 />
                             </div>
                             {hasActiveFilters && (
-                                <button onClick={resetFilters} className="flex items-center gap-1 self-start text-[10px] text-zinc-500 transition-colors hover:text-zinc-300">
+                                <button onClick={resetFilters} className="text-muted-foreground hover:text-foreground/85 flex items-center gap-1 self-start text-[10px] transition-colors">
                                     <XIcon className="h-3 w-3" /> Reset filters
                                 </button>
                             )}
@@ -607,27 +607,27 @@ export default function OffersPage() {
 
                     {/* Bulk Actions */}
                     {offerList.length > 0 && !selectMode && (
-                        <div className="relative z-10 flex gap-1.5 border-t border-zinc-800/30 pt-2">
-                            <Button size="sm" variant="ghost" className="h-6 flex-1 gap-1 text-[10px] text-amber-400 hover:bg-amber-500/10 hover:text-amber-300" onClick={handleBulkPause} disabled={actionLoading === "bulk"}>
+                        <div className="border-border/30 relative z-10 flex gap-1.5 border-t pt-2">
+                            <Button size="sm" variant="ghost" className="text-warning hover:bg-warning/10 hover:text-warning h-6 flex-1 gap-1 text-[10px]" onClick={handleBulkPause} disabled={actionLoading === "bulk"}>
                                 {actionLoading === "bulk" ? <Loader2Icon className="h-3 w-3 animate-spin" /> : <PauseIcon className="h-3 w-3" />}
                                 Pause All
                             </Button>
                             <AlertDialog>
                                 <AlertDialogTrigger asChild>
-                                    <Button size="sm" variant="ghost" className="h-6 flex-1 gap-1 text-[10px] text-red-400 hover:bg-red-500/10 hover:text-red-300">
+                                    <Button size="sm" variant="ghost" className="text-danger hover:bg-danger/10 hover:text-danger h-6 flex-1 gap-1 text-[10px]">
                                         <Trash2Icon className="h-3 w-3" /> Delete All
                                     </Button>
                                 </AlertDialogTrigger>
-                                <AlertDialogContent className="text-foreground border-zinc-800 bg-zinc-950">
+                                <AlertDialogContent className="text-foreground border-border bg-surface-1">
                                     <AlertDialogHeader>
                                         <AlertDialogTitle className="text-xl">Bulk Delete Offers?</AlertDialogTitle>
-                                        <AlertDialogDescription className="text-zinc-400">
-                                            Semua offers yang sesuai filter bakal dihapus. <span className="font-bold text-red-400">Ini ga bisa di-undo!</span>
+                                        <AlertDialogDescription className="text-muted-foreground">
+                                            Semua offers yang sesuai filter bakal dihapus. <span className="text-danger font-bold">Ini ga bisa di-undo!</span>
                                         </AlertDialogDescription>
                                     </AlertDialogHeader>
                                     <AlertDialogFooter className="mt-4">
-                                        <AlertDialogCancel className="border-zinc-700 bg-zinc-900 text-zinc-300">Batal</AlertDialogCancel>
-                                        <AlertDialogAction onClick={handleBulkDelete} className="bg-red-500 font-bold text-white hover:bg-red-600">
+                                        <AlertDialogCancel className="border-border bg-surface-2 text-foreground/85">Batal</AlertDialogCancel>
+                                        <AlertDialogAction onClick={handleBulkDelete} className="bg-danger text-danger-foreground hover:bg-danger/90 font-bold">
                                             Ya, Hapus Semua!
                                         </AlertDialogAction>
                                     </AlertDialogFooter>
@@ -640,43 +640,43 @@ export default function OffersPage() {
                     {selectMode && (
                         <div className="border-primary/20 relative z-10 flex flex-col gap-2 border-t pt-2">
                             <div className="flex items-center justify-between">
-                                <button onClick={toggleSelectAll} className="flex items-center gap-1.5 text-[10px] font-medium text-zinc-300 transition-colors hover:text-white">
+                                <button onClick={toggleSelectAll} className="text-foreground/85 hover:text-foreground flex items-center gap-1.5 text-[10px] font-medium transition-colors">
                                     {selectedIds.size === offerList.length && offerList.length > 0 ? <CheckSquareIcon className="text-primary h-3.5 w-3.5" /> : <SquareIcon className="h-3.5 w-3.5" />}
                                     {selectedIds.size === offerList.length && offerList.length > 0 ? "Unselect All" : "Select All"}
                                 </button>
                                 <div className="flex items-center gap-2">
                                     <span className="bg-primary/20 text-primary rounded-full px-2 py-0.5 text-[10px] font-bold">{selectedCount} dipilih</span>
-                                    <button onClick={clearSelection} className="text-[10px] text-zinc-500 hover:text-zinc-300">
+                                    <button onClick={clearSelection} className="text-muted-foreground hover:text-foreground/85 text-[10px]">
                                         <XIcon className="h-3 w-3" />
                                     </button>
                                 </div>
                             </div>
                             {selectedCount > 0 && (
                                 <div className="flex gap-1.5">
-                                    <Button size="sm" variant="ghost" className="h-6 flex-1 gap-1 text-[10px] text-amber-400 hover:bg-amber-500/10" onClick={handleSelectedPause} disabled={actionLoading === "selected"}>
+                                    <Button size="sm" variant="ghost" className="text-warning hover:bg-warning/10 h-6 flex-1 gap-1 text-[10px]" onClick={handleSelectedPause} disabled={actionLoading === "selected"}>
                                         {actionLoading === "selected" ? <Loader2Icon className="h-3 w-3 animate-spin" /> : <PauseCircleIcon className="h-3 w-3" />}
                                         Pause
                                     </Button>
-                                    <Button size="sm" variant="ghost" className="h-6 flex-1 gap-1 text-[10px] text-emerald-400 hover:bg-emerald-500/10" onClick={handleSelectedResume} disabled={actionLoading === "selected"}>
+                                    <Button size="sm" variant="ghost" className="text-success hover:bg-success/10 h-6 flex-1 gap-1 text-[10px]" onClick={handleSelectedResume} disabled={actionLoading === "selected"}>
                                         {actionLoading === "selected" ? <Loader2Icon className="h-3 w-3 animate-spin" /> : <PlayCircleIcon className="h-3 w-3" />}
                                         Resume
                                     </Button>
                                     <AlertDialog>
                                         <AlertDialogTrigger asChild>
-                                            <Button size="sm" variant="ghost" className="h-6 flex-1 gap-1 text-[10px] text-red-400 hover:bg-red-500/10">
+                                            <Button size="sm" variant="ghost" className="text-danger hover:bg-danger/10 h-6 flex-1 gap-1 text-[10px]">
                                                 <Trash2Icon className="h-3 w-3" /> Hapus
                                             </Button>
                                         </AlertDialogTrigger>
-                                        <AlertDialogContent className="text-foreground border-zinc-800 bg-zinc-950">
+                                        <AlertDialogContent className="text-foreground border-border bg-surface-1">
                                             <AlertDialogHeader>
                                                 <AlertDialogTitle>Hapus {selectedCount} offer?</AlertDialogTitle>
-                                                <AlertDialogDescription className="text-zinc-400">
-                                                    {selectedCount} offer yang dipilih bakal dihapus permanen. <span className="font-bold text-red-400">Ga bisa di-undo!</span>
+                                                <AlertDialogDescription className="text-muted-foreground">
+                                                    {selectedCount} offer yang dipilih bakal dihapus permanen. <span className="text-danger font-bold">Ga bisa di-undo!</span>
                                                 </AlertDialogDescription>
                                             </AlertDialogHeader>
                                             <AlertDialogFooter>
-                                                <AlertDialogCancel className="border-zinc-700 bg-zinc-900 text-zinc-300">Batal</AlertDialogCancel>
-                                                <AlertDialogAction onClick={handleSelectedDelete} className="bg-red-500 font-bold text-white hover:bg-red-600">
+                                                <AlertDialogCancel className="border-border bg-surface-2 text-foreground/85">Batal</AlertDialogCancel>
+                                                <AlertDialogAction onClick={handleSelectedDelete} className="bg-danger text-danger-foreground hover:bg-danger/90 font-bold">
                                                     Ya, Hapus!
                                                 </AlertDialogAction>
                                             </AlertDialogFooter>
@@ -699,14 +699,14 @@ export default function OffersPage() {
                     ) : tokenStatus !== "ok" && offerList.length === 0 ? (
                         <TokenStatusNotice status={tokenStatus} failure={tokenFailure} retryCount={retryCount} />
                     ) : apiError ? (
-                        <div className="rounded-xl border border-red-900/50 bg-red-950/30 p-4 text-sm text-red-400">
+                        <div className="border-danger/50 bg-danger-muted/30 text-danger rounded-xl border p-4 text-sm">
                             {apiError}
                             <p className="mt-2 text-xs opacity-70">Coba refresh bentar lagi ya bro.</p>
                         </div>
                     ) : offerList.length === 0 ? (
                         <div className="flex flex-col items-center gap-3 py-12 text-center">
-                            <PackageIcon className="h-10 w-10 text-zinc-700" />
-                            <p className="text-sm text-zinc-500">Gak ada offer yang ketemu.</p>
+                            <PackageIcon className="text-muted-foreground/60 h-10 w-10" />
+                            <p className="text-muted-foreground text-sm">Gak ada offer yang ketemu.</p>
                             {hasActiveFilters && (
                                 <button onClick={resetFilters} className="text-primary text-xs hover:underline">
                                     Reset filters
@@ -719,7 +719,7 @@ export default function OffersPage() {
                             return (
                                 <Card
                                     key={offer.id}
-                                    className={`cursor-pointer border transition-all duration-200 ${isSelected ? "border-primary/60 bg-primary/5 shadow-[0_0_15px_rgba(248,28,229,0.1)]" : activeOfferId === offer.id ? "border-primary/50 bg-zinc-800/80 shadow-[0_0_15px_rgba(248,28,229,0.08)]" : "border-zinc-800 bg-zinc-900/40 hover:border-zinc-700 hover:bg-zinc-800/40"}`}
+                                    className={`cursor-pointer border transition-all duration-200 ${isSelected ? "border-primary/60 bg-primary/5 shadow-[0_0_15px_rgb(124_92_255_/_0.1)]" : activeOfferId === offer.id ? "border-primary/50 bg-surface-3/80 shadow-[0_0_15px_rgb(124_92_255_/_0.08)]" : "border-border bg-surface-2/40 hover:border-border hover:bg-surface-3/40"}`}
                                     onClick={() => {
                                         if (selectMode) {
                                             setSelectedIds((prev) => {
@@ -734,22 +734,22 @@ export default function OffersPage() {
                                     }}
                                 >
                                     <CardHeader className="p-2.5 pb-1">
-                                        <CardTitle className="flex min-w-0 items-start justify-between gap-2 text-sm font-bold text-zinc-200">
+                                        <CardTitle className="text-foreground flex min-w-0 items-start justify-between gap-2 text-sm font-bold">
                                             <div className="flex min-w-0 flex-1 items-center gap-2">
                                                 {selectMode ? (
                                                     <button onClick={(e) => toggleSelect(offer.id, e)} className="shrink-0">
-                                                        {isSelected ? <CheckSquareIcon className="text-primary h-4 w-4" /> : <SquareIcon className="h-4 w-4 text-zinc-500" />}
+                                                        {isSelected ? <CheckSquareIcon className="text-primary h-4 w-4" /> : <SquareIcon className="text-muted-foreground h-4 w-4" />}
                                                     </button>
                                                 ) : offer.mainOfferImage?.smallImage ? (
-                                                    <img src={`https://fileserviceusprod.blob.core.windows.net/offerimages/${offer.mainOfferImage.smallImage}`} alt="Offer" className="h-10 w-10 shrink-0 rounded-md border border-zinc-800 object-cover" />
+                                                    <img src={`https://fileserviceusprod.blob.core.windows.net/offerimages/${offer.mainOfferImage.smallImage}`} alt="Offer" className="border-border h-10 w-10 shrink-0 rounded-md border object-cover" />
                                                 ) : (
-                                                    <PackageIcon className="h-8 w-8 shrink-0 text-zinc-500" />
+                                                    <PackageIcon className="text-muted-foreground h-8 w-8 shrink-0" />
                                                 )}
                                                 <div className="flex min-w-0 flex-1 flex-col gap-0.5">
                                                     {offer.gameId && (
                                                         <div className="flex min-w-0 items-center gap-1">
                                                             <img src={`https://assetsdelivery.eldorado.gg/v7/_assets_/icons/v28/${offer.gameId}.png`} alt="Game" className="h-3 w-3 shrink-0 rounded-sm object-cover opacity-60" />
-                                                            <span className="truncate text-[9px] font-bold tracking-widest text-zinc-500 uppercase">{getGameName(offer.gameId) || "Game"}</span>
+                                                            <span className="text-muted-foreground truncate text-[9px] font-bold tracking-widest uppercase">{getGameName(offer.gameId) || "Game"}</span>
                                                         </div>
                                                     )}
                                                     <span className="text-primary truncate text-xs font-medium sm:text-sm">{offer.offerTitle}</span>
@@ -762,13 +762,13 @@ export default function OffersPage() {
                                         </CardTitle>
                                     </CardHeader>
                                     <CardContent className="flex flex-col gap-1 p-2.5 pt-0">
-                                        <div className="flex items-center justify-between rounded-md border border-zinc-800/50 bg-zinc-950/50 p-1.5">
-                                            <p className="flex items-center gap-1.5 truncate text-[10px] font-medium text-zinc-400">
-                                                <Gamepad2Icon className="h-3 w-3 shrink-0 text-zinc-600" />
+                                        <div className="border-border/50 bg-surface-1/50 flex items-center justify-between rounded-md border p-1.5">
+                                            <p className="text-muted-foreground flex items-center gap-1.5 truncate text-[10px] font-medium">
+                                                <Gamepad2Icon className="text-muted-foreground/70 h-3 w-3 shrink-0" />
                                                 <span className="truncate">{offer.gameCategoryTitle}</span>
                                             </p>
                                             <div className="ml-2 flex shrink-0 items-center gap-2">
-                                                <span className="flex items-center gap-0.5 text-[9px] text-zinc-500">
+                                                <span className="text-muted-foreground flex items-center gap-0.5 text-[9px]">
                                                     <ClockIcon className="h-2.5 w-2.5" />
                                                     {formatDeliveryTime(offer.guaranteedDeliveryTime)}
                                                 </span>
@@ -784,8 +784,8 @@ export default function OffersPage() {
 
                 {/* Pagination */}
                 {totalPages > 1 && (
-                    <div className="flex shrink-0 items-center justify-between rounded-xl border border-zinc-800 bg-zinc-900/50 px-3 py-2">
-                        <span className="text-[10px] text-zinc-500">
+                    <div className="border-border bg-surface-2/50 flex shrink-0 items-center justify-between rounded-xl border px-3 py-2">
+                        <span className="text-muted-foreground text-[10px]">
                             Hal {pageIndex + 1} / {totalPages}
                         </span>
                         <div className="flex items-center gap-1">
@@ -801,10 +801,10 @@ export default function OffersPage() {
             </div>
 
             {/* ===== RIGHT PANEL — Detail ===== */}
-            <div className="flex h-full flex-1 flex-col overflow-hidden rounded-2xl border border-zinc-800 bg-zinc-900/40 backdrop-blur-sm">
+            <div className="border-border bg-surface-2/40 flex h-full flex-1 flex-col overflow-hidden rounded-2xl border backdrop-blur-sm">
                 {!activeOffer ? (
-                    <div className="flex flex-1 flex-col items-center justify-center gap-3 text-zinc-500">
-                        <InfoIcon className="h-8 w-8 text-zinc-700" />
+                    <div className="text-muted-foreground flex flex-1 flex-col items-center justify-center gap-3">
+                        <InfoIcon className="text-muted-foreground/60 h-8 w-8" />
                         <p className="text-sm">Pilih offer di sebelah kiri buat lihat detail.</p>
                     </div>
                 ) : (
@@ -813,44 +813,44 @@ export default function OffersPage() {
 
                         <div className="relative z-10 flex h-full flex-col">
                             {/* Fixed Header */}
-                            <div className="relative flex shrink-0 items-center justify-between overflow-hidden border-b border-zinc-800/50 bg-black/40 px-5 py-4 shadow-lg backdrop-blur-xl">
+                            <div className="border-border/50 relative flex shrink-0 items-center justify-between overflow-hidden border-b bg-black/40 px-5 py-4 shadow-lg backdrop-blur-xl">
                                 <div className="from-primary/10 absolute inset-0 z-0 bg-gradient-to-r via-transparent to-transparent opacity-40"></div>
                                 <div className="relative z-10 flex-1 overflow-hidden">
-                                    <h1 className="flex items-center gap-2.5 text-lg font-bold text-white">
-                                        <div className="bg-primary/20 border-primary/30 shrink-0 rounded-lg border p-1.5 shadow-[0_0_15px_rgba(248,28,229,0.2)]">{activeOffer.gameId ? <img src={`https://assetsdelivery.eldorado.gg/v7/_assets_/icons/v28/${activeOffer.gameId}.png`} alt="Game" className="h-4 w-4 shrink-0 rounded-sm object-cover" /> : <PackageIcon className="text-primary h-4 w-4" />}</div>
+                                    <h1 className="text-foreground flex items-center gap-2.5 text-lg font-bold">
+                                        <div className="bg-primary/20 border-primary/30 shrink-0 rounded-lg border p-1.5 shadow-[0_0_15px_rgb(124_92_255_/_0.2)]">{activeOffer.gameId ? <img src={`https://assetsdelivery.eldorado.gg/v7/_assets_/icons/v28/${activeOffer.gameId}.png`} alt="Game" className="h-4 w-4 shrink-0 rounded-sm object-cover" /> : <PackageIcon className="text-primary h-4 w-4" />}</div>
                                         <div className="flex flex-col">
-                                            {activeOffer.gameId && <span className="text-[10px] font-normal tracking-widest text-zinc-400 uppercase">{getGameName(activeOffer.gameId) || "Game"}</span>}
+                                            {activeOffer.gameId && <span className="text-muted-foreground text-[10px] font-normal tracking-widest uppercase">{getGameName(activeOffer.gameId) || "Game"}</span>}
                                             <span className="truncate">{activeOffer.offerTitle}</span>
                                         </div>
                                     </h1>
                                     <div className="mt-1 flex items-center gap-2 pl-9">
-                                        <span className="font-mono text-[10px] text-zinc-600">{activeOffer.id}</span>
+                                        <span className="text-muted-foreground/70 font-mono text-[10px]">{activeOffer.id}</span>
                                         <span className={`rounded-md border px-1.5 py-0.5 text-[9px] font-bold tracking-wider uppercase ${getStateBadgeClass(activeOffer.offerState)}`}>{activeOffer.offerState}</span>
                                     </div>
                                 </div>
 
                                 <div className="relative z-10 ml-3 flex shrink-0 gap-2">
-                                    <Button onClick={() => handlePauseResume(activeOffer)} variant="outline" size="sm" className="border-zinc-700 bg-zinc-900/50 text-zinc-300 hover:text-white" disabled={actionLoading === activeOffer.id}>
+                                    <Button onClick={() => handlePauseResume(activeOffer)} variant="outline" size="sm" className="border-border bg-surface-2/50 text-foreground/85 hover:text-foreground" disabled={actionLoading === activeOffer.id}>
                                         {actionLoading === activeOffer.id ? <Loader2Icon className="mr-1.5 h-3.5 w-3.5 animate-spin" /> : activeOffer.offerState === "Active" ? <PauseCircleIcon className="mr-1.5 h-3.5 w-3.5" /> : <PlayCircleIcon className="mr-1.5 h-3.5 w-3.5" />}
                                         {activeOffer.offerState === "Active" ? "Pause" : "Resume"}
                                     </Button>
                                     <AlertDialog>
                                         <AlertDialogTrigger asChild>
-                                            <Button variant="outline" size="sm" className="border-red-500/30 bg-red-500/10 text-red-500 hover:bg-red-500/20">
+                                            <Button variant="outline" size="sm" className="border-danger/30 bg-danger/10 text-danger hover:bg-danger/20">
                                                 <Trash2Icon className="mr-1.5 h-3.5 w-3.5" />
                                                 Delete
                                             </Button>
                                         </AlertDialogTrigger>
-                                        <AlertDialogContent className="text-foreground border-zinc-800 bg-zinc-950">
+                                        <AlertDialogContent className="text-foreground border-border bg-surface-1">
                                             <AlertDialogHeader>
                                                 <AlertDialogTitle className="text-xl">Yakin hapus offer ini?</AlertDialogTitle>
-                                                <AlertDialogDescription className="text-zinc-400">
-                                                    Offer <span className="font-mono text-white">{activeOffer.id?.substring(0, 8)}...</span> bakal ilang dari Eldorado. <span className="text-red-400">Ga bisa di-undo bro.</span>
+                                                <AlertDialogDescription className="text-muted-foreground">
+                                                    Offer <span className="text-foreground font-mono">{activeOffer.id?.substring(0, 8)}...</span> bakal ilang dari Eldorado. <span className="text-danger">Ga bisa di-undo bro.</span>
                                                 </AlertDialogDescription>
                                             </AlertDialogHeader>
                                             <AlertDialogFooter className="mt-4">
-                                                <AlertDialogCancel className="border-zinc-700 bg-zinc-900 text-zinc-300">Batal</AlertDialogCancel>
-                                                <AlertDialogAction onClick={() => handleDelete(activeOffer.id)} className="bg-red-500 font-bold text-white hover:bg-red-600">
+                                                <AlertDialogCancel className="border-border bg-surface-2 text-foreground/85">Batal</AlertDialogCancel>
+                                                <AlertDialogAction onClick={() => handleDelete(activeOffer.id)} className="bg-danger text-danger-foreground hover:bg-danger/90 font-bold">
                                                     Ya, Hapus!
                                                 </AlertDialogAction>
                                             </AlertDialogFooter>
@@ -867,7 +867,7 @@ export default function OffersPage() {
                                         <DetailItem label="Title" value={activeOffer.offerTitle} icon={<PackageIcon className="h-3 w-3" />} colSpan />
                                         <DetailItem label="Category" value={activeOffer.category} icon={<TagIcon className="h-3 w-3" />} />
                                         <DetailItem label="Game" value={activeOffer.gameCategoryTitle} icon={<Gamepad2Icon className="h-3 w-3" />} />
-                                        <DetailItem label="Status" value={activeOffer.offerState} valueClass={activeOffer.offerState === "Active" ? "text-emerald-400" : activeOffer.offerState === "Paused" ? "text-amber-400" : "text-zinc-400"} icon={<PlayCircleIcon className="h-3 w-3" />} />
+                                        <DetailItem label="Status" value={activeOffer.offerState} valueClass={activeOffer.offerState === "Active" ? "text-success" : activeOffer.offerState === "Paused" ? "text-warning" : "text-muted-foreground"} icon={<PlayCircleIcon className="h-3 w-3" />} />
                                         <DetailItem label="Game SEO Alias" value={activeOffer.gameSeoAlias} icon={<GlobeIcon className="h-3 w-3" />} />
                                         <DetailItem label="Description" value={activeOffer.description} icon={<InfoIcon className="h-3 w-3" />} colSpan />
                                         <DetailItem label="Expire Date" value={formatDate(activeOffer.expireDate)} icon={<CalendarIcon className="h-3 w-3" />} />
@@ -879,21 +879,21 @@ export default function OffersPage() {
                                     {/* 2. Pricing */}
                                     <DetailSection title="Pricing" icon={<DollarSign className="text-primary h-4 w-4" />}>
                                         <EditableField label="Price Per Unit" value={activeOffer.pricePerUnit?.amount} icon={<DollarSign className="h-3 w-3" />} type="number" isLoading={priceLoading} onSave={(v) => handleUpdatePrice(activeOffer.id, v)} />
-                                        <DetailItem label="Price w/ Discount" value={formatCurrency(activeOffer.pricePerUnitWithDiscount?.amount)} icon={<PercentIcon className="h-3 w-3" />} valueClass="text-emerald-400" />
+                                        <DetailItem label="Price w/ Discount" value={formatCurrency(activeOffer.pricePerUnitWithDiscount?.amount)} icon={<PercentIcon className="h-3 w-3" />} valueClass="text-success" />
                                         <DetailItem label="Price in USD" value={formatCurrency(activeOffer.pricePerUnitInUSD?.amount)} icon={<DollarSign className="h-3 w-3" />} />
-                                        <DetailItem label="Discount %" value={activeOffer.discountPercentage ? `${activeOffer.discountPercentage}%` : "0%"} icon={<PercentIcon className="h-3 w-3" />} valueClass="text-amber-400" />
+                                        <DetailItem label="Discount %" value={activeOffer.discountPercentage ? `${activeOffer.discountPercentage}%` : "0%"} icon={<PercentIcon className="h-3 w-3" />} valueClass="text-warning" />
                                         <DetailItem label="Min Purchase Price" value={formatCurrency(activeOffer.minPurchasePrice?.amount)} icon={<DollarSign className="h-3 w-3" />} />
                                         <DetailItem label="Exchange Rate" value={activeOffer.exchangeRate ? `${activeOffer.exchangeRate.currency} × ${activeOffer.exchangeRate.exchangeRate}` : "-"} icon={<TrendingUpIcon className="h-3 w-3" />} />
                                         {activeOffer.volumeDiscounts?.length > 0 && (
                                             <div className="sm:col-span-2">
-                                                <div className="rounded-lg border border-zinc-800/50 bg-zinc-900/40 p-2.5">
-                                                    <span className="mb-2 flex items-center gap-1.5 text-[9px] font-bold tracking-widest text-zinc-500 uppercase">
+                                                <div className="border-border/50 bg-surface-2/40 rounded-lg border p-2.5">
+                                                    <span className="text-muted-foreground mb-2 flex items-center gap-1.5 text-[9px] font-bold tracking-widest uppercase">
                                                         <LayersIcon className="h-3 w-3" /> Volume Discounts
                                                     </span>
                                                     <div className="mt-1.5 flex flex-wrap gap-1.5">
                                                         {activeOffer.volumeDiscounts.map((vd, i) => (
-                                                            <span key={i} className="rounded border border-zinc-700/50 bg-zinc-800/60 px-2 py-0.5 text-[10px] text-zinc-300">
-                                                                {vd.quantity}+ → <span className="text-emerald-400">{vd.percentage}%</span>
+                                                            <span key={i} className="border-border/50 bg-surface-3/60 text-foreground/85 rounded border px-2 py-0.5 text-[10px]">
+                                                                {vd.quantity}+ → <span className="text-success">{vd.percentage}%</span>
                                                             </span>
                                                         ))}
                                                     </div>
@@ -909,10 +909,10 @@ export default function OffersPage() {
                                         <DetailItem label="Max Purchase Qty" value={activeOffer.maxPurchaseQuantity} icon={<ShoppingCartIcon className="h-3 w-3" />} />
 
                                         {/* Delivery Time — Editable via select */}
-                                        <div className="group/item relative flex flex-col gap-1 overflow-hidden rounded-lg border border-zinc-800/50 bg-zinc-900/40 p-2.5 transition-colors hover:border-zinc-700/60 hover:bg-zinc-800/50">
+                                        <div className="group/item border-border/50 bg-surface-2/40 hover:border-border/60 hover:bg-surface-3/50 relative flex flex-col gap-1 overflow-hidden rounded-lg border p-2.5 transition-colors">
                                             <div className="flex items-center justify-between gap-2">
-                                                <span className="flex items-center gap-1.5 text-[9px] font-bold tracking-widest text-zinc-500 uppercase">
-                                                    <ClockIcon className="group-hover/item:text-primary h-3 w-3 text-zinc-500 transition-colors" />
+                                                <span className="text-muted-foreground flex items-center gap-1.5 text-[9px] font-bold tracking-widest uppercase">
+                                                    <ClockIcon className="group-hover/item:text-primary text-muted-foreground h-3 w-3 transition-colors" />
                                                     Delivery Time
                                                 </span>
                                                 {!editDeliveryOpen && (
@@ -925,28 +925,28 @@ export default function OffersPage() {
                                                             setEditDeliveryValue(activeOffer.guaranteedDeliveryTime);
                                                         }}
                                                     >
-                                                        <PencilIcon className="hover:text-accent h-3 w-3 text-zinc-400" />
+                                                        <PencilIcon className="hover:text-accent text-muted-foreground h-3 w-3" />
                                                     </Button>
                                                 )}
                                             </div>
                                             {editDeliveryOpen ? (
                                                 <div className="flex items-center gap-1.5">
-                                                    <select value={editDeliveryValue} onChange={(e) => setEditDeliveryValue(e.target.value)} className="focus:border-primary/50 h-7 flex-1 rounded border border-zinc-700 bg-zinc-950 px-2 text-xs text-zinc-200 focus:outline-none">
+                                                    <select value={editDeliveryValue} onChange={(e) => setEditDeliveryValue(e.target.value)} className="focus:border-primary/50 border-border bg-surface-1 text-foreground h-7 flex-1 rounded border px-2 text-xs focus:outline-none">
                                                         {DELIVERY_TIME_OPTIONS.filter((o) => o.value).map((o) => (
                                                             <option key={o.value} value={o.value}>
                                                                 {o.label}
                                                             </option>
                                                         ))}
                                                     </select>
-                                                    <Button size="icon" variant="ghost" className="h-6 w-6 text-emerald-400 hover:text-emerald-300" onClick={() => handleUpdateDeliveryTime(activeOffer.id, editDeliveryValue)} disabled={actionLoading === activeOffer.id}>
+                                                    <Button size="icon" variant="ghost" className="text-success hover:text-success h-6 w-6" onClick={() => handleUpdateDeliveryTime(activeOffer.id, editDeliveryValue)} disabled={actionLoading === activeOffer.id}>
                                                         {actionLoading === activeOffer.id ? <Loader2Icon className="h-3 w-3 animate-spin" /> : <CheckIcon className="h-3 w-3" />}
                                                     </Button>
-                                                    <Button size="icon" variant="ghost" className="h-6 w-6 text-zinc-400 hover:text-zinc-300" onClick={() => setEditDeliveryOpen(false)}>
+                                                    <Button size="icon" variant="ghost" className="text-muted-foreground hover:text-foreground/85 h-6 w-6" onClick={() => setEditDeliveryOpen(false)}>
                                                         <XIcon className="h-3 w-3" />
                                                     </Button>
                                                 </div>
                                             ) : (
-                                                <span className="text-sm font-semibold text-zinc-200">{formatDeliveryTime(activeOffer.guaranteedDeliveryTime)}</span>
+                                                <span className="text-foreground text-sm font-semibold">{formatDeliveryTime(activeOffer.guaranteedDeliveryTime)}</span>
                                             )}
                                         </div>
                                     </DetailSection>
@@ -980,11 +980,11 @@ export default function OffersPage() {
                                     {activeOffer.attributes?.length > 0 && (
                                         <DetailSection title="Attribute Definitions" icon={<SlidersHorizontalIcon className="text-primary h-4 w-4" />}>
                                             {activeOffer.attributes.map((attr, i) => (
-                                                <div key={i} className="flex flex-col gap-1 rounded-lg border border-zinc-800/50 bg-zinc-900/40 p-2.5">
-                                                    <span className="text-[9px] font-bold tracking-widest text-zinc-500 uppercase">{attr.name}</span>
+                                                <div key={i} className="border-border/50 bg-surface-2/40 flex flex-col gap-1 rounded-lg border p-2.5">
+                                                    <span className="text-muted-foreground text-[9px] font-bold tracking-widest uppercase">{attr.name}</span>
                                                     <div className="flex flex-wrap gap-1">
-                                                        <span className="rounded border border-zinc-700/50 bg-zinc-800/60 px-1.5 py-0.5 text-[9px] text-zinc-400">type: {attr.type}</span>
-                                                        <span className="rounded border border-zinc-700/50 bg-zinc-800/60 px-1.5 py-0.5 text-[9px] text-zinc-400">display: {attr.display}</span>
+                                                        <span className="border-border/50 bg-surface-3/60 text-muted-foreground rounded border px-1.5 py-0.5 text-[9px]">type: {attr.type}</span>
+                                                        <span className="border-border/50 bg-surface-3/60 text-muted-foreground rounded border px-1.5 py-0.5 text-[9px]">display: {attr.display}</span>
                                                     </div>
                                                 </div>
                                             ))}
@@ -995,8 +995,8 @@ export default function OffersPage() {
                                     {(activeOffer.mainOfferImage || activeOffer.offerImages?.length > 0) && (
                                         <DetailSection title="Images" icon={<ImageIcon className="text-primary h-4 w-4" />}>
                                             {activeOffer.mainOfferImage?.smallImage ? (
-                                                <div className="group/item flex flex-col gap-2 overflow-hidden rounded-lg border border-zinc-800/50 bg-zinc-900/40 p-2.5 sm:col-span-2">
-                                                    <span className="flex items-center gap-1.5 text-[9px] font-bold tracking-widest text-zinc-500 uppercase">
+                                                <div className="group/item border-border/50 bg-surface-2/40 flex flex-col gap-2 overflow-hidden rounded-lg border p-2.5 sm:col-span-2">
+                                                    <span className="text-muted-foreground flex items-center gap-1.5 text-[9px] font-bold tracking-widest uppercase">
                                                         <ImageIcon className="h-3 w-3" /> Main Image
                                                     </span>
                                                     <img src={`https://fileserviceusprod.blob.core.windows.net/offerimages/${activeOffer.mainOfferImage.smallImage}`} alt="Main" className="h-24 w-24 rounded object-cover" />

@@ -11,8 +11,8 @@ import { Label } from "@/components/ui/label";
  */
 export function MissingLinksDialog({ open, onOpenChange, missingLinks, setMissingLinks, onSubmit }) {
     return (
-        <FormDialog open={open} onOpenChange={onOpenChange} title="Wajib Isi Link!" titleClassName="text-xl font-bold text-red-500" maxWidth="max-w-lg">
-            <p className="mt-2 text-sm text-zinc-400">
+        <FormDialog open={open} onOpenChange={onOpenChange} title="Wajib Isi Link!" titleClassName="text-xl font-bold text-danger" maxWidth="max-w-lg">
+            <p className="text-muted-foreground mt-2 text-sm">
                 Karena opsi &quot;Buyer Wajib Join&quot; diaktifkan, <strong>{missingLinks.length} akun</strong> ini butuh private server link. Isi dulu bos sebelum bisa simpan!
             </p>
             <form onSubmit={onSubmit} className="mt-2 max-h-[60vh] space-y-4 overflow-y-auto pr-2">
@@ -28,11 +28,11 @@ export function MissingLinksDialog({ open, onOpenChange, missingLinks, setMissin
                                 setMissingLinks(updated);
                             }}
                             required
-                            className="border-zinc-800 bg-zinc-900"
+                            className="border-border bg-surface-2"
                         />
                     </div>
                 ))}
-                <Button type="submit" className="mt-4 w-full bg-red-600 font-bold text-white hover:bg-red-700">
+                <Button type="submit" className="bg-danger text-danger-foreground hover:bg-danger/90 mt-4 w-full font-bold">
                     Simpan & Lanjutkan Update
                 </Button>
             </form>

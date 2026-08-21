@@ -81,36 +81,36 @@ export default function ProfilePage() {
 
     return (
         <PageContainer width="compact">
-            <div className="flex items-center gap-4 rounded-2xl border border-zinc-800 bg-zinc-900/50 p-6 backdrop-blur-md">
-                <div className="bg-primary/20 border-primary/50 flex h-16 w-16 items-center justify-center rounded-full border shadow-[0_0_15px_rgba(248,28,229,0.3)]">
+            <div className="border-border bg-surface-2/50 flex items-center gap-4 rounded-2xl border p-6 backdrop-blur-md">
+                <div className="bg-primary/20 border-primary/50 flex h-16 w-16 items-center justify-center rounded-full border shadow-[0_0_15px_rgb(124_92_255_/_0.3)]">
                     <User className="text-primary h-8 w-8" />
                 </div>
                 <div>
-                    <h1 className="text-2xl font-bold text-white">
+                    <h1 className="text-foreground text-2xl font-bold">
                         Profil: <span className="text-glow-primary">{profile?.username || "Admin"}</span>
                     </h1>
-                    <p className="mt-1 text-zinc-400">
-                        Email Utama: <span className="text-white">{profile?.primary_email || session?.user?.email}</span>
+                    <p className="text-muted-foreground mt-1">
+                        Email Utama: <span className="text-foreground">{profile?.primary_email || session?.user?.email}</span>
                     </p>
-                    {profile?.emails?.length > 1 && <p className="mt-1 text-sm text-zinc-500">Alias: {profile.emails.filter((e) => e !== profile.primary_email).join(", ")}</p>}
+                    {profile?.emails?.length > 1 && <p className="text-muted-foreground mt-1 text-sm">Alias: {profile.emails.filter((e) => e !== profile.primary_email).join(", ")}</p>}
                 </div>
             </div>
 
-            <Card className="border-zinc-800 bg-zinc-900/50 backdrop-blur-md">
+            <Card className="border-border bg-surface-2/50 backdrop-blur-md">
                 <CardHeader>
                     <CardTitle className="text-primary flex items-center gap-2 text-xl">
                         <User className="h-5 w-5" /> Edit Profil
                     </CardTitle>
-                    <CardDescription className="text-zinc-400">Ubah nama panggilan dan email buat login di markas.</CardDescription>
+                    <CardDescription className="text-muted-foreground">Ubah nama panggilan dan email buat login di markas.</CardDescription>
                 </CardHeader>
                 <CardContent>
                     <form onSubmit={handleUpdateProfile} className="space-y-4">
                         <div className="space-y-2">
                             <Label>Username</Label>
-                            <Input type="text" required value={editUsername} onChange={(e) => setEditUsername(e.target.value)} className="border-zinc-800 bg-zinc-950" placeholder="Nama panggilan..." />
+                            <Input type="text" required value={editUsername} onChange={(e) => setEditUsername(e.target.value)} className="border-border bg-surface-1" placeholder="Nama panggilan..." />
                         </div>
-                        <EmailListInput emails={editEmails} setEmails={setEditEmails} primaryPlaceholder="Email Utama" secondaryPlaceholder="Email Cadangan" inputClassName="bg-zinc-950 border-zinc-800" />
-                        <Button type="submit" disabled={isSavingProfile} className="bg-primary hover:bg-primary/80 h-12 px-8 font-bold text-white">
+                        <EmailListInput emails={editEmails} setEmails={setEditEmails} primaryPlaceholder="Email Utama" secondaryPlaceholder="Email Cadangan" inputClassName="bg-surface-1 border-border" />
+                        <Button type="submit" disabled={isSavingProfile} className="bg-primary hover:bg-primary/80 text-foreground h-12 px-8 font-bold">
                             {isSavingProfile ? (
                                 "Menyimpan..."
                             ) : (
@@ -123,18 +123,18 @@ export default function ProfilePage() {
                 </CardContent>
             </Card>
 
-            <Card className="border-zinc-800 bg-zinc-900/50 backdrop-blur-md">
+            <Card className="border-border bg-surface-2/50 backdrop-blur-md">
                 <CardHeader>
                     <CardTitle className="text-primary flex items-center gap-2 text-xl">
                         <Key className="h-5 w-5" /> Ganti Password
                     </CardTitle>
-                    <CardDescription className="text-zinc-400">Ubah password akun kamu di sini. Pastikan pakai password yang kuat.</CardDescription>
+                    <CardDescription className="text-muted-foreground">Ubah password akun kamu di sini. Pastikan pakai password yang kuat.</CardDescription>
                 </CardHeader>
                 <CardContent>
                     <form onSubmit={handleUpdatePassword} className="space-y-4">
-                        <PasswordInput label="Password Baru" required value={password} onChange={(e) => setPassword(e.target.value)} className="border-zinc-800 bg-zinc-950" />
-                        <PasswordInput label="Konfirmasi Password Baru" required value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} placeholder="Ulangi password" className="border-zinc-800 bg-zinc-950" />
-                        <Button type="submit" disabled={isUpdating} className="bg-primary hover:bg-primary/80 h-12 px-8 font-bold text-white">
+                        <PasswordInput label="Password Baru" required value={password} onChange={(e) => setPassword(e.target.value)} className="border-border bg-surface-1" />
+                        <PasswordInput label="Konfirmasi Password Baru" required value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} placeholder="Ulangi password" className="border-border bg-surface-1" />
+                        <Button type="submit" disabled={isUpdating} className="bg-primary hover:bg-primary/80 text-foreground h-12 px-8 font-bold">
                             {isUpdating ? "Menyimpan..." : "Simpan Password Baru"}
                         </Button>
                     </form>

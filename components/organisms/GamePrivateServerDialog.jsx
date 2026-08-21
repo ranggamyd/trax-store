@@ -176,42 +176,42 @@ export function GamePrivateServerDialog({ open, onOpenChange, game, onSaved }) {
     return (
         <FormDialog open={open} onOpenChange={onOpenChange} title="Private Server Link" titleClassName="text-glow-primary" maxWidth="sm:max-w-2xl">
             <div className="space-y-4 pt-2">
-                <div className="flex items-center gap-3 rounded-lg border border-zinc-800 bg-zinc-900/50 p-3">
-                    <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-zinc-700/50 bg-zinc-800">{eldoradoGameId && <img src={eldoradoIconUrl(eldoradoGameId)} alt={gameName} className="h-full w-full object-cover" />}</div>
+                <div className="border-border bg-surface-2/50 flex items-center gap-3 rounded-lg border p-3">
+                    <div className="border-border/50 bg-surface-3 flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-lg border">{eldoradoGameId && <img src={eldoradoIconUrl(eldoradoGameId)} alt={gameName} className="h-full w-full object-cover" />}</div>
                     <div className="min-w-0">
-                        <p className="truncate font-bold text-white">{gameName}</p>
-                        <p className="font-mono text-xs text-zinc-500">ID: {eldoradoGameId}</p>
+                        <p className="text-foreground truncate font-bold">{gameName}</p>
+                        <p className="text-muted-foreground font-mono text-xs">ID: {eldoradoGameId}</p>
                     </div>
                 </div>
 
                 {loading ? (
-                    <div className="flex items-center justify-center gap-2 py-10 text-sm text-zinc-500">
+                    <div className="text-muted-foreground flex items-center justify-center gap-2 py-10 text-sm">
                         <Loader2 className="h-4 w-4 animate-spin" />
                         Ngambil data akun...
                     </div>
                 ) : (
                     <>
                         <div className="space-y-2">
-                            <Label className="text-zinc-400">Tambah akun</Label>
+                            <Label className="text-muted-foreground">Tambah akun</Label>
                             <ComboboxSelect items={availableAccounts} value="" onSelect={handleAddAccount} getItemValue={(acc) => acc.username} placeholder={availableAccounts.length > 0 ? "-- Pilih akun --" : "Semua akun udah ditautin"} searchPlaceholder="Cari atau ketik akun baru..." emptyText="Gak ada akun yang cocok." onCreateNew={handleCreateAccount} createNewLabel={(term) => `Daftarin "${term}"`} />
                         </div>
 
                         <div className="space-y-2">
-                            <Label className="text-zinc-400">Akun di game ini ({rows.length})</Label>
+                            <Label className="text-muted-foreground">Akun di game ini ({rows.length})</Label>
                             {rows.length > 0 ? (
                                 <div className="max-h-[45vh] space-y-2 overflow-y-auto pr-1">
                                     {rows.map((row) => (
-                                        <div key={row.account_id} className="flex items-center gap-2 rounded-lg border border-zinc-800 bg-zinc-900/40 p-2">
-                                            <span className="w-28 shrink-0 truncate text-sm font-medium text-white" title={row.username}>
+                                        <div key={row.account_id} className="border-border bg-surface-2/40 flex items-center gap-2 rounded-lg border p-2">
+                                            <span className="text-foreground w-28 shrink-0 truncate text-sm font-medium" title={row.username}>
                                                 {row.username}
                                             </span>
-                                            <Input placeholder="https://www.roblox.com/share?code=..." value={row.link} onChange={(e) => handleChangeLink(row.account_id, e.target.value)} className="border-zinc-800 bg-zinc-950 text-xs" />
+                                            <Input placeholder="https://www.roblox.com/share?code=..." value={row.link} onChange={(e) => handleChangeLink(row.account_id, e.target.value)} className="border-border bg-surface-1 text-xs" />
                                             <ActionIcon icon={Trash2} variant="delete" title="Cabut akun dari game ini" onClick={() => handleRemoveRow(row.account_id)} />
                                         </div>
                                     ))}
                                 </div>
                             ) : (
-                                <p className="rounded-lg border border-dashed border-zinc-800 bg-zinc-900/30 py-6 text-center text-sm text-zinc-500">Belum ada akun buat game ini.</p>
+                                <p className="border-border bg-surface-2/30 text-muted-foreground rounded-lg border border-dashed py-6 text-center text-sm">Belum ada akun buat game ini.</p>
                             )}
                         </div>
 

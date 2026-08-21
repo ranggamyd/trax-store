@@ -311,8 +311,8 @@ export default function AccountDetail() {
                 title={account?.username}
                 subtitle={
                     <>
-                        Status Robux: {account?.status === "EMPTY_ROBUX" ? <span className="font-bold text-red-500">Habis</span> : <span className="font-bold text-green-500">Tersedia</span>}
-                        <span className="ml-2 text-xs text-zinc-500">| Akun ID: {account?.id}</span>
+                        Status Robux: {account?.status === "EMPTY_ROBUX" ? <span className="text-danger font-bold">Habis</span> : <span className="text-success font-bold">Tersedia</span>}
+                        <span className="text-muted-foreground ml-2 text-xs">| Akun ID: {account?.id}</span>
                     </>
                 }
                 avatarShape="circle"
@@ -351,10 +351,10 @@ export default function AccountDetail() {
             <FormDialog open={isEditNotesOpen} onOpenChange={setIsEditNotesOpen} title="Edit Catatan Item" titleClassName="text-glow-accent">
                 <form onSubmit={handleUpdateNotes} className="space-y-4 pt-4">
                     <div className="space-y-2">
-                        <Label className="text-zinc-400">
-                            Item: <span className="text-white">{editItemData?.items?.item_name}</span>
+                        <Label className="text-muted-foreground">
+                            Item: <span className="text-foreground">{editItemData?.items?.item_name}</span>
                         </Label>
-                        <Input placeholder="Cth: Laku, dipindah, dsb..." value={newNotes} onChange={(e) => setNewNotes(e.target.value)} className="border-zinc-800 bg-zinc-900" />
+                        <Input placeholder="Cth: Laku, dipindah, dsb..." value={newNotes} onChange={(e) => setNewNotes(e.target.value)} className="border-border bg-surface-2" />
                     </div>
                     <Button type="submit" className="bg-accent hover:bg-accent/80 mt-2 w-full font-bold text-black">
                         Update Catatan
@@ -363,8 +363,8 @@ export default function AccountDetail() {
             </FormDialog>
 
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full flex-col">
-                <TabsList className="mx-auto grid h-12 w-full max-w-md grid-cols-2 rounded-xl border border-zinc-800 bg-zinc-900 p-1">
-                    <TabsTrigger value="games" className="data-[state=active]:bg-primary rounded-lg transition-all data-[state=active]:font-bold data-[state=active]:text-white">
+                <TabsList className="border-border bg-surface-2 mx-auto grid h-12 w-full max-w-md grid-cols-2 rounded-xl border p-1">
+                    <TabsTrigger value="games" className="data-[state=active]:bg-primary data-[state=active]:text-foreground rounded-lg transition-all data-[state=active]:font-bold">
                         List Game
                     </TabsTrigger>
                     <TabsTrigger value="items" className="data-[state=active]:bg-accent rounded-lg transition-all data-[state=active]:font-bold data-[state=active]:text-black">
@@ -377,7 +377,7 @@ export default function AccountDetail() {
                     <div className="flex flex-col items-start justify-between gap-4 md:flex-row md:items-center">
                         <h2 className="text-glow-primary text-xl font-bold">Game yang Terhubung</h2>
                         <div className="flex w-full items-center gap-2 md:w-auto">
-                            <Input placeholder="Cari nama game..." value={gameSearch} onChange={(e) => setGameSearch(e.target.value)} className="w-full border-zinc-800 bg-zinc-900 md:w-64" />
+                            <Input placeholder="Cari nama game..." value={gameSearch} onChange={(e) => setGameSearch(e.target.value)} className="border-border bg-surface-2 w-full md:w-64" />
                             <Button
                                 size="sm"
                                 className="bg-primary hover:bg-primary/80 font-bold text-black"
@@ -422,7 +422,7 @@ export default function AccountDetail() {
                                     renderItem={(g) => (
                                         <>
                                             {g.name}
-                                            {g.requires_private_server && <span className="ml-2 inline-flex items-center rounded-sm border border-red-900 bg-red-950 px-2 py-0.5 text-[10px] font-bold text-red-500">WAJIB LINK</span>}
+                                            {g.requires_private_server && <span className="border-danger bg-danger-muted text-danger ml-2 inline-flex items-center rounded-sm border px-2 py-0.5 text-[10px] font-bold">WAJIB LINK</span>}
                                         </>
                                     )}
                                 />
@@ -430,13 +430,13 @@ export default function AccountDetail() {
                             {selectedGameId && allGames.find((g) => g.id === selectedGameId)?.requires_private_server && (
                                 <div className="space-y-2">
                                     <Label>
-                                        Private Server Link <span className="text-red-500">* (Wajib)</span>
+                                        Private Server Link <span className="text-danger">* (Wajib)</span>
                                     </Label>
-                                    <Input placeholder="https://..." value={privateServerLink} onChange={(e) => setPrivateServerLink(e.target.value)} className="border-zinc-800 bg-zinc-900" required />
+                                    <Input placeholder="https://..." value={privateServerLink} onChange={(e) => setPrivateServerLink(e.target.value)} className="border-border bg-surface-2" required />
                                 </div>
                             )}
                             {selectedGameId && (
-                                <div className="mt-4 space-y-2 border-t border-zinc-800 pt-4">
+                                <div className="border-border mt-4 space-y-2 border-t pt-4">
                                     <div className="flex items-center justify-between">
                                         <Label>Tambahkan Item dari Game Ini (Opsional)</Label>
                                         <Button type="button" variant="outline" size="sm" onClick={() => setGameItemsLinks([...gameItemsLinks, { item_id: "", new_name: "" }])} className="border-primary text-primary hover:bg-primary/20 h-7 text-xs">
@@ -470,7 +470,7 @@ export default function AccountDetail() {
                                                     type="button"
                                                     variant="ghost"
                                                     size="icon"
-                                                    className="h-10 w-10 shrink-0 text-red-500 hover:bg-red-950 hover:text-red-400"
+                                                    className="text-danger hover:bg-danger-muted hover:text-danger h-10 w-10 shrink-0"
                                                     onClick={() => {
                                                         const newArr = [...gameItemsLinks];
                                                         newArr.splice(idx, 1);
@@ -498,13 +498,13 @@ export default function AccountDetail() {
                         renderRow={(g) => (
                             <ClickableTableRow key={g.id} href={`/games/${g.games?.id}`}>
                                 <TableCell className="flex items-center gap-3 font-medium">
-                                    {g.games?.image_url ? <div className="h-8 w-8 shrink-0 rounded-md bg-zinc-800 bg-cover bg-center" style={{ backgroundImage: `url(${g.games?.image_url})` }} /> : <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-zinc-800 text-xs font-bold text-zinc-500">{getInitials(g.games?.name)}</div>}
+                                    {g.games?.image_url ? <div className="bg-surface-3 h-8 w-8 shrink-0 rounded-md bg-cover bg-center" style={{ backgroundImage: `url(${g.games?.image_url})` }} /> : <div className="bg-surface-3 text-muted-foreground flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-xs font-bold">{getInitials(g.games?.name)}</div>}
                                     <div className="hover:text-primary transition-colors">{g.games?.name}</div>
                                 </TableCell>
                                 <TableCell>
                                     <PrivateServerLinkCell link={g.private_server_link} />
                                 </TableCell>
-                                <TableCell className="text-right text-sm text-zinc-400">{new Date(g.created_at).toLocaleDateString("id-ID")}</TableCell>
+                                <TableCell className="text-muted-foreground text-right text-sm">{new Date(g.created_at).toLocaleDateString("id-ID")}</TableCell>
                                 <TableCell className="text-right">
                                     <div className="flex justify-end gap-1">
                                         <ActionIcon
@@ -539,7 +539,7 @@ export default function AccountDetail() {
                     <div className="flex flex-col items-start justify-between gap-4 md:flex-row md:items-center">
                         <h2 className="text-glow-accent text-xl font-bold">Item di Akun Ini</h2>
                         <div className="flex w-full items-center gap-2 md:w-auto">
-                            <Input placeholder="Cari nama item..." value={itemSearch} onChange={(e) => setItemSearch(e.target.value)} className="w-full border-zinc-800 bg-zinc-900 md:w-64" />
+                            <Input placeholder="Cari nama item..." value={itemSearch} onChange={(e) => setItemSearch(e.target.value)} className="border-border bg-surface-2 w-full md:w-64" />
                             <Button
                                 size="sm"
                                 className="bg-accent hover:bg-accent/80 font-bold text-black"
@@ -607,7 +607,7 @@ export default function AccountDetail() {
                         renderRow={(item) => (
                             <ClickableTableRow key={item.id} href={`/items/${item.items?.id}`}>
                                 <TableCell className="flex items-center gap-3 font-medium">
-                                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-zinc-700/50 bg-zinc-800/80 font-bold text-zinc-400 shadow-inner">{getInitials(item.items?.item_name || "I")}</div>
+                                    <div className="border-border/50 bg-surface-3/80 text-muted-foreground flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border font-bold shadow-inner">{getInitials(item.items?.item_name || "I")}</div>
                                     <div className="hover:text-accent flex items-center gap-2 transition-colors">
                                         {item.items?.item_name}{" "}
                                         <div onClick={(e) => e.stopPropagation()}>
@@ -615,9 +615,9 @@ export default function AccountDetail() {
                                         </div>
                                     </div>
                                 </TableCell>
-                                <TableCell className="text-zinc-400">{item.items?.games?.name || "-"}</TableCell>
+                                <TableCell className="text-muted-foreground">{item.items?.games?.name || "-"}</TableCell>
                                 <TableCell>{item.is_available ? <StatusBadge variant="success">Tersedia</StatusBadge> : <StatusBadge variant="danger">Habis / Terjual</StatusBadge>}</TableCell>
-                                <TableCell className="text-sm text-zinc-400">{item.stock_notes || "-"}</TableCell>
+                                <TableCell className="text-muted-foreground text-sm">{item.stock_notes || "-"}</TableCell>
                                 <TableCell className="text-right">
                                     <div className="flex justify-end gap-1">
                                         <ActionIcon
@@ -633,7 +633,7 @@ export default function AccountDetail() {
                                         <Button
                                             variant="ghost"
                                             size="icon"
-                                            className={item.is_available ? "h-8 w-8 text-zinc-500 hover:bg-red-500/10 hover:text-red-500" : "h-8 w-8 text-zinc-500 hover:bg-green-500/10 hover:text-green-500"}
+                                            className={item.is_available ? "text-muted-foreground hover:bg-danger/10 hover:text-danger h-8 w-8" : "text-muted-foreground hover:bg-success/10 hover:text-success h-8 w-8"}
                                             title={item.is_available ? "Tandai Habis" : "Tandai Tersedia"}
                                             onClick={(e) => {
                                                 e.stopPropagation();

@@ -9,26 +9,24 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { cn } from "@/lib/utils";
 
 /**
- * Reusable combobox select component.
- * Replaces 12+ copy-pasted Popover+Command patterns across the codebase.
+ * Combobox select. Gantiin 12+ pola Popover+Command yang di-copy-paste.
+ *
+ * BUG YANG DIBENERIN: lebar dropdown-nya dulu `w-[var(--radix-popover-trigger-width)]`.
+ * Itu variabel RADIX, sedangkan project ini pakai @base-ui/react — jadi
+ * variabelnya gak pernah ada, nilainya invalid, dan lebarnya diam-diam jatuh ke
+ * `w-72` bawaan PopoverContent. Akibatnya dropdown sering lebih sempit atau
+ * lebih lebar dari trigger-nya tanpa alasan yang kelihatan.
+ * Base UI namanya `--anchor-width`.
  *
  * Props:
- * - items: Array of selectable items
- * - value: Currently selected value (item ID or similar)
- * - onSelect: (item) => void
- * - getItemValue: (item) => string (for Command filtering, defaults to item.name)
- * - getItemId: (item) => string (for matching selected, defaults to item.id)
- * - renderItem: (item) => ReactNode (custom render per item)
- * - placeholder: Trigger button placeholder
- * - searchPlaceholder: Search input placeholder
- * - emptyText: Text when no results
- * - onCreateNew: (searchTerm) => void (optional, for inline creation)
- * - createNewLabel: (searchTerm) => string (button label for create)
- * - triggerClassName: Additional classes for trigger button
- * - contentClassName: Additional classes for the dropdown (buat trigger kecil yang butuh list lebih lebar)
- * - open/onOpenChange: Optional controlled open state
+ * - items, value, onSelect
+ * - getItemValue / getItemId / renderItem
+ * - placeholder / searchPlaceholder / emptyText
+ * - onCreateNew + createNewLabel (bikin item baru langsung dari kolom cari)
+ * - triggerClassName / contentClassName
+ * - open / onOpenChange (opsional, buat controlled)
  */
-export function ComboboxSelect({ items = [], value, onSelect, getItemValue = (item) => item.name || item.username || item.item_name || "", getItemId = (item) => item.id, renderItem, placeholder = "-- Pilih --", searchPlaceholder = "Cari...", emptyText = "Gak ketemu bro.", onCreateNew, createNewLabel = (term) => `Tambah "${term}"`, triggerClassName, contentClassName, open: controlledOpen, onOpenChange: controlledOnOpenChange }) {
+export function ComboboxSelect({ items = [], value, onSelect, getItemValue = (item) => item.name || item.username || item.item_name || "", getItemId = (item) => item.id, renderItem, placeholder = "-- Pilih --", searchPlaceholder = "Cari...", emptyText = "Gak ketemu.", onCreateNew, createNewLabel = (term) => `Tambah "${term}"`, triggerClassName, contentClassName, disabled, open: controlledOpen, onOpenChange: controlledOnOpenChange }) {
     const [internalOpen, setInternalOpen] = useState(false);
     const [search, setSearch] = useState("");
 
@@ -37,28 +35,38 @@ export function ComboboxSelect({ items = [], value, onSelect, getItemValue = (it
     const setOpen = isControlled ? controlledOnOpenChange : setInternalOpen;
 
     const selectedItem = items.find((item) => getItemId(item) === value);
-    const displayValue = selectedItem ? getItemValue(selectedItem) : placeholder;
+    const hasSelection = Boolean(selectedItem);
+    const displayValue = hasSelection ? getItemValue(selectedItem) : placeholder;
 
     return (
         <Popover open={open} onOpenChange={setOpen}>
             <PopoverTrigger asChild>
-                <Button variant="outline" role="combobox" aria-expanded={open} className={cn("flex w-full flex-1 items-center justify-between border-zinc-800 bg-zinc-900 text-zinc-300 hover:bg-zinc-800 hover:text-white", triggerClassName)}>
-                    {displayValue}
+                <Button
+                    variant="outline"
+                    role="combobox"
+                    aria-expanded={open}
+                    disabled={disabled}
+                    // Placeholder dibedain warnanya dari nilai terpilih. Dulu dua-duanya
+                    // `text-zinc-300`, jadi "-- Pilih game --" kelihatan kayak udah kepilih.
+                    className={cn("border-border bg-input/60 hover:bg-surface-3 hover:text-foreground flex h-9 w-full flex-1 items-center justify-between font-normal", hasSelection ? "text-foreground" : "text-muted-foreground", triggerClassName)}
+                >
+                    <span className="truncate">{displayValue}</span>
                     <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                 </Button>
             </PopoverTrigger>
-            <PopoverContent className={cn("w-[var(--radix-popover-trigger-width)] border-zinc-800 bg-zinc-950 p-0", contentClassName)}>
+
+            <PopoverContent className={cn("border-border bg-popover w-(--anchor-width) min-w-56 p-0", contentClassName)}>
                 <Command>
                     <CommandInput placeholder={searchPlaceholder} className="text-foreground" value={search} onValueChange={setSearch} />
-                    <CommandList>
-                        <CommandEmpty className="p-4 text-center text-sm text-zinc-400">
+                    <CommandList className="custom-scrollbar">
+                        <CommandEmpty className="text-muted-foreground p-4 text-center text-sm">
                             <p className="mb-2">{emptyText}</p>
                             {onCreateNew && search.trim() && (
                                 <Button
                                     type="button"
                                     size="sm"
                                     variant="outline"
-                                    className="text-primary border-primary hover:bg-primary/20 mt-2 w-full"
+                                    className="text-primary border-primary/50 hover:bg-primary/15 mt-2 w-full"
                                     onClick={() => {
                                         onCreateNew(search.trim());
                                         setSearch("");
@@ -80,9 +88,9 @@ export function ComboboxSelect({ items = [], value, onSelect, getItemValue = (it
                                         setSearch("");
                                         setOpen(false);
                                     }}
-                                    className="text-foreground aria-selected:bg-primary/20 aria-selected:text-primary cursor-pointer"
+                                    className="text-foreground aria-selected:bg-primary/15 aria-selected:text-primary cursor-pointer"
                                 >
-                                    <Check className={cn("mr-2 h-4 w-4", value === getItemId(item) ? "opacity-100" : "opacity-0")} />
+                                    <Check className={cn("mr-2 h-4 w-4 shrink-0", value === getItemId(item) ? "opacity-100" : "opacity-0")} />
                                     {renderItem ? renderItem(item) : getItemValue(item)}
                                 </CommandItem>
                             ))}

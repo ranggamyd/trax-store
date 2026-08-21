@@ -33,7 +33,7 @@ export function RepeaterField({ items, setItems, label = "Items", addLabel = "Ta
     };
 
     return (
-        <div className="mt-4 space-y-2 border-t border-zinc-800 pt-4">
+        <div className="border-border mt-4 space-y-2 border-t pt-4">
             <div className="flex items-center justify-between">
                 <Label>{label}</Label>
                 <Button type="button" variant="outline" size="sm" onClick={addRow} className={addButtonClassName}>
@@ -47,7 +47,7 @@ export function RepeaterField({ items, setItems, label = "Items", addLabel = "Ta
                             update: (updates) => updateRow(idx, updates),
                             remove: () => removeRow(idx),
                         })}
-                        <Button type="button" variant="ghost" size="icon" className="h-10 w-10 shrink-0 text-red-500 hover:bg-red-950 hover:text-red-400" onClick={() => removeRow(idx)}>
+                        <Button type="button" variant="ghost" size="icon" className="text-danger hover:bg-danger-muted hover:text-danger h-10 w-10 shrink-0" onClick={() => removeRow(idx)}>
                             <Trash2 className="h-4 w-4" />
                         </Button>
                     </div>

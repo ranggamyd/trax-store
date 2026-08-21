@@ -12,7 +12,7 @@ import { TOKEN_FAILURE, TOKEN_STATUS } from "@/hooks/useTokenRecovery";
 export default function TokenStatusNotice({ status, failure, retryCount = 0, className = "" }) {
     if (status === TOKEN_STATUS.RECOVERING) {
         return (
-            <div className={`flex items-start gap-3 rounded-xl border border-amber-900/40 bg-amber-950/20 p-4 text-sm text-amber-300 ${className}`}>
+            <div className={`border-warning/40 bg-warning-muted/20 text-warning flex items-start gap-3 rounded-xl border p-4 text-sm ${className}`}>
                 <Loader2Icon className="mt-0.5 h-4 w-4 shrink-0 animate-spin" />
                 <div>
                     <p className="font-semibold">Menyiapkan token...</p>
@@ -27,7 +27,7 @@ export default function TokenStatusNotice({ status, failure, retryCount = 0, cla
     const isNoExtension = failure === TOKEN_FAILURE.NO_EXTENSION;
 
     return (
-        <div className={`rounded-xl border border-red-900/50 bg-red-950/30 p-4 text-sm text-red-400 ${className}`}>
+        <div className={`border-danger/50 bg-danger-muted/30 text-danger rounded-xl border p-4 text-sm ${className}`}>
             <div className="flex items-start gap-3">
                 {isNoExtension ? <PuzzleIcon className="mt-0.5 h-4 w-4 shrink-0" /> : <AlertTriangleIcon className="mt-0.5 h-4 w-4 shrink-0" />}
                 <div>
@@ -41,7 +41,7 @@ export default function TokenStatusNotice({ status, failure, retryCount = 0, cla
                         </ol>
                     ) : (
                         <div className="mt-2 text-xs opacity-80">
-                            <a href="https://www.eldorado.gg/" target="_blank" rel="noopener noreferrer" className="mt-1.5 inline-flex items-center gap-1 text-red-300 underline underline-offset-2 hover:text-red-200">
+                            <a href="https://www.eldorado.gg/" target="_blank" rel="noopener noreferrer" className="text-danger hover:text-danger mt-1.5 inline-flex items-center gap-1 underline underline-offset-2">
                                 Login dulu di eldorado.gg
                                 <ExternalLinkIcon className="h-3 w-3" />
                             </a>

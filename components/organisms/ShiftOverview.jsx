@@ -80,47 +80,45 @@ export function ShiftOverview({ onShiftEnded, onShiftChange }) {
     const currentGuardUsername = activeShift?.admin_profiles?.username || null;
 
     return (
-        <div className="relative overflow-hidden rounded-2xl border border-zinc-800 bg-zinc-900/40 p-6 backdrop-blur-sm">
-            <div className="absolute inset-0 z-0 bg-gradient-to-br from-green-500/5 via-transparent to-emerald-500/5"></div>
+        <div className="border-border bg-surface-2/40 relative overflow-hidden rounded-2xl border p-6 backdrop-blur-sm">
+            <div className="from-success/5 to-success/5 absolute inset-0 z-0 bg-gradient-to-br via-transparent"></div>
             <div className="relative z-10">
                 <div className="mb-5 flex flex-col items-start justify-between gap-4 md:flex-row md:items-center">
                     <div className="flex items-center gap-3">
-                        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-green-500/10 ring-1 ring-green-500/30">
-                            <Clock className="h-5 w-5 text-green-400" />
+                        <div className="bg-success/10 ring-success/30 flex h-10 w-10 items-center justify-center rounded-xl ring-1">
+                            <Clock className="text-success h-5 w-5" />
                         </div>
                         <div>
-                            <h2 className="text-lg font-bold tracking-wide text-white uppercase" style={{ textShadow: "0 0 10px rgba(34,197,94,0.5)" }}>
-                                Yang lagi jaga
-                            </h2>
+                            <h2 className="text-foreground text-lg font-bold tracking-wide uppercase">Yang lagi jaga</h2>
                         </div>
                     </div>
                     {pathname !== "/shifts" && (
-                        <Link href="/shifts" className="text-xs font-bold text-green-400 transition-colors hover:text-green-300 hover:underline">
+                        <Link href="/shifts" className="text-success hover:text-success text-xs font-bold transition-colors hover:underline">
                             History
                         </Link>
                     )}
                 </div>
 
                 {shiftLoading ? (
-                    <div className="flex flex-col items-center gap-4 rounded-xl border border-zinc-800 bg-zinc-950/60 p-8 md:flex-row">
-                        <Skeleton className="h-16 w-16 rounded-full bg-zinc-800" />
+                    <div className="border-border bg-surface-1/60 flex flex-col items-center gap-4 rounded-xl border p-8 md:flex-row">
+                        <Skeleton className="bg-surface-3 h-16 w-16 rounded-full" />
                         <div className="flex-1 space-y-2">
-                            <Skeleton className="h-5 w-40 bg-zinc-800" />
-                            <Skeleton className="h-4 w-24 bg-zinc-800" />
+                            <Skeleton className="bg-surface-3 h-5 w-40" />
+                            <Skeleton className="bg-surface-3 h-4 w-24" />
                         </div>
                     </div>
                 ) : activeShift ? (
-                    <div className="flex flex-col gap-4 rounded-xl border border-green-500/20 bg-zinc-950/60 p-5 md:flex-row md:items-center">
+                    <div className="border-success/20 bg-surface-1/60 flex flex-col gap-4 rounded-xl border p-5 md:flex-row md:items-center">
                         <div className="flex flex-1 items-center gap-4">
                             <div className="relative">
-                                <div className="flex h-14 w-14 items-center justify-center rounded-full bg-green-500/10 ring-2 ring-green-500/40">
-                                    <span className="text-xl font-black text-green-400">{currentGuardUsername?.charAt(0)?.toUpperCase() || "?"}</span>
+                                <div className="bg-success/10 ring-success/40 flex h-14 w-14 items-center justify-center rounded-full ring-2">
+                                    <span className="text-success text-xl font-black">{currentGuardUsername?.charAt(0)?.toUpperCase() || "?"}</span>
                                 </div>
-                                <span className="absolute -right-0.5 -bottom-0.5 h-4 w-4 animate-pulse rounded-full border-2 border-zinc-950 bg-green-400 shadow-[0_0_8px_rgba(34,197,94,0.8)]"></span>
+                                <span className="border-border bg-success absolute -right-0.5 -bottom-0.5 h-4 w-4 animate-pulse rounded-full border-2 shadow-[0_0_8px_rgb(52_211_153_/_0.8)]"></span>
                             </div>
                             <div>
-                                <p className="text-lg font-bold text-white">{currentGuardUsername || "Unknown"}</p>
-                                <p className="text-xs text-zinc-500">
+                                <p className="text-foreground text-lg font-bold">{currentGuardUsername || "Unknown"}</p>
+                                <p className="text-muted-foreground text-xs">
                                     Dari jam:{" "}
                                     {new Date(activeShift.started_at).toLocaleTimeString("id-ID", {
                                         hour: "2-digit",
@@ -131,23 +129,21 @@ export function ShiftOverview({ onShiftEnded, onShiftChange }) {
                         </div>
 
                         <div className="flex items-center gap-3">
-                            <div className="flex items-center gap-2 rounded-lg border border-zinc-800 bg-black/50 px-4 py-2">
-                                <Timer className="h-4 w-4 text-green-400" />
-                                <span className="font-mono text-xl font-bold text-green-400" style={{ textShadow: "0 0 10px rgba(34,197,94,0.5)" }}>
-                                    {liveDuration}
-                                </span>
+                            <div className="border-border flex items-center gap-2 rounded-lg border bg-black/50 px-4 py-2">
+                                <Timer className="text-success h-4 w-4" />
+                                <span className="text-success font-mono text-xl font-bold">{liveDuration}</span>
                             </div>
                         </div>
 
                         <div className="flex gap-2">
                             {activeShift.user_id === session?.user?.id && (
-                                <Button variant="ghost" className="gap-2 border border-red-500/30 bg-red-500/10 text-red-400 hover:bg-red-500/20 hover:text-red-300" onClick={handleEndShift} disabled={actionLoading}>
+                                <Button variant="ghost" className="border-danger/30 bg-danger/10 text-danger hover:bg-danger/20 hover:text-danger gap-2 border" onClick={handleEndShift} disabled={actionLoading}>
                                     <Square className="h-4 w-4" />
                                     <span className="hidden sm:inline">Lepas</span>
                                 </Button>
                             )}
                             {activeShift.user_id !== session?.user?.id && (
-                                <Button variant="ghost" className="gap-2 border border-yellow-500/30 bg-yellow-500/10 text-yellow-400 hover:bg-yellow-500/20 hover:text-yellow-300" onClick={handleTakeover} disabled={actionLoading}>
+                                <Button variant="ghost" className="border-warning/30 bg-warning/10 text-warning hover:bg-warning/20 hover:text-warning gap-2 border" onClick={handleTakeover} disabled={actionLoading}>
                                     <ArrowRightLeft className="h-4 w-4" />
                                     <span className="hidden sm:inline">Takeover</span>
                                 </Button>
@@ -155,14 +151,15 @@ export function ShiftOverview({ onShiftEnded, onShiftChange }) {
                         </div>
                     </div>
                 ) : (
-                    <div className="flex flex-col items-center gap-4 rounded-xl border border-dashed border-zinc-700 bg-zinc-950/40 p-8 text-center">
-                        <div className="flex h-16 w-16 items-center justify-center rounded-full bg-zinc-800/50 ring-1 ring-zinc-700">
-                            <Clock className="h-8 w-8 text-zinc-600" />
+                    <div className="border-border bg-surface-1/40 flex flex-col items-center gap-4 rounded-xl border border-dashed p-8 text-center">
+                        <div className="bg-surface-3/50 ring-border flex h-16 w-16 items-center justify-center rounded-full ring-1">
+                            <Clock className="text-muted-foreground/70 h-8 w-8" />
                         </div>
                         <div>
-                            <p className="text-base font-bold text-zinc-400">Kosong</p>
+                            <p className="text-foreground text-base font-semibold">Belum ada yang jaga</p>
+                            <p className="text-muted-foreground mt-1 text-sm">Ambil shift biar order yang masuk ada yang pegang.</p>
                         </div>
-                        <Button size="lg" className="mt-2 gap-2 bg-green-600 font-bold text-white shadow-[0_0_15px_rgba(34,197,94,0.3)] hover:bg-green-500 hover:shadow-[0_0_20px_rgba(34,197,94,0.5)]" onClick={handleStartShift} disabled={actionLoading}>
+                        <Button size="lg" className="bg-success text-success-foreground hover:bg-success/90 mt-2 gap-2 font-semibold" style={{ boxShadow: "0 0 24px rgb(52 211 153 / 0.3)" }} onClick={handleStartShift} disabled={actionLoading}>
                             <Play className="h-4 w-4" />
                             Take sekarang
                         </Button>

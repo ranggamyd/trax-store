@@ -21,7 +21,7 @@ export function CopyButton({ textToCopy, className }) {
     return (
         <Button variant="ghost" size="icon" className={`text-muted-foreground hover:text-accent text-glow-accent relative h-8 w-8 transition-all ${className}`} onClick={handleCopy}>
             <span className="sr-only">Copy</span>
-            {copied ? <Check className="h-4 w-4 scale-100 text-green-500 transition-all" /> : <Copy className="h-4 w-4 scale-100 transition-all" />}
+            {copied ? <Check className="text-success h-4 w-4 scale-100 transition-all" /> : <Copy className="h-4 w-4 scale-100 transition-all" />}
         </Button>
     );
 }

@@ -10,17 +10,17 @@ export function DetailHeader({ title, subtitle, initialsText, imageUrl, avatarSh
     const shapeClass = avatarShape === "circle" ? "rounded-full" : "rounded-xl";
 
     return (
-        <div className="flex flex-col justify-between gap-4 rounded-2xl border border-zinc-800 bg-zinc-900/50 p-6 backdrop-blur-md md:flex-row md:items-center">
+        <div className="border-border bg-surface-2/50 flex flex-col justify-between gap-4 rounded-2xl border p-6 backdrop-blur-md md:flex-row md:items-center">
             <div className="flex items-center gap-4">
-                <Button variant="ghost" size="icon" className="shrink-0 rounded-full text-zinc-400 transition-colors hover:bg-zinc-800 hover:text-white" onClick={() => router.back()}>
+                <Button variant="ghost" size="icon" className="text-muted-foreground hover:bg-surface-3 hover:text-foreground shrink-0 rounded-full transition-colors" onClick={() => router.back()}>
                     <ArrowLeft className="h-5 w-5" />
                 </Button>
-                {imageUrl ? <div className={`h-16 w-16 shrink-0 border border-zinc-700/50 bg-zinc-800 bg-cover bg-center shadow-lg ${shapeClass}`} style={{ backgroundImage: `url(${imageUrl})` }} /> : <div className={`flex h-16 w-16 shrink-0 items-center justify-center border border-zinc-700/50 bg-zinc-800/80 text-2xl font-bold text-zinc-400 shadow-inner ${shapeClass}`}>{getInitials(initialsText || title || "A")}</div>}
+                {imageUrl ? <div className={`border-border/50 bg-surface-3 h-16 w-16 shrink-0 border bg-cover bg-center shadow-lg ${shapeClass}`} style={{ backgroundImage: `url(${imageUrl})` }} /> : <div className={`border-border/50 bg-surface-3/80 text-muted-foreground flex h-16 w-16 shrink-0 items-center justify-center border text-2xl font-bold shadow-inner ${shapeClass}`}>{getInitials(initialsText || title || "A")}</div>}
                 <div>
-                    <h1 className="flex items-center gap-2 text-3xl font-bold tracking-widest text-white uppercase">
+                    <h1 className="text-foreground flex items-center gap-2 text-3xl font-bold tracking-widest uppercase">
                         {title} <CopyButton textToCopy={title} className="h-6 w-6" />
                     </h1>
-                    {typeof subtitle === "string" ? <p className="mt-1 text-sm text-zinc-500">{subtitle}</p> : <div className="mt-1">{subtitle}</div>}
+                    {typeof subtitle === "string" ? <p className="text-muted-foreground mt-1 text-sm">{subtitle}</p> : <div className="mt-1">{subtitle}</div>}
                 </div>
             </div>
 

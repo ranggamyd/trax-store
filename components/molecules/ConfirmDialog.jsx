@@ -6,7 +6,7 @@ import { cn } from "@/lib/utils";
  *
  * Yang diubah:
  *
- * 1. Warna ke token semantik. `text-red-500` / `bg-red-600` jadi `danger`.
+ * 1. Warna ke token semantik: `text-red-500` / `bg-red-600` jadi `danger`.
  *
  * 2. Tombol konfirmasi default-nya "Ya, Hapus" — sekarang bisa (dan sebaiknya)
  *    diisi kata kerja spesifik. Tombol yang nyebut AKSI-nya ("Hapus akun")

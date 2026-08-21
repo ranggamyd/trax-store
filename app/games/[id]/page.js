@@ -381,8 +381,8 @@ export default function GameDetail() {
                 title={game.name}
                 subtitle={
                     <>
-                        Status Private Server: {game.requires_private_server ? <span className="font-bold text-red-500">Wajib Join</span> : <span className="font-bold text-green-500">Bebas</span>}
-                        <span className="ml-2 text-xs text-zinc-500">| Game ID: {game.id}</span>
+                        Status Private Server: {game.requires_private_server ? <span className="text-danger font-bold">Wajib Join</span> : <span className="text-success font-bold">Bebas</span>}
+                        <span className="text-muted-foreground ml-2 text-xs">| Game ID: {game.id}</span>
                     </>
                 }
                 imageUrl={game.image_url || "https://images.unsplash.com/photo-1550745165-9bc0b252726f?q=80&w=200&auto=format&fit=crop"}
@@ -413,8 +413,8 @@ export default function GameDetail() {
             <EditLinkDialog open={isEditLinkOpen} onOpenChange={setIsEditLinkOpen} entityLabel="Akun" entityName={editAccountGame?.accounts?.username} link={newLink} onLinkChange={setNewLink} onSubmit={handleUpdateLink} />
 
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full flex-col">
-                <TabsList className="mx-auto grid h-12 w-full max-w-md grid-cols-2 rounded-xl border border-zinc-800 bg-zinc-900 p-1">
-                    <TabsTrigger value="accounts" className="data-[state=active]:bg-primary rounded-lg transition-all data-[state=active]:font-bold data-[state=active]:text-white">
+                <TabsList className="border-border bg-surface-2 mx-auto grid h-12 w-full max-w-md grid-cols-2 rounded-xl border p-1">
+                    <TabsTrigger value="accounts" className="data-[state=active]:bg-primary data-[state=active]:text-foreground rounded-lg transition-all data-[state=active]:font-bold">
                         List Akun
                     </TabsTrigger>
                     <TabsTrigger value="items" className="data-[state=active]:bg-accent rounded-lg transition-all data-[state=active]:font-bold data-[state=active]:text-black">
@@ -427,7 +427,7 @@ export default function GameDetail() {
                     <div className="flex flex-col items-start justify-between gap-4 md:flex-row md:items-center">
                         <h2 className="text-glow-primary text-xl font-bold">Akun yang main di sini</h2>
                         <div className="flex w-full items-center gap-2 md:w-auto">
-                            <Input placeholder="Cari username..." value={accountSearch} onChange={(e) => setAccountSearch(e.target.value)} className="w-full border-zinc-800 bg-zinc-900 md:w-64" />
+                            <Input placeholder="Cari username..." value={accountSearch} onChange={(e) => setAccountSearch(e.target.value)} className="border-border bg-surface-2 w-full md:w-64" />
                             <Button
                                 size="sm"
                                 className="bg-primary hover:bg-primary/80 font-bold text-black"
@@ -460,16 +460,16 @@ export default function GameDetail() {
                                     renderItem={(acc) => (
                                         <>
                                             {acc.username}
-                                            {acc.status === "EMPTY_ROBUX" && <span className="ml-2 inline-flex items-center rounded-sm border border-red-900 bg-red-950 px-2 py-0.5 text-[10px] font-bold text-red-500">HABIS</span>}
+                                            {acc.status === "EMPTY_ROBUX" && <span className="border-danger bg-danger-muted text-danger ml-2 inline-flex items-center rounded-sm border px-2 py-0.5 text-[10px] font-bold">HABIS</span>}
                                         </>
                                     )}
                                 />
-                                {errAcc.account_id && <p className="text-sm text-red-500">{errAcc.account_id.message}</p>}
+                                {errAcc.account_id && <p className="text-danger text-sm">{errAcc.account_id.message}</p>}
                             </div>
-                            <FormField label={<>Private Server Link {game.requires_private_server ? <span className="text-red-500">* (Wajib)</span> : "(Opsional)"}</>} error={errAcc.private_server_link?.message} register={regAcc("private_server_link")} placeholder="https://..." />
+                            <FormField label={<>Private Server Link {game.requires_private_server ? <span className="text-danger">* (Wajib)</span> : "(Opsional)"}</>} error={errAcc.private_server_link?.message} register={regAcc("private_server_link")} placeholder="https://..." />
 
                             {/* Item links repeater */}
-                            <div className="mt-4 space-y-2 border-t border-zinc-800 pt-4">
+                            <div className="border-border mt-4 space-y-2 border-t pt-4">
                                 <div className="flex items-center justify-between">
                                     <Label>Item yang Dimiliki (Opsional)</Label>
                                     <Button type="button" variant="outline" size="sm" onClick={() => setAccountItemsLinks([...accountItemsLinks, { item_id: "", new_name: "" }])} className="border-primary text-primary hover:bg-primary/20 h-7 text-xs">
@@ -501,7 +501,7 @@ export default function GameDetail() {
                                             type="button"
                                             variant="ghost"
                                             size="icon"
-                                            className="h-10 w-10 shrink-0 text-red-500 hover:bg-red-950 hover:text-red-400"
+                                            className="text-danger hover:bg-danger-muted hover:text-danger h-10 w-10 shrink-0"
                                             onClick={() => {
                                                 const newArr = [...accountItemsLinks];
                                                 newArr.splice(idx, 1);
@@ -528,10 +528,10 @@ export default function GameDetail() {
                         renderRow={(acc) => (
                             <ClickableTableRow key={acc.id} href={`/accounts/${acc.account_id}`}>
                                 <TableCell className="flex items-center gap-3 font-medium">
-                                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-zinc-700/50 bg-zinc-800/80 font-bold text-zinc-400 shadow-inner">{getInitials(acc.accounts?.username)}</div>
+                                    <div className="border-border/50 bg-surface-3/80 text-muted-foreground flex h-10 w-10 shrink-0 items-center justify-center rounded-full border font-bold shadow-inner">{getInitials(acc.accounts?.username)}</div>
                                     <div className="flex items-center gap-2">
                                         {acc.accounts?.username} <CopyButton textToCopy={acc.accounts?.username} className="h-6 w-6" />
-                                        {acc.accounts?.status === "EMPTY_ROBUX" && <span className="inline-flex items-center rounded-sm border border-red-900 bg-red-950 px-2 py-0.5 text-[10px] font-bold text-red-500">HABIS ROBUX</span>}
+                                        {acc.accounts?.status === "EMPTY_ROBUX" && <span className="border-danger bg-danger-muted text-danger inline-flex items-center rounded-sm border px-2 py-0.5 text-[10px] font-bold">HABIS ROBUX</span>}
                                     </div>
                                 </TableCell>
                                 <TableCell>
@@ -562,7 +562,7 @@ export default function GameDetail() {
                     <div className="flex flex-col items-start justify-between gap-4 md:flex-row md:items-center">
                         <h2 className="text-glow-accent text-xl font-bold">Daftar Item Game</h2>
                         <div className="flex w-full items-center gap-2 md:w-auto">
-                            <Input placeholder="Cari nama item..." value={itemSearch} onChange={(e) => setItemSearch(e.target.value)} className="w-full border-zinc-800 bg-zinc-900 md:w-64" />
+                            <Input placeholder="Cari nama item..." value={itemSearch} onChange={(e) => setItemSearch(e.target.value)} className="border-border bg-surface-2 w-full md:w-64" />
                             <Button
                                 size="sm"
                                 className="bg-accent hover:bg-accent/80 font-bold text-black"
@@ -585,7 +585,7 @@ export default function GameDetail() {
                             <FormField label="Deskripsi (Opsional)" error={errItem.description?.message} register={regItem("description")} placeholder="Cth: Buah langka" />
 
                             {!editItemId && (
-                                <div className="mt-4 space-y-2 border-t border-zinc-800 pt-4">
+                                <div className="border-border mt-4 space-y-2 border-t pt-4">
                                     <div className="flex items-center justify-between">
                                         <Label>Tautkan ke Akun (Wajib minimal 1)</Label>
                                         <Button type="button" variant="outline" size="sm" onClick={() => setItemAccounts([...itemAccounts, { account_id: "", private_server_link: "" }])} className="border-primary text-primary hover:bg-primary/20 h-7 text-xs">
@@ -623,7 +623,7 @@ export default function GameDetail() {
                                                     renderItem={(acc) => (
                                                         <>
                                                             {acc.username}
-                                                            {acc.status === "EMPTY_ROBUX" && <span className="ml-2 inline-flex items-center rounded-sm border border-red-900 bg-red-950 px-2 py-0.5 text-[10px] font-bold text-red-500">HABIS</span>}
+                                                            {acc.status === "EMPTY_ROBUX" && <span className="border-danger bg-danger-muted text-danger ml-2 inline-flex items-center rounded-sm border px-2 py-0.5 text-[10px] font-bold">HABIS</span>}
                                                         </>
                                                     )}
                                                 />
@@ -631,7 +631,7 @@ export default function GameDetail() {
                                                     type="button"
                                                     variant="ghost"
                                                     size="icon"
-                                                    className="h-10 w-10 shrink-0 text-red-500 hover:bg-red-950 hover:text-red-400"
+                                                    className="text-danger hover:bg-danger-muted hover:text-danger h-10 w-10 shrink-0"
                                                     onClick={() => {
                                                         const newArr = [...itemAccounts];
                                                         newArr.splice(idx, 1);
@@ -642,7 +642,7 @@ export default function GameDetail() {
                                                 </Button>
                                             </div>
                                             {game?.requires_private_server && accObj.account_id && (
-                                                <div className="mb-2 ml-1 flex w-full items-center border-l-2 border-zinc-800 pl-4">
+                                                <div className="border-border mb-2 ml-1 flex w-full items-center border-l-2 pl-4">
                                                     <Input
                                                         placeholder="Link Private Server (Wajib)"
                                                         value={accObj.private_server_link}
@@ -651,7 +651,7 @@ export default function GameDetail() {
                                                             newArr[idx].private_server_link = e.target.value;
                                                             setItemAccounts(newArr);
                                                         }}
-                                                        className="h-8 border-zinc-800 bg-zinc-900 text-xs"
+                                                        className="border-border bg-surface-2 h-8 text-xs"
                                                     />
                                                 </div>
                                             )}
@@ -674,12 +674,12 @@ export default function GameDetail() {
                         renderRow={(item) => (
                             <ClickableTableRow key={item.id} href={`/items/${item.id}`}>
                                 <TableCell className="flex items-center gap-3 font-medium">
-                                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-zinc-700/50 bg-zinc-800/80 font-bold text-zinc-400 shadow-inner">{getInitials(item.item_name)}</div>
+                                    <div className="border-border/50 bg-surface-3/80 text-muted-foreground flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border font-bold shadow-inner">{getInitials(item.item_name)}</div>
                                     <div className="flex items-center gap-2">
                                         {item.item_name} <CopyButton textToCopy={item.item_name} className="h-6 w-6" />
                                     </div>
                                 </TableCell>
-                                <TableCell className="text-zinc-400">{item.description || "-"}</TableCell>
+                                <TableCell className="text-muted-foreground">{item.description || "-"}</TableCell>
                                 <TableCell className="flex items-center justify-end gap-1 text-right">
                                     <ActionIcon
                                         icon={Pencil}
