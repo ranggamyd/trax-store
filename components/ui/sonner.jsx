@@ -1,15 +1,13 @@
 "use client";
 
-import { CircleCheckIcon, InfoIcon, Loader2Icon,OctagonXIcon, TriangleAlertIcon } from "lucide-react";
-import { useTheme } from "next-themes";
+import { CircleCheckIcon, InfoIcon, Loader2Icon, OctagonXIcon, TriangleAlertIcon } from "lucide-react";
 import { Toaster as Sonner } from "sonner";
 
 const Toaster = ({ ...props }) => {
-    const { theme = "system" } = useTheme();
-
+    // App ini dark-only, jadi gak perlu next-themes cuma buat baca satu string.
     return (
         <Sonner
-            theme={theme}
+            theme="dark"
             className="toaster group"
             icons={{
                 success: <CircleCheckIcon className="size-4" />,

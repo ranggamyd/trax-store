@@ -40,4 +40,4 @@ function TableCaption({ className, ...props }) {
     return <caption data-slot="table-caption" className={cn("text-muted-foreground mt-4 text-sm", className)} {...props} />;
 }
 
-export { Table, TableBody, TableCaption,TableCell, TableFooter, TableHead, TableHeader, TableRow };
+export { Table, TableBody, TableCaption, TableCell, TableFooter, TableHead, TableHeader, TableRow };

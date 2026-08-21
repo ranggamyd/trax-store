@@ -1,16 +1,42 @@
 "use server";
+
+import { getCurrentAdmin, UNAUTHORIZED_MESSAGE } from "@/lib/auth";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 
-export async function resolveLoginIdentifier(identifier) {
-    const { data, error } = await supabaseAdmin.from("admin_profiles").select("primary_email").or(`username.eq.${identifier},emails.cs.{${identifier}}`).maybeSingle();
+/** Batas wajar buat identifier login. Nolak payload aneh sebelum nyentuh DB. */
+const MAX_IDENTIFIER_LENGTH = 254;
 
-    if (data && data.primary_email) {
-        return { email: data.primary_email };
-    }
-    return { email: identifier };
+/**
+ * SENGAJA TANPA AUTH — dipanggil dari halaman login, sebelum user punya session.
+ *
+ * Dulu di sini ada:
+ *   .or(`username.eq.${identifier},emails.cs.{${identifier}}`)
+ * `identifier` dateng mentah dari input user dan diinterpolasi ke string filter
+ * PostgREST. Tanda koma / kurung kurawal di input bisa nyambung jadi filter
+ * tambahan alias FILTER INJECTION. Dua query terpisah pakai .eq() dan .contains()
+ * itu ter-parameterisasi dengan bener, jadi input gak bisa jadi sintaks query.
+ *
+ * Balikannya sengaja SELALU berbentuk sama (ketemu atau nggak) biar gak bisa
+ * dipakai buat nebak username mana yang kedaftar.
+ */
+export async function resolveLoginIdentifier(identifier) {
+    const raw = typeof identifier === "string" ? identifier.trim() : "";
+    if (!raw || raw.length > MAX_IDENTIFIER_LENGTH) return { email: raw };
+
+    const { data: byUsername } = await supabaseAdmin.from("admin_profiles").select("primary_email").eq("username", raw).maybeSingle();
+    if (byUsername?.primary_email) return { email: byUsername.primary_email };
+
+    const { data: byEmail } = await supabaseAdmin.from("admin_profiles").select("primary_email").contains("emails", [raw]).maybeSingle();
+    if (byEmail?.primary_email) return { email: byEmail.primary_email };
+
+    // Gak ketemu: balikin apa adanya dan biar Supabase Auth yang nolak.
+    // Jangan bocorin "user gak ada" — itu ngasih attacker daftar username valid.
+    return { email: raw };
 }
 
 export async function listUsers() {
+    if (!(await getCurrentAdmin())) return { error: UNAUTHORIZED_MESSAGE };
+
     const { data: authData, error: authError } = await supabaseAdmin.auth.admin.listUsers();
     if (authError) return { error: authError.message };
 
@@ -34,6 +60,8 @@ export async function listUsers() {
 }
 
 export async function createUser(payload) {
+    if (!(await getCurrentAdmin())) return { error: UNAUTHORIZED_MESSAGE };
+
     const { username, password, emails } = payload;
     if (!username || !emails || emails.length === 0) return { error: "Username dan minimal 1 email wajib diisi!" };
 
@@ -73,12 +101,21 @@ export async function createUser(payload) {
 }
 
 export async function deleteUser(id) {
+    const currentAdmin = await getCurrentAdmin();
+    if (!currentAdmin) return { error: UNAUTHORIZED_MESSAGE };
+
+    // Nolak bunuh diri: admin terakhir yang ngehapus dirinya sendiri bikin
+    // dashboard-nya kekunci permanen tanpa jalan masuk.
+    if (currentAdmin.id === id) return { error: "Gak bisa hapus akun lu sendiri, bro." };
+
     const { error } = await supabaseAdmin.auth.admin.deleteUser(id);
     if (error) return { error: error.message };
     return { success: true };
 }
 
 export async function updateUser(id, payload) {
+    if (!(await getCurrentAdmin())) return { error: UNAUTHORIZED_MESSAGE };
+
     const { username, password, emails } = payload;
     if (!username || !emails || emails.length === 0) return { error: "Username dan minimal 1 email wajib diisi!" };
 
@@ -89,7 +126,7 @@ export async function updateUser(id, payload) {
         updateData.password = password;
     }
 
-    const { data: authData, error: authError } = await supabaseAdmin.auth.admin.updateUserById(id, updateData);
+    const { error: authError } = await supabaseAdmin.auth.admin.updateUserById(id, updateData);
 
     if (authError) {
         if (authError.message.toLowerCase().includes("already registered")) {

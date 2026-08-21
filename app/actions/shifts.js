@@ -1,4 +1,5 @@
 "use server";
+import { getCurrentAdmin, UNAUTHORIZED_MESSAGE } from "@/lib/auth";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 import { wibDayEnd, wibDayStart, wibMidnight, wibParts } from "@/lib/wib";
 
@@ -29,6 +30,8 @@ function roundToNearestHour(date) {
  * Get all currently active shifts (ended_at IS NULL).
  */
 export async function getActiveShift() {
+    if (!(await getCurrentAdmin())) return { error: UNAUTHORIZED_MESSAGE };
+
     const { data: shift, error } = await supabaseAdmin.from("shifts").select("*").is("ended_at", null).order("started_at", { ascending: false }).limit(1).maybeSingle();
 
     if (error) return { error: error.message };
@@ -44,6 +47,8 @@ export async function getActiveShift() {
  * Get all users from admin_profiles (for dropdown select).
  */
 export async function getShiftUsers() {
+    if (!(await getCurrentAdmin())) return { error: UNAUTHORIZED_MESSAGE };
+
     const { data, error } = await supabaseAdmin.from("admin_profiles").select("id, username").order("username");
 
     if (error) return { error: error.message };
@@ -54,6 +59,8 @@ export async function getShiftUsers() {
  * Start a new shift for a user.
  */
 export async function startShift(userId, notes = "") {
+    if (!(await getCurrentAdmin())) return { error: UNAUTHORIZED_MESSAGE };
+
     const { data: activeShift } = await supabaseAdmin.from("shifts").select("id, user_id").is("ended_at", null).maybeSingle();
 
     if (activeShift) {
@@ -84,6 +91,8 @@ export async function startShift(userId, notes = "") {
  * End the current active shift (self-ended).
  */
 export async function endShift(shiftId) {
+    if (!(await getCurrentAdmin())) return { error: UNAUTHORIZED_MESSAGE };
+
     const { data: shift, error } = await supabaseAdmin
         .from("shifts")
         .update({
@@ -106,6 +115,8 @@ export async function endShift(shiftId) {
  * Takeover: End the current shift and start a new one for a different user.
  */
 export async function takeoverShift(currentShiftId, newUserId) {
+    if (!(await getCurrentAdmin())) return { error: UNAUTHORIZED_MESSAGE };
+
     const { data: endedShift, error: endError } = await supabaseAdmin
         .from("shifts")
         .update({
@@ -140,6 +151,8 @@ export async function takeoverShift(currentShiftId, newUserId) {
  * Get shift history with filters.
  */
 export async function getShiftHistory({ startDate, endDate, userId, page = 0, pageSize = 20 } = {}) {
+    if (!(await getCurrentAdmin())) return { error: UNAUTHORIZED_MESSAGE };
+
     let query = supabaseAdmin.from("shifts").select("*", { count: "exact" }).not("ended_at", "is", null).order("started_at", { ascending: false });
 
     if (startDate) {
@@ -171,6 +184,8 @@ export async function getShiftHistory({ startDate, endDate, userId, page = 0, pa
  * Get summary of total hours per user (for payroll).
  */
 export async function getShiftSummary({ startDate, endDate } = {}) {
+    if (!(await getCurrentAdmin())) return { error: UNAUTHORIZED_MESSAGE };
+
     let query = supabaseAdmin.from("shifts").select("user_id, started_at, ended_at").not("ended_at", "is", null).order("started_at", { ascending: false });
 
     if (startDate) {
@@ -211,6 +226,8 @@ export async function getShiftSummary({ startDate, endDate } = {}) {
  * Week starts on Saturday 00:00:00 and ends on Friday 23:59:59.
  */
 export async function getWeeklyShiftSummary({ weekOffset = 0 } = {}) {
+    if (!(await getCurrentAdmin())) return { error: UNAUTHORIZED_MESSAGE };
+
     const nowWib = wibParts();
     const daysSinceSaturday = (nowWib.dayOfWeek + 1) % 7;
     const offsetDays = weekOffset * 7 - daysSinceSaturday;

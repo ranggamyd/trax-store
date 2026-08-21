@@ -1,7 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { CircleDollarSign, PackageCheck,PackageX, Pencil, Plus, Trash2 } from "lucide-react";
+import { CircleDollarSign, PackageCheck, PackageX, Pencil, Plus, Trash2 } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
@@ -10,7 +10,6 @@ import { toast } from "sonner";
 import { ActionIcon } from "@/components/atoms/ActionIcon";
 import { StatusBadge } from "@/components/atoms/StatusBadge";
 import { CopyButton } from "@/components/CopyButton";
-import { GlobalLoading } from "@/components/GlobalLoading";
 import { ClickableTableRow } from "@/components/molecules/ClickableTableRow";
 import { ComboboxSelect } from "@/components/molecules/ComboboxSelect";
 import { ConfirmDialog } from "@/components/molecules/ConfirmDialog";
@@ -29,7 +28,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuthGuard } from "@/hooks/useAuthGuard";
 import { accountSchema } from "@/lib/schemas";
 import { supabase } from "@/lib/supabase";
-import { createGameFromCombo,isDuplicateError, processItemLinks, validateUniqueItems } from "@/lib/supabaseHelpers";
+import { createGameFromCombo, isDuplicateError, processItemLinks, validateUniqueItems } from "@/lib/supabaseHelpers";
 import { getInitials } from "@/lib/utils";
 
 export default function AccountDetail() {
@@ -74,8 +73,6 @@ export default function AccountDetail() {
     const [editItemData, setEditItemData] = useState(null);
     const [newNotes, setNewNotes] = useState("");
 
-    const { session } = useAuthGuard(() => fetchData(), [params.id]);
-
     const fetchData = async () => {
         setLoading(true);
         const [{ data: accData }, { data: gamesData }, { data: itemsData }, { data: allGamesData }] = await Promise.all([supabase.from("accounts").select("*").eq("id", params.id).single(), supabase.from("account_games").select("*, games(id, name, image_url, requires_private_server)").eq("account_id", params.id), supabase.from("account_items").select("*, items(id, item_name, game_id, games(name))").eq("account_id", params.id), supabase.from("games").select("*, items(id, item_name)")]);
@@ -85,6 +82,8 @@ export default function AccountDetail() {
         setAllGames(allGamesData || []);
         setLoading(false);
     };
+
+    useAuthGuard(() => fetchData(), [params.id]);
 
     // ─── Account CRUD ───
     const toggleStatus = async () => {
@@ -306,9 +305,6 @@ export default function AccountDetail() {
     const filteredGames = games.filter((g) => g.games?.name.toLowerCase().includes(gameSearch.toLowerCase()));
     const filteredItems = items.filter((i) => i.items?.item_name.toLowerCase().includes(itemSearch.toLowerCase()));
 
-    if (loading && !account) return <GlobalLoading text="Loading data akun..." />;
-    if (!session) return <GlobalLoading text="Mengecek sesi..." />;
-
     return (
         <PageContainer>
             <DetailHeader
@@ -339,7 +335,7 @@ export default function AccountDetail() {
             />
 
             {/* Edit Account Dialog */}
-            <FormDialog open={isEditOpen} onOpenChange={setIsEditOpen} title="Edit Akun" titleClassName="neon-text-accent">
+            <FormDialog open={isEditOpen} onOpenChange={setIsEditOpen} title="Edit Akun" titleClassName="text-glow-accent">
                 <form onSubmit={handleSubmit(onSubmitEdit)} className="space-y-4 pt-4">
                     <FormField label="Username / Email Akun" error={errors.username?.message} register={register("username")} placeholder="Cth: player_sakti123" />
                     <FormField label="Catatan Tambahan (Opsional)" register={register("notes")} placeholder="Cth: Akun tumbal" />
@@ -352,7 +348,7 @@ export default function AccountDetail() {
             <EditLinkDialog open={isEditLinkOpen} onOpenChange={setIsEditLinkOpen} entityLabel="Game" entityName={editGameData?.games?.name} link={newLink} onLinkChange={setNewLink} onSubmit={handleUpdateLink} />
 
             {/* Edit Notes Dialog */}
-            <FormDialog open={isEditNotesOpen} onOpenChange={setIsEditNotesOpen} title="Edit Catatan Item" titleClassName="neon-text-accent">
+            <FormDialog open={isEditNotesOpen} onOpenChange={setIsEditNotesOpen} title="Edit Catatan Item" titleClassName="text-glow-accent">
                 <form onSubmit={handleUpdateNotes} className="space-y-4 pt-4">
                     <div className="space-y-2">
                         <Label className="text-zinc-400">
@@ -379,7 +375,7 @@ export default function AccountDetail() {
                 {/* ═══ GAMES TAB ═══ */}
                 <TabsContent value="games" className="mt-6 space-y-4">
                     <div className="flex flex-col items-start justify-between gap-4 md:flex-row md:items-center">
-                        <h2 className="neon-text-primary text-xl font-bold">Game yang Terhubung</h2>
+                        <h2 className="text-glow-primary text-xl font-bold">Game yang Terhubung</h2>
                         <div className="flex w-full items-center gap-2 md:w-auto">
                             <Input placeholder="Cari nama game..." value={gameSearch} onChange={(e) => setGameSearch(e.target.value)} className="w-full border-zinc-800 bg-zinc-900 md:w-64" />
                             <Button
@@ -403,7 +399,7 @@ export default function AccountDetail() {
                             setIsAddGameOpen(open);
                         }}
                         title="Tautkan Game ke Akun"
-                        titleClassName="neon-text-primary"
+                        titleClassName="text-glow-primary"
                     >
                         <form onSubmit={onAddGame} className="space-y-4 pt-4">
                             <div className="flex w-full flex-col space-y-2">
@@ -541,7 +537,7 @@ export default function AccountDetail() {
                 {/* ═══ ITEMS TAB ═══ */}
                 <TabsContent value="items" className="mt-6 space-y-4">
                     <div className="flex flex-col items-start justify-between gap-4 md:flex-row md:items-center">
-                        <h2 className="neon-text-accent text-xl font-bold">Item di Akun Ini</h2>
+                        <h2 className="text-glow-accent text-xl font-bold">Item di Akun Ini</h2>
                         <div className="flex w-full items-center gap-2 md:w-auto">
                             <Input placeholder="Cari nama item..." value={itemSearch} onChange={(e) => setItemSearch(e.target.value)} className="w-full border-zinc-800 bg-zinc-900 md:w-64" />
                             <Button
@@ -565,7 +561,7 @@ export default function AccountDetail() {
                             setIsAddItemOpen(open);
                         }}
                         title="Tautkan Item ke Akun"
-                        titleClassName="neon-text-accent"
+                        titleClassName="text-glow-accent"
                     >
                         <form onSubmit={handleAddItem} className="space-y-4 pt-4">
                             <div className="flex w-full flex-col space-y-2">

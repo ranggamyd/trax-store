@@ -1,6 +1,6 @@
 "use client";
 
-import { BookOpenIcon, CheckCircleIcon, DownloadIcon, LinkIcon,ZapIcon } from "lucide-react";
+import { BookOpenIcon, CheckCircleIcon, DownloadIcon, LinkIcon, ZapIcon } from "lucide-react";
 
 import { PageHeader } from "@/components/molecules/PageHeader";
 import { PageContainer } from "@/components/templates/PageContainer";
@@ -99,17 +99,17 @@ export default function GuidePage() {
                                 <hr className="border-zinc-800" />
                                 <div>
                                     <h3 className="mb-2 text-lg font-bold text-white">Kelola Orderan (Orders)</h3>
-                                    <p>Masuk ke menu Orders di web ini. Kalau token lu valid, semua orderan lu bakal muncul. Lu bisa liat detail pesanan, nama Roblox buyer, link VIP server, dan klik "Mark as Delivered" cuma dari sini tanpa harus buka Eldorado.</p>
+                                    <p>Masuk ke menu Orders di web ini. Kalau token lu valid, semua orderan lu bakal muncul. Lu bisa liat detail pesanan, nama Roblox buyer, link VIP server, dan klik &quot;Mark as Delivered&quot; cuma dari sini tanpa harus buka Eldorado.</p>
                                 </div>
                                 <hr className="border-zinc-800" />
                                 <div>
                                     <h3 className="mb-2 text-lg font-bold text-white">Live Chat (Auto Balas)</h3>
-                                    <p>Klik tombol Chat di tiap order buat buka Live Chat. Gunain fitur "Templates" buat bikin balesan otomatis. Biar buyer puas karena fast respon.</p>
+                                    <p>Klik tombol Chat di tiap order buat buka Live Chat. Gunain fitur &quot;Templates&quot; buat bikin balesan otomatis. Biar buyer puas karena fast respon.</p>
                                 </div>
                                 <hr className="border-zinc-800" />
                                 <div>
                                     <h3 className="mb-2 text-lg font-bold text-white">Gagal Tarik Data?</h3>
-                                    <p>Kalau tiba-tiba list order ilang atau error "Token basi", coba refresh halaman web TraxStore ini. Kalau masih gak bisa, buka tab eldorado.gg lagi dan pastikan lu belom ke-logout.</p>
+                                    <p>Kalau tiba-tiba list order ilang atau error &quot;Token basi&quot;, coba refresh halaman web TraxStore ini. Kalau masih gak bisa, buka tab eldorado.gg lagi dan pastikan lu belom ke-logout.</p>
                                 </div>
                             </div>
                         </CardContent>

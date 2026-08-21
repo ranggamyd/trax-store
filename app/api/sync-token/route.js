@@ -1,42 +1,45 @@
 import { NextResponse } from "next/server";
 
 import { setEldoradoToken } from "@/app/actions";
+import { getCurrentAdmin } from "@/lib/auth";
 
+/**
+ * Nerima token Eldorado dari extension buat disimpen ke cookie httpOnly.
+ *
+ * Endpoint ini CUMA dipanggil same-origin dari hooks/useTokenRecovery.js.
+ * Extension-nya sendiri gak pernah nembak sini langsung — dia ngasih token lewat
+ * window.postMessage ke content script, terus halamannya yang forward ke sini.
+ *
+ * Makanya header CORS `Access-Control-Allow-Origin: *` yang dulu ada di sini dicabut:
+ * nol fungsi, tapi bikin website mana pun bisa maksa nulis cookie token ke browser
+ * admin yang lagi login (cookie injection / session fixation).
+ */
 export async function POST(request) {
     try {
+        if (!(await getCurrentAdmin())) {
+            return NextResponse.json({ success: false, error: "UNAUTHORIZED" }, { status: 401 });
+        }
+
+        // Lapis kedua anti-CSRF: cuma layani request yang keliatan same-origin.
+        // Form lintas-site gak bisa nyetel Origin, jadi ini nyaring drive-by POST.
+        const origin = request.headers.get("origin");
+        if (origin && origin !== request.nextUrl.origin) {
+            return NextResponse.json({ success: false, error: "FORBIDDEN_ORIGIN" }, { status: 403 });
+        }
+
         const { token } = await request.json();
-        if (!token) return NextResponse.json({ success: false, error: "No token provided" }, { status: 400 });
+        if (typeof token !== "string" || !token.trim()) {
+            return NextResponse.json({ success: false, error: "No token provided" }, { status: 400 });
+        }
 
-        await setEldoradoToken(token);
+        const result = await setEldoradoToken(token);
+        if (!result.success) {
+            return NextResponse.json({ success: false, error: result.error }, { status: 401 });
+        }
 
-        return new NextResponse(JSON.stringify({ success: true, message: "Token synced successfully" }), {
-            status: 200,
-            headers: {
-                "Content-Type": "application/json",
-                "Access-Control-Allow-Origin": "*",
-                "Access-Control-Allow-Methods": "POST, OPTIONS",
-                "Access-Control-Allow-Headers": "Content-Type",
-            },
-        });
-    } catch (error) {
-        return new NextResponse(JSON.stringify({ success: false, error: error.message }), {
-            status: 500,
-            headers: {
-                "Content-Type": "application/json",
-                "Access-Control-Allow-Origin": "*",
-            },
-        });
+        return NextResponse.json({ success: true, message: "Token synced successfully" });
+    } catch {
+        // Jangan bocorin error.message ke klien — isinya bisa detail internal.
+        return NextResponse.json({ success: false, error: "SYNC_FAILED" }, { status: 500 });
     }
-}
-
-// Enable CORS for Eldorado.gg
-export async function OPTIONS() {
-    return new NextResponse(null, {
-        status: 204,
-        headers: {
-            "Access-Control-Allow-Origin": "*",
-            "Access-Control-Allow-Methods": "POST, OPTIONS",
-            "Access-Control-Allow-Headers": "Content-Type",
-        },
-    });
 }

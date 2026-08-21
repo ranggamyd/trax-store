@@ -1,5 +1,5 @@
 import { Calendar, ChevronLeft, ChevronRight } from "lucide-react";
-import { useCallback,useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 import { getWeeklyShiftSummary } from "@/app/actions/shifts";
 import { Button } from "@/components/ui/button";

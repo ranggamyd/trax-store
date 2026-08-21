@@ -1,5 +1,6 @@
 "use client";
 
+import { ArrowRight, Loader2 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -7,8 +8,8 @@ import { toast } from "sonner";
 
 import { resolveLoginIdentifier } from "@/app/actions/users";
 import { PasswordInput } from "@/components/molecules/PasswordInput";
+import { AuthShell } from "@/components/templates/AuthShell";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/lib/supabase";
@@ -27,46 +28,69 @@ export default function LoginPage() {
         const { error } = await supabase.auth.signInWithPassword({ email: resolvedEmail, password });
 
         if (error) {
-            toast.error("Gagal.", { description: error.message });
+            // Cuma kasus kredensial salah yang digenerikin — pesan asli Supabase
+            // ("Invalid login credentials") kedengeran kayak error sistem.
+            // Error LAIN tetep ditampilin apa adanya: "Email not confirmed" atau
+            // rate limit itu justru info yang bikin admin tau harus ngapain, dan
+            // nutup semuanya jadi satu pesan bikin masalah nyata jadi gak kebaca.
+            const isBadCredentials = error.message?.toLowerCase().includes("invalid login credentials");
+
+            toast.error("Gak bisa masuk", {
+                description: isBadCredentials ? "Username atau password-nya salah. Coba cek lagi." : error.message,
+            });
             setLoading(false);
         } else {
-            router.push("/");
+            // proxy.js nyimpen tujuan awal di ?next= waktu nendang ke login.
+            // Cuma terima path relatif: "//evil.com" itu URL protocol-relative
+            // yang bakal jadi open redirect kalau diloloskan.
+            const requested = new URLSearchParams(window.location.search).get("next");
+            const destination = requested && requested.startsWith("/") && !requested.startsWith("//") ? requested : "/";
+
+            router.push(destination);
             router.refresh();
         }
     };
 
     return (
-        <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-black p-4">
-            <div className="bg-primary/20 pointer-events-none absolute top-1/2 left-1/2 h-[500px] w-[500px] -translate-x-1/2 -translate-y-1/2 rounded-full blur-[120px]" />
+        <AuthShell
+            title="Masuk ke markas"
+            description="Akses khusus admin Traxstore."
+            footer={
+                <p className="text-muted-foreground text-xs">
+                    Belum punya akses? <span className="text-foreground/80">Minta admin lain bikinin akun lu.</span>
+                </p>
+            }
+        >
+            <form onSubmit={handleLogin} className="space-y-5">
+                <div className="space-y-2">
+                    <Label htmlFor="identifier">Username atau email</Label>
+                    <Input id="identifier" type="text" autoComplete="username" placeholder="admin123 atau admin@traxstore.com" value={identifier} onChange={(e) => setIdentifier(e.target.value)} required className="border-border bg-input/60 focus-visible:border-ring focus-visible:ring-ring/30 h-10" />
+                </div>
 
-            <Card className="border-primary/50 relative z-10 w-full max-w-md bg-black/60 backdrop-blur-xl">
-                <CardHeader className="space-y-1 text-center">
-                    <CardTitle className="neon-text-primary text-3xl font-bold tracking-wider uppercase">Traxstore</CardTitle>
-                    <CardDescription className="text-zinc-400">Masuk ke Markas Besar Admin</CardDescription>
-                </CardHeader>
-                <form onSubmit={handleLogin}>
-                    <CardContent className="space-y-4">
-                        <div className="space-y-2">
-                            <Label htmlFor="identifier">Username atau Email Admin</Label>
-                            <Input id="identifier" type="text" placeholder="Contoh: admin123 atau admin@traxstore.com" value={identifier} onChange={(e) => setIdentifier(e.target.value)} required className="focus-visible:ring-primary focus-visible:border-primary border-zinc-800 bg-zinc-900" />
-                        </div>
-                        <div className="space-y-2">
-                            <div className="flex items-center justify-between">
-                                <Label htmlFor="password">Password Rahasia</Label>
-                                <Link href="/reset-password" tabIndex={-1} className="text-primary hover:text-primary/80 text-xs transition-colors">
-                                    Lupa Password?
-                                </Link>
-                            </div>
-                            <PasswordInput label={null} value={password} onChange={(e) => setPassword(e.target.value)} required placeholder="" minLength={1} className="focus-visible:ring-primary focus-visible:border-primary border-zinc-800 bg-zinc-900" />
-                        </div>
-                    </CardContent>
-                    <CardFooter>
-                        <Button type="submit" className="bg-primary hover:bg-primary/90 w-full font-bold tracking-wide text-white" disabled={loading}>
-                            {loading ? "Tunggu bentar..." : "Gass Masuk"}
-                        </Button>
-                    </CardFooter>
-                </form>
-            </Card>
-        </div>
+                <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                        <Label htmlFor="password">Password</Label>
+                        <Link href="/reset-password" tabIndex={-1} className="text-primary text-xs transition-opacity hover:opacity-80">
+                            Lupa password?
+                        </Link>
+                    </div>
+                    <PasswordInput id="password" label={null} value={password} onChange={(e) => setPassword(e.target.value)} required minLength={1} autoComplete="current-password" className="h-10" />
+                </div>
+
+                <Button type="submit" size="lg" className="group h-11 w-full font-semibold" disabled={loading}>
+                    {loading ? (
+                        <>
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            Bentar, dicek dulu...
+                        </>
+                    ) : (
+                        <>
+                            Gass masuk
+                            <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+                        </>
+                    )}
+                </Button>
+            </form>
+        </AuthShell>
     );
 }

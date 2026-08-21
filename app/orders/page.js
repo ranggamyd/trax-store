@@ -1,10 +1,10 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { toast } from "sonner";
 import Talk from "talkjs";
 
 import { cancelOrder, getEldoradoOrderDetails, getEldoradoOrders, getTalkJsToken, markOrderDelivered } from "@/app/actions";
+import { PageContainer } from "@/components/templates/PageContainer";
 import { useTokenRecovery } from "@/hooks/useTokenRecovery";
 
 import OrderDetail from "./components/OrderDetail";
@@ -19,14 +19,12 @@ export default function OrdersPage() {
     const [cancelMessage, setCancelMessage] = useState("");
 
     const [isDelivering, setIsDelivering] = useState(false);
-    const [isDeliverDialogOpen, setIsDeliverDialogOpen] = useState(false);
     const [isCancelDialogOpen, setIsCancelDialogOpen] = useState(false);
     const [isLoadingOrders, setIsLoadingOrders] = useState(true);
     const [isLoadingOrderDetails, setIsLoadingOrderDetails] = useState(false);
     const [activeOrderFullDetails, setActiveOrderFullDetails] = useState(null);
     const [apiError, setApiError] = useState(null);
     const [talkData, setTalkData] = useState(null);
-    const [activeTab, setActiveTab] = useState("details"); // "details" or "chat"
     const [chatPreviews, setChatPreviews] = useState({}); // { conversationId: { lastMessage, unreadCount, timestamp } }
     const talkSessionRef = useRef(null);
 
@@ -45,9 +43,7 @@ export default function OrdersPage() {
 
     // Token recovery: selama extension ada & Eldorado masih login, retry terus sampe token kejemput
     const fetchOrdersRef = useRef(null);
-    const { tokenStatus, tokenFailure, retryCount, reportTokenExpired, reportTokenOk } = useTokenRecovery(
-        useCallback(() => fetchOrdersRef.current?.("", false, true), [])
-    );
+    const { tokenStatus, tokenFailure, retryCount, reportTokenExpired, reportTokenOk } = useTokenRecovery(useCallback(() => fetchOrdersRef.current?.("", false, true), []));
 
     const fetchOrders = useCallback(
         async (cursor = "", append = false, silent = false) => {
@@ -178,6 +174,7 @@ export default function OrdersPage() {
         const openId = urlParams.get("openOrderId");
 
         if (openId && !searchQuery) {
+            // eslint-disable-next-line react-hooks/set-state-in-effect -- deep link ?openOrderId= cuma bisa dibaca setelah mount
             setSearchInput(openId);
             setSearchQuery(openId);
             setActiveOrderId(openId);
@@ -193,7 +190,8 @@ export default function OrdersPage() {
         }, 15000);
 
         return () => clearInterval(interval);
-    }, [fetchOrders]);
+        // searchQuery udah kebawa lewat identitas fetchOrders, ditulis eksplisit biar lint tenang
+    }, [fetchOrders, searchQuery]);
 
     const handleScroll = (e) => {
         const { scrollTop, scrollHeight, clientHeight } = e.target;
@@ -208,10 +206,6 @@ export default function OrdersPage() {
     const handleSearchSubmit = (e) => {
         e.preventDefault();
         setSearchQuery(searchInput); // Trigger fetchOrders
-    };
-
-    const handleStateFilterChange = (e) => {
-        setOrderStateFilter(e.target.value); // Trigger fetchOrders
     };
 
     // Nandain order mana yang detail-nya paling terakhir diminta
@@ -250,6 +244,7 @@ export default function OrdersPage() {
     );
 
     useEffect(() => {
+        // eslint-disable-next-line react-hooks/set-state-in-effect -- fetch data, loading flag-nya sengaja di-set biar spinner langsung nongol
         loadOrderDetails();
         // tokenStatus ikut dipantau biar detail-nya ke-load ulang begitu token baru masuk
     }, [loadOrderDetails, tokenStatus]);
@@ -263,7 +258,6 @@ export default function OrdersPage() {
 
         if (result.success) {
             // toast.success("Cakep! Pesanan udah ditandai terkirim ke Eldorado.");
-            setIsDeliverDialogOpen(false);
             setActiveOrders((prev) => prev.map((o) => (o.id === activeOrderId ? { ...o, status: "Delivered" } : o)));
             loadOrderDetails(true); // Silent reload
         } else {
@@ -302,12 +296,10 @@ export default function OrdersPage() {
     }
 
     return (
-        <div className="text-foreground bg-black p-4 pb-20 md:p-8">
-            <div className="mx-auto flex h-[80vh] w-full max-w-7xl flex-col gap-6 md:flex-row">
-                <OrderList activeOrderList={activeOrderList} activeOrderId={activeOrderId} setActiveOrderId={setActiveOrderId} isLoadingOrders={isLoadingOrders} fetchOrders={fetchOrders} apiError={apiError} tokenStatus={tokenStatus} tokenFailure={tokenFailure} tokenRetryCount={retryCount} searchInput={searchInput} setSearchInput={setSearchInput} handleSearchSubmit={handleSearchSubmit} openFilter={openFilter} setOpenFilter={setOpenFilter} orderStateFilter={orderStateFilter} setOrderStateFilter={setOrderStateFilter} handleScroll={handleScroll} isFetchingNextPage={isFetchingNextPage} hasNextPage={hasNextPage} chatPreviews={chatPreviews} talkUserId={talkData?.userId} />
+        <PageContainer width="wide" innerClassName="flex h-[80vh] w-full flex-col gap-6 md:flex-row">
+            <OrderList activeOrderList={activeOrderList} activeOrderId={activeOrderId} setActiveOrderId={setActiveOrderId} isLoadingOrders={isLoadingOrders} fetchOrders={fetchOrders} apiError={apiError} tokenStatus={tokenStatus} tokenFailure={tokenFailure} tokenRetryCount={retryCount} searchInput={searchInput} setSearchInput={setSearchInput} handleSearchSubmit={handleSearchSubmit} openFilter={openFilter} setOpenFilter={setOpenFilter} orderStateFilter={orderStateFilter} setOrderStateFilter={setOrderStateFilter} handleScroll={handleScroll} isFetchingNextPage={isFetchingNextPage} hasNextPage={hasNextPage} chatPreviews={chatPreviews} />
 
-                <OrderDetail activeOrderId={activeOrderId} activeOrderDetails={activeOrderDetails} activeOrderFullDetails={activeOrderFullDetails} isLoadingOrderDetails={isLoadingOrderDetails} handleMarkDelivered={handleMarkDelivered} isDelivering={isDelivering} handleCancelOrder={handleCancelOrder} isCanceling={isCanceling} cancelReason={cancelReason} setCancelReason={setCancelReason} cancelMessage={cancelMessage} setCancelMessage={setCancelMessage} isCancelDialogOpen={isCancelDialogOpen} setIsCancelDialogOpen={setIsCancelDialogOpen} talkData={talkData} robloxUsernames={robloxUsernames} />
-            </div>
-        </div>
+            <OrderDetail activeOrderId={activeOrderId} activeOrderDetails={activeOrderDetails} activeOrderFullDetails={activeOrderFullDetails} isLoadingOrderDetails={isLoadingOrderDetails} handleMarkDelivered={handleMarkDelivered} isDelivering={isDelivering} handleCancelOrder={handleCancelOrder} isCanceling={isCanceling} cancelReason={cancelReason} setCancelReason={setCancelReason} cancelMessage={cancelMessage} setCancelMessage={setCancelMessage} isCancelDialogOpen={isCancelDialogOpen} setIsCancelDialogOpen={setIsCancelDialogOpen} talkData={talkData} robloxUsernames={robloxUsernames} />
+        </PageContainer>
     );
 }

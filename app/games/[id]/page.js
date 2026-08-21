@@ -1,15 +1,14 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Pencil,Plus, Trash2 } from "lucide-react";
+import { Pencil, Plus, Trash2 } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 import { useState } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { toast } from "sonner";
 
 import { ActionIcon } from "@/components/atoms/ActionIcon";
 import { CopyButton } from "@/components/CopyButton";
-import { GlobalLoading } from "@/components/GlobalLoading";
 import { ClickableTableRow } from "@/components/molecules/ClickableTableRow";
 import { ComboboxSelect } from "@/components/molecules/ComboboxSelect";
 import { ConfirmDialog } from "@/components/molecules/ConfirmDialog";
@@ -30,7 +29,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuthGuard } from "@/hooks/useAuthGuard";
 import { accountGameSchema, gameSchema, itemSchema } from "@/lib/schemas";
 import { supabase } from "@/lib/supabase";
-import { isDuplicateError, processItemLinks,saveMissingLinks, validateUniqueItems } from "@/lib/supabaseHelpers";
+import { isDuplicateError, processItemLinks, saveMissingLinks, validateUniqueItems } from "@/lib/supabaseHelpers";
 import { getInitials } from "@/lib/utils";
 
 export default function GameDetail() {
@@ -70,9 +69,10 @@ export default function GameDetail() {
         handleSubmit: handAcc,
         formState: { errors: errAcc },
         reset: resetAcc,
-        watch: watchAcc,
+        control: controlAcc,
         setValue: setValueAcc,
     } = useForm({ resolver: zodResolver(accountGameSchema) });
+    const selectedAccountId = useWatch({ control: controlAcc, name: "account_id" });
     const {
         register: regGame,
         handleSubmit: handGame,
@@ -88,8 +88,6 @@ export default function GameDetail() {
         reset: resetItem,
     } = useForm({ resolver: zodResolver(itemSchema) });
 
-    const { session } = useAuthGuard(() => fetchData(true), [params.id]);
-
     // ─── Data Fetching ───
     const fetchData = async (showLoader = false) => {
         if (showLoader) setLoading(true);
@@ -100,6 +98,8 @@ export default function GameDetail() {
         setAllAccounts(allAccData || []);
         setLoading(false);
     };
+
+    useAuthGuard(() => fetchData(true), [params.id]);
 
     // ─── Filtered Lists ───
     const filteredAccounts = accounts.filter((acc) => acc.accounts?.username.toLowerCase().includes(accountSearch.toLowerCase()));
@@ -375,9 +375,6 @@ export default function GameDetail() {
         onSuccess(data);
     };
 
-    if (loading && !game) return <GlobalLoading text="Loading data game..." />;
-    if (!session) return <GlobalLoading text="Mengecek sesi..." />;
-
     return (
         <PageContainer>
             <DetailHeader
@@ -428,7 +425,7 @@ export default function GameDetail() {
                 {/* ═══ ACCOUNTS TAB ═══ */}
                 <TabsContent value="accounts" className="mt-6 space-y-4">
                     <div className="flex flex-col items-start justify-between gap-4 md:flex-row md:items-center">
-                        <h2 className="neon-text-primary text-xl font-bold">Akun yang main di sini</h2>
+                        <h2 className="text-glow-primary text-xl font-bold">Akun yang main di sini</h2>
                         <div className="flex w-full items-center gap-2 md:w-auto">
                             <Input placeholder="Cari username..." value={accountSearch} onChange={(e) => setAccountSearch(e.target.value)} className="w-full border-zinc-800 bg-zinc-900 md:w-64" />
                             <Button
@@ -446,13 +443,13 @@ export default function GameDetail() {
                     </div>
 
                     {/* Add Account Dialog */}
-                    <FormDialog open={isAddAccountOpen} onOpenChange={(open) => (open ? setIsAddAccountOpen(true) : setIsAddAccountOpen(false))} title="Tautkan Akun ke Game" titleClassName="neon-text-primary">
+                    <FormDialog open={isAddAccountOpen} onOpenChange={(open) => (open ? setIsAddAccountOpen(true) : setIsAddAccountOpen(false))} title="Tautkan Akun ke Game" titleClassName="text-glow-primary">
                         <form onSubmit={handAcc(onAddAccount)} className="space-y-4 pt-4">
                             <div className="flex w-full flex-col space-y-2">
                                 <Label>Pilih Akun</Label>
                                 <ComboboxSelect
                                     items={allAccounts}
-                                    value={watchAcc("account_id")}
+                                    value={selectedAccountId}
                                     onSelect={(acc) => setValueAcc("account_id", acc.id)}
                                     getItemValue={(acc) => acc.username}
                                     placeholder="-- Pilih Akun Bro --"
@@ -563,7 +560,7 @@ export default function GameDetail() {
                 {/* ═══ ITEMS TAB ═══ */}
                 <TabsContent value="items" className="mt-6 space-y-4">
                     <div className="flex flex-col items-start justify-between gap-4 md:flex-row md:items-center">
-                        <h2 className="neon-text-accent text-xl font-bold">Daftar Item Game</h2>
+                        <h2 className="text-glow-accent text-xl font-bold">Daftar Item Game</h2>
                         <div className="flex w-full items-center gap-2 md:w-auto">
                             <Input placeholder="Cari nama item..." value={itemSearch} onChange={(e) => setItemSearch(e.target.value)} className="w-full border-zinc-800 bg-zinc-900 md:w-64" />
                             <Button
@@ -582,7 +579,7 @@ export default function GameDetail() {
                     </div>
 
                     {/* Add/Edit Item Dialog */}
-                    <FormDialog open={isAddItemOpen} onOpenChange={(open) => (open ? setIsAddItemOpen(true) : closeItemDialog())} title={editItemId ? "Edit Item" : "Tambah Item Baru"} titleClassName="neon-text-accent">
+                    <FormDialog open={isAddItemOpen} onOpenChange={(open) => (open ? setIsAddItemOpen(true) : closeItemDialog())} title={editItemId ? "Edit Item" : "Tambah Item Baru"} titleClassName="text-glow-accent">
                         <form onSubmit={handItem(onAddItem)} className="space-y-4 pt-4">
                             <FormField label="Nama Item" error={errItem.item_name?.message} register={regItem("item_name")} placeholder="Cth: Dark Blade" />
                             <FormField label="Deskripsi (Opsional)" error={errItem.description?.message} register={regItem("description")} placeholder="Cth: Buah langka" />

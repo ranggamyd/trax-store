@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useEffect,useState } from "react";
+import { createContext, useContext, useEffect, useState } from "react";
 
 import { getEldoradoLibrary } from "@/app/actions";
 
@@ -28,7 +28,6 @@ export function EldoradoLibraryProvider({ children }) {
 
     const getGameName = (gameId) => {
         if (!gameId) return null;
-        // API returns gameId as string e.g. "142", match with that
         const game = library.find((g) => g.gameId === String(gameId) || g.legacyUrlId === String(gameId));
         return game ? game.menuGameTitle || game.gameName : null;
     };

@@ -2,16 +2,40 @@
 
 import { cookies } from "next/headers";
 
+import { getCurrentAdmin, requireAdmin, UNAUTHORIZED_CODE, UNAUTHORIZED_MESSAGE } from "@/lib/auth";
+
 const ELDORADO_API_URL = process.env.ELDORADO_API_URL;
 
+/**
+ * Opsi cookie token Eldorado.
+ * httpOnly  -> gak kebaca dari JS, jadi XSS gak bisa nyolong token.
+ * sameSite  -> gak kekirim di request lintas-site (anti CSRF).
+ * secure    -> di production gak pernah lewat HTTP polos.
+ * maxAge    -> cookie session tanpa umur = nempel selamanya. Dibatesin 30 hari.
+ */
+const TOKEN_COOKIE_OPTIONS = {
+    httpOnly: true,
+    sameSite: "lax",
+    secure: process.env.NODE_ENV === "production",
+    path: "/",
+    maxAge: 60 * 60 * 24 * 30,
+};
+
 export async function setEldoradoToken(token, refreshToken = "") {
+    // Nulis cookie token itu operasi sensitif: tanpa cek ini, siapa pun bisa
+    // maksa cookie pilihan dia ke browser admin yang lagi login.
+    if (!(await getCurrentAdmin())) return { success: false, error: UNAUTHORIZED_CODE };
+
     const cookieStore = await cookies();
-    if (token) cookieStore.set("eldorado_token", token, { path: "/" });
-    if (refreshToken) cookieStore.set("eldorado_refresh_token", refreshToken, { path: "/" });
+    if (token) cookieStore.set("eldorado_token", token, TOKEN_COOKIE_OPTIONS);
+    if (refreshToken) cookieStore.set("eldorado_refresh_token", refreshToken, TOKEN_COOKIE_OPTIONS);
     return { success: true };
 }
 
 export async function getEldoradoToken() {
+    // Ini ngembaliin kredensial mentah. Wajib dikunci.
+    if (!(await getCurrentAdmin())) return { idToken: "", refreshToken: "", error: UNAUTHORIZED_CODE };
+
     const cookieStore = await cookies();
     return {
         idToken: cookieStore.get("eldorado_token")?.value || process.env.ELDORADO_ID_TOKEN || "",
@@ -20,6 +44,8 @@ export async function getEldoradoToken() {
 }
 
 export async function refreshEldoradoToken() {
+    if (!(await getCurrentAdmin())) return { success: false, error: UNAUTHORIZED_CODE };
+
     const cookieStore = await cookies();
     const refreshToken = cookieStore.get("eldorado_refresh_token")?.value || process.env.ELDORADO_REFRESH_TOKEN;
     if (!refreshToken) return { success: false, error: "No refresh token available" };
@@ -45,7 +71,7 @@ export async function refreshEldoradoToken() {
         if (data.AuthenticationResult?.IdToken) {
             const newToken = data.AuthenticationResult.IdToken;
             const cookieStore = await cookies();
-            cookieStore.set("eldorado_token", newToken, { path: "/" });
+            cookieStore.set("eldorado_token", newToken, TOKEN_COOKIE_OPTIONS);
             return { success: true, token: newToken };
         }
         return { success: false, error: "Failed to refresh token", data };
@@ -75,6 +101,11 @@ export async function getTalkJsToken() {
 }
 
 async function fetchEldorado(endpoint, options = {}) {
+    // GERBANG TUNGGAL. Semua action proxy Eldorado (orders, offers, notifications,
+    // bulk delete, cancel) lewat sini. Satu requireAdmin() = semuanya ikut terkunci,
+    // dan action baru otomatis kejaring tanpa perlu diingetin.
+    await requireAdmin();
+
     const cookieStore = await cookies();
     const tokenToUse = cookieStore.get("eldorado_token")?.value || process.env.ELDORADO_ID_TOKEN;
     if (!tokenToUse) {
@@ -251,6 +282,8 @@ export async function getEldoradoOrders(params = {}) {
 }
 
 export async function getEldoradoMessages(orderId) {
+    if (!(await getCurrentAdmin())) return { success: false, error: UNAUTHORIZED_MESSAGE };
+
     try {
         // Karena Eldorado menggunakan TalkJS pihak ketiga untuk sistem chat (terlihat dari talkJsConversationId),
         // kita belum bisa menarik chat secara langsung pakai REST API Eldorado tanpa token TalkJS mereka.
@@ -635,6 +668,8 @@ export async function markAllNotificationsAsRead() {
 }
 
 export async function getEldoradoLibrary() {
+    if (!(await getCurrentAdmin())) return { success: false, error: UNAUTHORIZED_MESSAGE, data: [] };
+
     try {
         const response = await fetch("https://www.eldorado.gg/api/library?locale=en-US", {
             next: { revalidate: 3600 }, // Cache for 1 hour on the server

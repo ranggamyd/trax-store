@@ -3,7 +3,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 
-import { endShift, getActiveShift, getShiftUsers, startShift, takeoverShift } from "@/app/actions/shifts";
+import { endShift, getActiveShift, startShift, takeoverShift } from "@/app/actions/shifts";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAuthGuard } from "@/hooks/useAuthGuard";

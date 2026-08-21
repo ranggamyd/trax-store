@@ -215,7 +215,7 @@ export default function TemplatesPage() {
                                         </div>
                                     )}
 
-                                    <p className="mb-4 flex-1 text-sm whitespace-pre-line text-zinc-400 italic">"{tmpl.text}"</p>
+                                    <p className="mb-4 flex-1 text-sm whitespace-pre-line text-zinc-400 italic">&quot;{tmpl.text}&quot;</p>
 
                                     <div className="flex items-end justify-between border-t border-zinc-800/80 pt-4">
                                         <div className="flex flex-1 flex-col gap-1.5 pr-2">

@@ -11,7 +11,7 @@ import { Label } from "@/components/ui/label";
  */
 export function EditLinkDialog({ open, onOpenChange, entityLabel, entityName, link, onLinkChange, onSubmit }) {
     return (
-        <FormDialog open={open} onOpenChange={onOpenChange} title="Edit Private Server Link" titleClassName="neon-text-primary">
+        <FormDialog open={open} onOpenChange={onOpenChange} title="Edit Private Server Link" titleClassName="text-glow-primary">
             <form onSubmit={onSubmit} className="space-y-4 pt-4">
                 <div className="space-y-2">
                     <Label className="text-zinc-400">

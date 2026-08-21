@@ -1,7 +1,6 @@
 "use client";
 
 import { CalendarIcon, CheckIcon, ChevronsUpDownIcon, CopyIcon, FilterIcon, Gamepad2Icon, Loader2Icon, MessageSquareIcon, RefreshCwIcon, SearchIcon, TimerIcon, UserIcon } from "lucide-react";
-import { toast } from "sonner";
 
 import TokenStatusNotice from "@/components/molecules/TokenStatusNotice";
 import { Button } from "@/components/ui/button";
@@ -13,7 +12,7 @@ import { cn } from "@/lib/utils";
 
 import { formatDeliveryTime, getStatusIcon, timeAgo } from "./utils";
 
-export default function OrderList({ activeOrderList, activeOrderId, setActiveOrderId, isLoadingOrders, fetchOrders, apiError, tokenStatus = "ok", tokenFailure = null, tokenRetryCount = 0, searchInput, setSearchInput, handleSearchSubmit, openFilter, setOpenFilter, orderStateFilter, setOrderStateFilter, handleScroll, isFetchingNextPage, hasNextPage, chatPreviews = {}, talkUserId }) {
+export default function OrderList({ activeOrderList, activeOrderId, setActiveOrderId, isLoadingOrders, fetchOrders, apiError, tokenStatus = "ok", tokenFailure = null, tokenRetryCount = 0, searchInput, setSearchInput, handleSearchSubmit, openFilter, setOpenFilter, orderStateFilter, setOrderStateFilter, handleScroll, isFetchingNextPage, hasNextPage, chatPreviews = {} }) {
     const { getGameName } = useEldoradoLibrary();
     return (
         <div className="flex h-full w-full shrink-0 flex-col gap-3 md:w-1/3">
@@ -21,7 +20,7 @@ export default function OrderList({ activeOrderList, activeOrderId, setActiveOrd
                 <div className="from-primary/10 absolute inset-0 z-0 bg-gradient-to-br to-transparent"></div>
                 <div className="relative z-10 flex items-center justify-between">
                     <div className="flex flex-col gap-0.5">
-                        <h1 className="neon-text-primary text-2xl font-bold tracking-widest uppercase">My Orderan Gweh</h1>
+                        <h1 className="text-glow-primary text-2xl font-bold tracking-widest uppercase">My Orderan Gweh</h1>
                         {/* <p className="text-[10px] font-medium tracking-wide text-zinc-500">Kelola pesanan aktif Eldorado secara real-time</p> */}
                     </div>
                     <Button size="icon" variant="ghost" className="h-8 w-8 text-zinc-400 hover:text-white" onClick={() => fetchOrders("", false)} disabled={isLoadingOrders} title="Refresh Orders">

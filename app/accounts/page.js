@@ -1,181 +1,99 @@
-"use client";
+import { User } from "lucide-react";
 
-import { zodResolver } from "@hookform/resolvers/zod";
-import { CircleDollarSign, Pencil, Plus, Trash2, User } from "lucide-react";
-import React, { useState } from "react";
-import { useForm } from "react-hook-form";
-
-import { ActionIcon } from "@/components/atoms/ActionIcon";
+import { AccountEditDialog } from "@/app/accounts/components/AccountEditDialog";
+import { AccountRowActions } from "@/app/accounts/components/AccountRowActions";
+import { AccountsToolbar } from "@/app/accounts/components/AccountsToolbar";
+import { getAccountById, getAccounts } from "@/app/accounts/queries";
 import { StatusBadge } from "@/components/atoms/StatusBadge";
 import { CopyButton } from "@/components/CopyButton";
-import { FormDialog } from "@/components/molecules/FormDialog";
-import { FormField } from "@/components/molecules/FormField";
+import { ClickableTableRow } from "@/components/molecules/ClickableTableRow";
 import { PageHeader } from "@/components/molecules/PageHeader";
-import { SearchBar } from "@/components/molecules/SearchBar";
+import { Pagination } from "@/components/molecules/Pagination";
 import { DataTable } from "@/components/organisms/DataTable";
 import { PageContainer } from "@/components/templates/PageContainer";
-import { Button } from "@/components/ui/button";
-import { TableCell, TableRow } from "@/components/ui/table";
-import { useAuthGuard } from "@/hooks/useAuthGuard";
-import { accountSchema } from "@/lib/schemas";
-import { supabase } from "@/lib/supabase";
+import { TableCell } from "@/components/ui/table";
 import { getInitials } from "@/lib/utils";
-import { toast } from "sonner";
 
-export default function AccountsPage() {
-    const [accounts, setAccounts] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const [isAddOpen, setIsAddOpen] = useState(false);
-    const [editAccountId, setEditAccountId] = useState(null);
-    const [searchQuery, setSearchQuery] = useState("");
+export const metadata = {
+    title: "Akun Roblox",
+};
 
-    const {
-        register,
-        handleSubmit,
-        formState: { errors },
-        reset,
-    } = useForm({
-        resolver: zodResolver(accountSchema),
-    });
+const COLUMNS = [{ label: "Akun" }, { label: "Catatan" }, { label: "Robux", className: "text-center" }, { label: "Aksi", className: "text-right" }];
 
-    useAuthGuard(() => fetchAccounts());
+/**
+ * SERVER COMPONENT.
+ *
+ * Yang berubah dari versi "use client" sebelumnya:
+ *
+ *   SEBELUM: browser unduh JS -> hydrate -> getSession() -> select("*") ->
+ *            simpen semua baris di state -> filter di render.
+ *            Empat perjalanan bolak-balik sebelum baris pertama kelihatan.
+ *
+ *   SEKARANG: server query persis satu halaman data (udah kefilter, udah
+ *             ke-paginasi) dan ngirim HTML-nya. Nol fetch dari klien, nol
+ *             useEffect, nol useAuthGuard — identitas user udah dipastiin
+ *             di proxy.js sebelum halaman ini kesentuh.
+ *
+ * Yang tersisa jadi client component cuma tiga pulau kecil: toolbar (input
+ * pencarian), aksi per baris (tombol), dan dialog. Sisanya HTML dari server.
+ */
+export default async function AccountsPage({ searchParams }) {
+    // Di Next 16 searchParams itu Promise — harus di-await.
+    const params = await searchParams;
 
-    const fetchAccounts = async () => {
-        setLoading(true);
-        const { data } = await supabase.from("accounts").select("*").order("created_at", { ascending: false });
-        setAccounts(data || []);
-        setLoading(false);
-    };
+    const query = typeof params?.q === "string" ? params.q : "";
+    const requestedPage = Number.parseInt(params?.page ?? "1", 10);
+    const page = Number.isFinite(requestedPage) && requestedPage > 0 ? requestedPage : 1;
+    const editId = typeof params?.edit === "string" ? params.edit : null;
 
-    const onSubmit = async (data) => {
-        const status = data.is_empty_robux ? "ACTIVE" : "EMPTY_ROBUX";
+    // Query paralel: daftar akun dan akun yang lagi diedit gak saling nunggu.
+    const [{ accounts, total, pageCount, pageSize, error }, editingAccount] = await Promise.all([getAccounts({ query, page }), getAccountById(editId)]);
 
-        const { data: existingAccount } = await supabase.from("accounts").select("id").eq("username", data.username).single();
-
-        if (existingAccount && existingAccount.id !== editAccountId) {
-            toast.error("Gagal!", { description: "Akun udah ada" });
-            return;
-        }
-
-        if (editAccountId) {
-            const { error } = await supabase.from("accounts").update({ username: data.username, notes: data.notes, status }).eq("id", editAccountId);
-
-            if (error) {
-                toast.error("Gagal!", { description: error.message });
-            } else {
-                closeDialog();
-                fetchAccounts();
-            }
-        } else {
-            const { error } = await supabase.from("accounts").insert([{ username: data.username, notes: data.notes, status }]);
-
-            if (error) {
-                toast.error("Gagal!", { description: error.message });
-            } else {
-                closeDialog();
-                fetchAccounts();
-            }
-        }
-    };
-
-    const closeDialog = () => {
-        setIsAddOpen(false);
-        setEditAccountId(null);
-        reset({ username: "", notes: "", is_empty_robux: false });
-    };
-
-    const handleDelete = async (id) => {
-        await supabase.from("accounts").delete().eq("id", id);
-        fetchAccounts();
-    };
-
-    const toggleStatus = async (acc) => {
-        const newStatus = acc.status === "EMPTY_ROBUX" ? "ACTIVE" : "EMPTY_ROBUX";
-        await supabase.from("accounts").update({ status: newStatus }).eq("id", acc.id);
-
-        fetchAccounts();
-    };
-
-    const filteredAccounts = accounts.filter((acc) => acc.username.toLowerCase().includes(searchQuery.toLowerCase()) || (acc.notes && acc.notes.toLowerCase().includes(searchQuery.toLowerCase())));
+    const isSearching = query.length > 0;
 
     return (
         <PageContainer>
-            <PageHeader
-                title="Akun Roblox"
-                subtitle="Disimpen di DB internal"
-                icon={User}
-                color="accent"
-                rightContent={
-                    <div className="flex w-full flex-col items-center gap-4 md:flex-row">
-                        <SearchBar value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} placeholder="Username..." containerClassName="w-full md:w-64" />
-                        <Button
-                            className="bg-accent hover:bg-accent/80 w-full font-bold text-black md:w-auto"
-                            onClick={() => {
-                                setEditAccountId(null);
-                                reset({ username: "", notes: "", is_empty_robux: false });
-                                setIsAddOpen(true);
-                            }}
-                        >
-                            <Plus className="mr-2 h-4 w-4" /> Tambah
-                        </Button>
-                    </div>
-                }
+            <PageHeader title="Akun Roblox" subtitle={total > 0 ? `${total} akun kesimpen di stok internal.` : "Stok akun internal Traxstore."} eyebrow="Inventaris" icon={User} color="accent" rightContent={<AccountsToolbar />} />
+
+            {error && (
+                <div className="border-danger/25 bg-danger/[0.07] text-danger rounded-2xl border p-4 text-sm" role="alert">
+                    Gagal ngambil data akun: {error}
+                </div>
+            )}
+
+            <DataTable
+                columns={COLUMNS}
+                data={accounts}
+                emptyTitle={isSearching ? `Gak ada yang cocok sama "${query}"` : "Stok akun masih kosong"}
+                emptyHint={isSearching ? "Coba kata kunci yang lebih pendek, atau cek ejaan username-nya." : 'Klik "Tambah akun" di kanan atas buat masukin username Roblox pertama.'}
+                footer={<Pagination page={page} pageCount={pageCount} total={total} pageSize={pageSize} />}
+                renderRow={(account) => (
+                    <ClickableTableRow key={account.id} href={`/accounts/${account.id}`}>
+                        <TableCell className="font-medium">
+                            <div className="flex items-center gap-3">
+                                <div className="border-border bg-surface-3 text-muted-foreground flex h-9 w-9 shrink-0 items-center justify-center rounded-full border text-xs font-bold">{getInitials(account.username)}</div>
+                                <div className="flex min-w-0 items-center gap-1.5">
+                                    <span className="truncate">{account.username}</span>
+                                    <CopyButton textToCopy={account.username} className="h-6 w-6 shrink-0" />
+                                </div>
+                            </div>
+                        </TableCell>
+
+                        <TableCell className="max-w-xs">
+                            <span className="text-muted-foreground block truncate text-sm">{account.notes || "—"}</span>
+                        </TableCell>
+
+                        <TableCell className="text-center">{account.status === "EMPTY_ROBUX" ? <StatusBadge variant="danger">Habis</StatusBadge> : <StatusBadge variant="success">Tersedia</StatusBadge>}</TableCell>
+
+                        <TableCell className="text-right">
+                            <AccountRowActions account={account} />
+                        </TableCell>
+                    </ClickableTableRow>
+                )}
             />
 
-            <FormDialog open={isAddOpen} onOpenChange={(open) => (open ? setIsAddOpen(true) : closeDialog())} title={editAccountId ? "Edit" : "Tambah"}>
-                <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 pt-4">
-                    <FormField label="Username" id="username" error={errors.username?.message} register={register("username")} />
-                    <FormField label="Notes" id="notes" register={register("notes")} />
-                    <div className="flex items-center space-x-2 pt-2">
-                        <input type="checkbox" id="is_empty_robux" {...register("is_empty_robux")} className="text-accent focus:ring-accent h-4 w-4 rounded border-zinc-700 bg-zinc-900 focus:ring-offset-zinc-950" />
-                        <label htmlFor="is_empty_robux" className="text-sm font-medium text-zinc-300">
-                            Akun Robux?
-                        </label>
-                    </div>
-                    <Button type="submit" className="bg-accent hover:bg-accent/80 mt-4 w-full font-bold text-black">
-                        {editAccountId ? "Edit" : "Tambah"}
-                    </Button>
-                </form>
-            </FormDialog>
-
-            <div className="w-full">
-                <DataTable
-                    loading={loading}
-                    data={filteredAccounts}
-                    emptyMessage="Kosong"
-                    columns={[{ label: "Username" }, { label: "Notes" }, { label: "Robux", className: "text-center" }, { label: "Aksi", className: "text-right" }]}
-                    renderRow={(acc) => (
-                        <TableRow key={acc.id} className="cursor-pointer border-zinc-800 hover:bg-zinc-900/50">
-                            <TableCell className="flex items-center gap-3 font-medium">
-                                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-zinc-700/50 bg-zinc-800/80 font-bold text-zinc-400 shadow-inner">{getInitials(acc.username)}</div>
-                                <div className="flex items-center gap-2">
-                                    {acc.username} <CopyButton textToCopy={acc.username} className="h-6 w-6" />
-                                </div>
-                            </TableCell>
-                            <TableCell>
-                                <span className="inline-block max-w-xs truncate text-zinc-400">{acc.notes || "-"}</span>
-                            </TableCell>
-                            <TableCell className="text-center">{acc.status === "EMPTY_ROBUX" ? <StatusBadge variant="danger">Habis</StatusBadge> : <StatusBadge variant="success">Tersedia</StatusBadge>}</TableCell>
-                            <TableCell className="text-right">
-                                <div className="flex items-center justify-end gap-2">
-                                    <ActionIcon icon={CircleDollarSign} title={acc.status === "EMPTY_ROBUX" ? "Tandai Tersedia" : "Tandai Habis"} variant={acc.status === "EMPTY_ROBUX" ? "success" : "warning"} onClick={() => toggleStatus(acc)} />
-                                    <ActionIcon
-                                        icon={Pencil}
-                                        title="Edit"
-                                        variant="edit"
-                                        onClick={() => {
-                                            setEditAccountId(acc.id);
-                                            reset({ username: acc.username, notes: acc.notes || "", is_empty_robux: acc.status === "ACTIVE" });
-                                            setIsAddOpen(true);
-                                        }}
-                                    />
-                                    <ActionIcon icon={Trash2} title="Hapus Akun" variant="delete" onClick={() => handleDelete(acc.id)} />
-                                </div>
-                            </TableCell>
-                        </TableRow>
-                    )}
-                />
-            </div>
+            {/* Dialog edit dinyetir ?edit=<id>, dan datanya udah di-prefetch di server */}
+            <AccountEditDialog account={editingAccount} />
         </PageContainer>
     );
 }

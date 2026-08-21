@@ -174,7 +174,7 @@ export function GamePrivateServerDialog({ open, onOpenChange, game, onSaved }) {
     };
 
     return (
-        <FormDialog open={open} onOpenChange={onOpenChange} title="Private Server Link" titleClassName="neon-text-primary" maxWidth="sm:max-w-2xl">
+        <FormDialog open={open} onOpenChange={onOpenChange} title="Private Server Link" titleClassName="text-glow-primary" maxWidth="sm:max-w-2xl">
             <div className="space-y-4 pt-2">
                 <div className="flex items-center gap-3 rounded-lg border border-zinc-800 bg-zinc-900/50 p-3">
                     <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-zinc-700/50 bg-zinc-800">{eldoradoGameId && <img src={eldoradoIconUrl(eldoradoGameId)} alt={gameName} className="h-full w-full object-cover" />}</div>

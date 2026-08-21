@@ -1,4 +1,4 @@
-import { ActivityIcon,AlertTriangleIcon, CheckCircleIcon, DollarSign, PackageIcon, XCircleIcon } from "lucide-react";
+import { ActivityIcon, AlertTriangleIcon, CheckCircleIcon, DollarSign, PackageIcon, XCircleIcon } from "lucide-react";
 
 export const formatJsonValue = (data) => {
     if (!data) return "-";
@@ -19,7 +19,7 @@ export const formatJsonValue = (data) => {
             return entries.map(([k, v]) => `${k}: ${v}`).join(" | ");
         }
         return String(data);
-    } catch (e) {
+    } catch {
         return "-";
     }
 };
@@ -61,7 +61,7 @@ export const formatDeliveryTime = (timeStr) => {
         if (seconds > 0 || parts.length === 0) parts.push(`${seconds} detik`);
 
         return parts.join(" ");
-    } catch (e) {
+    } catch {
         return timeStr;
     }
 };

@@ -1,107 +1,131 @@
 "use client";
 
-import { Bell, BookOpen, Clock,Gamepad2, List, LogOut, MessageSquare, Shield, ShoppingCart, User, Users } from "lucide-react";
+import { motion, useReducedMotion } from "framer-motion";
+import { Bell, BookOpen, Clock, Gamepad2, List, LogOut, MessageSquare, Shield, ShoppingCart, User, Users } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 
-import { getEldoradoNotifications,getUnreadNotificationCount } from "@/app/actions";
+import { getEldoradoNotifications, getUnreadNotificationCount } from "@/app/actions";
+import { TraxMark } from "@/components/illustrations/TraxMark";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useTokenRecovery } from "@/hooks/useTokenRecovery";
+import { SPRING } from "@/lib/motion";
 import { supabase } from "@/lib/supabase";
+
+const POLL_INTERVAL_MS = 30000;
+const AUTH_ROUTES = ["/login", "/reset-password"];
+
+const PRIMARY_LINKS = [
+    { name: "Games", href: "/games", icon: Gamepad2 },
+    { name: "Accounts", href: "/accounts", icon: Users },
+    { name: "Templates", href: "/templates", icon: MessageSquare },
+    { name: "Users", href: "/users", icon: Shield },
+    { name: "Shifts", href: "/shifts", icon: Clock },
+];
+
+const COMMERCE_LINKS = [
+    { name: "Orders", href: "/orders", icon: ShoppingCart },
+    { name: "Offers", href: "/offers", icon: List },
+];
+
+/** Label event Eldorado -> bahasa manusia. */
+function labelForEvent(event) {
+    if (event === "OrderCreated") return "Order baru masuk";
+    if (event === "MessageReceived") return "Pesan baru";
+    return event;
+}
 
 export function Navbar() {
     const pathname = usePathname();
     const router = useRouter();
+    const shouldReduceMotion = useReducedMotion();
 
     const [unreadCount, setUnreadCount] = useState(0);
     const [latestNotifs, setLatestNotifs] = useState([]);
     const [isLoadingNotifs, setIsLoadingNotifs] = useState(false);
     const [isPopoverOpen, setIsPopoverOpen] = useState(false);
 
-    // Retry-nya lewat ref biar hook-nya bisa dipanggil duluan tanpa muter-muter dependensi
+    // Dipakai sebagai dependency, bukan `pathname` mentah. Ini yang benerin
+    // kebocoran interval: dulu deps-nya `pathname`, jadi tiap pindah halaman
+    // interval polling-nya dibongkar-pasang ulang. Sekarang boolean, jadi cuma
+    // berubah waktu nyeberang batas login <-> app.
+    const isAuthRoute = useMemo(() => AUTH_ROUTES.includes(pathname), [pathname]);
+
     const fetchUnreadRef = useRef(null);
     const { reportTokenExpired, reportTokenOk } = useTokenRecovery(useCallback(() => fetchUnreadRef.current?.(), []));
 
     const fetchUnread = useCallback(async () => {
-        if (pathname === "/login" || pathname === "/reset-password") return;
-
         const res = await getUnreadNotificationCount();
         if (res.success) {
             setUnreadCount(res.count);
             reportTokenOk();
         } else if (res.error === "TOKEN_EXPIRED_401") {
-            // Biarin recovery yang urus: dia bakal nyuruh extension jemput token & retry sendiri
             reportTokenExpired();
         }
-    }, [pathname, reportTokenExpired, reportTokenOk]);
+    }, [reportTokenExpired, reportTokenOk]);
 
     useEffect(() => {
         fetchUnreadRef.current = fetchUnread;
     }, [fetchUnread]);
 
     useEffect(() => {
-        if (pathname === "/login" || pathname === "/reset-password") return;
+        if (isAuthRoute) return;
 
-        fetchUnread();
+        fetchUnreadRef.current?.();
 
-        // Poll every 30 seconds
-        const interval = setInterval(fetchUnread, 30000);
+        // Skip polling waktu tab-nya gak kelihatan. Yang lama tetep nembak
+        // server tiap 30 detik walau tab-nya ketinggal kebuka seharian.
+        const tick = () => {
+            if (document.visibilityState === "visible") fetchUnreadRef.current?.();
+        };
+
+        const interval = setInterval(tick, POLL_INTERVAL_MS);
         return () => clearInterval(interval);
-    }, [pathname, fetchUnread]);
+    }, [isAuthRoute]);
 
-    const fetchLatestNotifs = async () => {
-        if (pathname === "/login" || pathname === "/reset-password") return;
+    const fetchLatestNotifs = useCallback(async () => {
         setIsLoadingNotifs(true);
         const res = await getEldoradoNotifications("");
         if (res.success && res.data?.results) {
-            setLatestNotifs(res.data.results.slice(0, 10)); // Top 10
+            setLatestNotifs(res.data.results.slice(0, 10));
         } else if (res.error === "TOKEN_EXPIRED_401") {
             reportTokenExpired();
         }
         setIsLoadingNotifs(false);
-    };
+    }, [reportTokenExpired]);
 
     useEffect(() => {
-        if (isPopoverOpen) {
-            fetchLatestNotifs();
-        }
-    }, [isPopoverOpen]);
+        if (!isPopoverOpen || isAuthRoute) return;
+        // eslint-disable-next-line react-hooks/set-state-in-effect -- fetch waktu popover kebuka, setState-nya nyusul setelah await
+        fetchLatestNotifs();
+    }, [isPopoverOpen, isAuthRoute, fetchLatestNotifs]);
 
     const handleLogout = async () => {
         const { error } = await supabase.auth.signOut();
         if (error) {
-            toast.error("Gagal logout bro!");
+            toast.error("Logout gagal", { description: "Coba sekali lagi ya." });
         } else {
             router.push("/login");
         }
     };
 
-    const group1 = [
-        { name: "Games", href: "/games", icon: Gamepad2 },
-        { name: "Accounts", href: "/accounts", icon: Users },
-        // { name: "Items", href: "/items", icon: Package },
-        { name: "Templates", href: "/templates", icon: MessageSquare },
-        { name: "Users", href: "/users", icon: Shield },
-        { name: "Shifts", href: "/shifts", icon: Clock },
-    ];
-
-    const group2 = [
-        { name: "Orders", href: "/orders", icon: ShoppingCart },
-        { name: "Offers", href: "/offers", icon: List },
-    ];
-
-    if (pathname === "/login" || pathname === "/reset-password") return null;
+    if (isAuthRoute) return null;
 
     const renderNavButton = (link) => {
         const Icon = link.icon;
-        const isActive = pathname === link.href || (link.href !== "/" && pathname.startsWith(link.href));
+        const isActive = pathname === link.href || pathname.startsWith(`${link.href}/`);
+
         return (
-            <Link key={link.href} href={link.href}>
-                <Button variant="ghost" className={`rounded-full text-sm font-medium transition-colors ${isActive ? "border border-yellow-500/30 bg-yellow-500/20 text-yellow-400 shadow-[0_0_10px_rgba(250,204,21,0.2)]" : "text-zinc-400 hover:bg-zinc-800/50 hover:text-white"}`}>
+            <Link key={link.href} href={link.href} className="relative">
+                {/* Pil aktif pakai layoutId, jadi dia MELUNCUR dari tab lama ke tab
+                    baru ketimbang muncul-ilang. Gerakan itu yang ngasih tau mata
+                    "lu pindah dari sini ke sini" tanpa perlu dibaca. */}
+                {isActive && <motion.span layoutId="nav-active-pill" className="bg-primary/15 border-primary/30 absolute inset-0 rounded-full border" style={{ boxShadow: "var(--glow-primary)" }} transition={shouldReduceMotion ? { duration: 0 } : SPRING} />}
+                <Button variant="ghost" className={`relative z-10 rounded-full text-sm font-medium transition-colors ${isActive ? "text-primary hover:bg-transparent" : "text-muted-foreground hover:text-foreground hover:bg-surface-3/60"}`}>
                     <Icon className="h-4 w-4 shrink-0 md:mr-2" />
                     <span className="hidden lg:inline">{link.name}</span>
                 </Button>
@@ -109,50 +133,70 @@ export function Navbar() {
         );
     };
 
+    const renderIconLink = (href, Icon, label) => {
+        const isActive = pathname === href;
+        return (
+            <Link href={href}>
+                <Button variant="ghost" aria-label={label} title={label} className={`rounded-full px-3 transition-colors ${isActive ? "text-primary bg-primary/12" : "text-muted-foreground hover:text-foreground hover:bg-surface-3/60"}`}>
+                    <Icon className="h-5 w-5" />
+                </Button>
+            </Link>
+        );
+    };
+
     return (
-        <div className="sticky top-6 z-50 mx-auto mt-6 mb-2 w-full max-w-7xl px-4">
-            <nav className="flex h-16 items-center rounded-full border border-zinc-800 bg-black/60 px-4 shadow-[0_8px_30px_rgb(0,0,0,0.5)] backdrop-blur-xl md:px-6">
-                <Link href="/" className="mr-4 flex shrink-0 items-center gap-2 transition-opacity hover:opacity-80 md:mr-8">
-                    <Gamepad2 className="text-primary h-6 w-6" />
-                    <span className="neon-text-primary hidden text-xl font-bold tracking-widest uppercase md:inline-block">Traxstore</span>
+        <div className="sticky top-4 z-50 mx-auto mt-4 mb-2 w-full max-w-7xl px-4">
+            <nav className="glass flex h-16 items-center rounded-full px-4 md:px-6">
+                <Link href="/" className="mr-4 flex shrink-0 items-center gap-2.5 transition-opacity hover:opacity-80 md:mr-8">
+                    {/* Logo asli, bukan ikon gamepad dari icon set */}
+                    <TraxMark className="h-7 w-7" />
+                    <span className="text-brand hidden text-lg font-bold tracking-tight md:inline-block">Traxstore</span>
                 </Link>
 
                 <div className="no-scrollbar flex flex-1 items-center space-x-2 overflow-x-auto lg:space-x-3">
-                    <div className="flex items-center space-x-1 rounded-full border border-zinc-800/50 bg-zinc-900/30 px-2 py-1.5">{group1.map(renderNavButton)}</div>
-                    <div className="flex items-center space-x-1 rounded-full border border-zinc-800/50 bg-zinc-900/30 px-2 py-1.5">{group2.map(renderNavButton)}</div>
+                    <div className="border-border/60 bg-surface-1/40 flex items-center space-x-1 rounded-full border px-2 py-1.5">{PRIMARY_LINKS.map(renderNavButton)}</div>
+                    <div className="border-border/60 bg-surface-1/40 flex items-center space-x-1 rounded-full border px-2 py-1.5">{COMMERCE_LINKS.map(renderNavButton)}</div>
                 </div>
+
                 <div className="flex items-center justify-end gap-1 md:gap-2">
                     <Popover open={isPopoverOpen} onOpenChange={setIsPopoverOpen}>
                         <PopoverTrigger asChild>
-                            <Button variant="ghost" className={`relative rounded-full px-3 text-zinc-400 hover:bg-zinc-800/50 hover:text-white ${pathname === "/notifications" ? "bg-zinc-800 text-white shadow-[0_0_15px_rgba(255,255,255,0.1)]" : ""}`} title="Notifications">
+                            <Button variant="ghost" aria-label="Notifikasi" title="Notifikasi" className={`relative rounded-full px-3 transition-colors ${pathname === "/notifications" ? "text-primary bg-primary/12" : "text-muted-foreground hover:text-foreground hover:bg-surface-3/60"}`}>
                                 <Bell className="h-5 w-5" />
-                                {unreadCount > 0 && <span className="absolute top-0 right-0 -mt-1 -mr-1 flex h-4 w-4 animate-pulse items-center justify-center rounded-full bg-red-500 text-[9px] font-bold text-white shadow-[0_0_10px_rgba(239,68,68,0.6)]">{unreadCount > 99 ? "99+" : unreadCount}</span>}
+                                {unreadCount > 0 && (
+                                    // Yang lama pakai shadow-[0_0_10px_rgba(var(--primary),0.8)].
+                                    // Itu CSS invalid: --primary isinya hex, bukan channel RGB,
+                                    // jadi glow-nya diem-diem gak pernah ke-render.
+                                    <span className="bg-danger text-danger-foreground absolute top-0 right-0 -mt-0.5 -mr-0.5 flex h-4 min-w-4 items-center justify-center rounded-full px-1 text-[9px] font-bold" style={{ boxShadow: "var(--glow-danger)" }}>
+                                        {unreadCount > 99 ? "99+" : unreadCount}
+                                    </span>
+                                )}
                             </Button>
                         </PopoverTrigger>
-                        <PopoverContent align="end" className="z-[100] mt-4 w-80 rounded-xl border-zinc-800 bg-black/90 p-0 shadow-2xl backdrop-blur-xl sm:w-[350px]">
-                            <div className="flex items-center justify-between border-b border-zinc-800/80 bg-zinc-950/80 p-3.5">
-                                <h4 className="text-sm font-bold tracking-wide">Notifikasi Terbaru</h4>
-                                <Link href="/notifications" onClick={() => setIsPopoverOpen(false)} className="text-primary text-[11px] font-bold hover:underline">
-                                    View all
+                        <PopoverContent align="end" className="border-border/70 bg-popover/90 z-[100] mt-3 w-80 rounded-2xl p-0 shadow-2xl backdrop-blur-2xl sm:w-[360px]">
+                            <div className="border-border/70 bg-surface-1/60 flex items-center justify-between border-b p-3.5">
+                                <h4 className="text-sm font-semibold tracking-tight">Yang baru masuk</h4>
+                                <Link href="/notifications" onClick={() => setIsPopoverOpen(false)} className="text-primary text-[11px] font-bold transition-opacity hover:opacity-80">
+                                    Lihat semua
                                 </Link>
                             </div>
+
                             <div className="custom-scrollbar flex max-h-[350px] flex-col overflow-y-auto">
                                 {isLoadingNotifs ? (
-                                    <div className="flex flex-col">
-                                        {[...Array(5)].map((_, i) => (
-                                            <div key={i} className="flex flex-col gap-2 border-b border-zinc-800/40 p-3.5">
-                                                <div className="flex items-start justify-between gap-2">
-                                                    <Skeleton className="h-4 w-1/2 bg-zinc-800" />
-                                                </div>
-                                                <div className="mt-1 flex items-end justify-between">
-                                                    <Skeleton className="h-3 w-1/3 bg-zinc-800" />
-                                                    <Skeleton className="h-4 w-12 bg-zinc-800" />
-                                                </div>
+                                    Array.from({ length: 5 }).map((_, i) => (
+                                        <div key={i} className="border-border/40 flex flex-col gap-2 border-b p-3.5">
+                                            <Skeleton className="bg-surface-3 h-4 w-1/2" />
+                                            <div className="mt-1 flex items-end justify-between">
+                                                <Skeleton className="bg-surface-3 h-3 w-1/3" />
+                                                <Skeleton className="bg-surface-3 h-4 w-12" />
                                             </div>
-                                        ))}
-                                    </div>
+                                        </div>
+                                    ))
                                 ) : latestNotifs.length === 0 ? (
-                                    <div className="py-10 text-center text-xs text-zinc-500">Belum ada notif terbaru.</div>
+                                    <div className="px-6 py-12 text-center">
+                                        <p className="text-foreground text-sm font-medium">Sepi, aman.</p>
+                                        <p className="text-muted-foreground mt-1 text-xs">Notifikasi baru bakal nongol di sini duluan.</p>
+                                    </div>
                                 ) : (
                                     latestNotifs.map((notif) => {
                                         const n = notif.notification;
@@ -160,48 +204,44 @@ export function Navbar() {
                                         const isUnread = n.notificationReadStatus !== "IsRead";
 
                                         return (
-                                            <div
+                                            <button
                                                 key={n.id}
-                                                className={`flex cursor-pointer flex-col gap-1.5 border-b border-zinc-800/40 p-3.5 transition-colors ${isUnread ? "bg-primary/5 hover:bg-primary/10" : "hover:bg-zinc-900/40"}`}
+                                                type="button"
+                                                className={`border-border/40 flex w-full flex-col gap-1.5 border-b p-3.5 text-left transition-colors ${isUnread ? "bg-primary/[0.06] hover:bg-primary/10" : "hover:bg-surface-2/60"}`}
                                                 onClick={() => {
                                                     setIsPopoverOpen(false);
                                                     router.push("/notifications");
                                                 }}
                                             >
                                                 <div className="flex items-start justify-between gap-2 overflow-hidden">
-                                                    <span className={`min-w-0 flex-1 truncate text-xs leading-tight font-bold ${isUnread ? "text-zinc-100" : "text-zinc-400"}`}>
-                                                        {n.event === "OrderCreated" ? "New Order" : n.event === "MessageReceived" ? "New Message" : n.event}
-                                                        {n.details?.title && <span className="ml-1 font-normal opacity-80">- {n.details.title}</span>}
+                                                    <span className={`min-w-0 flex-1 truncate text-xs leading-tight font-semibold ${isUnread ? "text-foreground" : "text-muted-foreground"}`}>
+                                                        {labelForEvent(n.event)}
+                                                        {n.details?.title && <span className="ml-1 font-normal opacity-80">— {n.details.title}</span>}
                                                     </span>
-                                                    {isUnread && <span className="bg-primary mt-0.5 h-2 w-2 shrink-0 rounded-full shadow-[0_0_8px_rgba(var(--primary),0.8)]"></span>}
+                                                    {isUnread && <span className="bg-primary mt-1 h-2 w-2 shrink-0 rounded-full" style={{ boxShadow: "var(--glow-primary)" }} />}
                                                 </div>
                                                 <div className="mt-1 flex items-end justify-between">
-                                                    <span className="font-mono text-[10px] text-zinc-500">{n.details?.buyerUsername ? `Buyer: ${n.details.buyerUsername}` : "Notification"}</span>
-                                                    {n.details?.price && n.details.price.amount > 0 && <span className="rounded border border-green-500/20 bg-green-500/10 px-1.5 py-0.5 text-[10px] font-bold text-green-400">${n.details.price.amount.toFixed(2)}</span>}
+                                                    <span className="text-muted-foreground font-mono text-[10px]">{n.details?.buyerUsername ? `Buyer: ${n.details.buyerUsername}` : "Notifikasi"}</span>
+                                                    {n.details?.price && n.details.price.amount > 0 && <span className="border-success/25 bg-success/12 text-success rounded border px-1.5 py-0.5 text-[10px] font-bold">${n.details.price.amount.toFixed(2)}</span>}
                                                 </div>
-                                            </div>
+                                            </button>
                                         );
                                     })
                                 )}
                             </div>
-                            <div className="border-t border-zinc-800/80 bg-zinc-950/90 p-2.5 text-center">
-                                <Link href="/notifications" onClick={() => setIsPopoverOpen(false)} className="block w-full text-xs text-zinc-400 transition-colors hover:text-white">
-                                    Buka Halaman Notifikasi Lengkap
+
+                            <div className="border-border/70 bg-surface-1/60 border-t p-2.5 text-center">
+                                <Link href="/notifications" onClick={() => setIsPopoverOpen(false)} className="text-muted-foreground hover:text-foreground block w-full text-xs transition-colors">
+                                    Buka pusat notifikasi
                                 </Link>
                             </div>
                         </PopoverContent>
                     </Popover>
-                    <Link href="/guide">
-                        <Button variant="ghost" className={`rounded-full px-3 text-zinc-400 hover:bg-zinc-800/50 hover:text-white ${pathname === "/guide" ? "bg-zinc-800 text-white" : ""}`} title="Panduan & Setup">
-                            <BookOpen className="h-5 w-5" />
-                        </Button>
-                    </Link>
-                    <Link href="/profile">
-                        <Button variant="ghost" className={`rounded-full px-3 text-zinc-400 hover:bg-zinc-800/50 hover:text-white ${pathname === "/profile" ? "bg-zinc-800 text-white" : ""}`} title="Profile">
-                            <User className="h-5 w-5" />
-                        </Button>
-                    </Link>
-                    <Button variant="ghost" className="rounded-full px-3 text-red-500 hover:bg-red-500/10 hover:text-red-400" onClick={handleLogout} title="Logout">
+
+                    {renderIconLink("/guide", BookOpen, "Panduan & Setup")}
+                    {renderIconLink("/profile", User, "Profil")}
+
+                    <Button variant="ghost" aria-label="Logout" title="Logout" className="text-danger hover:bg-danger/10 hover:text-danger rounded-full px-3 transition-colors" onClick={handleLogout}>
                         <LogOut className="h-5 w-5" />
                     </Button>
                 </div>

@@ -30,4 +30,4 @@ function CardFooter({ className, ...props }) {
     return <div data-slot="card-footer" className={cn("bg-muted/50 flex items-center rounded-b-xl border-t p-(--card-spacing)", className)} {...props} />;
 }
 
-export { Card, CardAction, CardContent,CardDescription, CardFooter, CardHeader, CardTitle };
+export { Card, CardAction, CardContent, CardDescription, CardFooter, CardHeader, CardTitle };

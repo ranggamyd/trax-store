@@ -1,8 +1,7 @@
 "use client";
 
-import { ArrowRightLeft, Calendar, ChevronLeft, ChevronRight, Link2 } from "lucide-react";
+import { Calendar, ChevronLeft, ChevronRight } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
-import { toast } from "sonner";
 
 import { getShiftHistory, getShiftUsers } from "@/app/actions/shifts";
 import { DataTable } from "@/components/organisms/DataTable";
@@ -49,6 +48,7 @@ export function ShiftHistoryTable({ refreshTrigger }) {
     }, [filterStartDate, filterEndDate, filterUserId, historyPage]);
 
     useEffect(() => {
+        // eslint-disable-next-line react-hooks/set-state-in-effect -- fetch data, loading flag-nya sengaja di-set biar spinner langsung nongol
         fetchUsers();
     }, [fetchUsers]);
 
@@ -114,7 +114,7 @@ export function ShiftHistoryTable({ refreshTrigger }) {
                         <Calendar className="text-primary h-4 w-4" />
                     </div>
                     <div>
-                        <h3 className="text-primary neon-text-primary text-sm font-bold tracking-widest uppercase">History</h3>
+                        <h3 className="text-primary text-glow-primary text-sm font-bold tracking-widest uppercase">History</h3>
                         <p className="text-xs text-zinc-600">Rekap jam jaga</p>
                     </div>
                 </div>
@@ -129,9 +129,6 @@ export function ShiftHistoryTable({ refreshTrigger }) {
                         const startTime = new Date(shift.started_at);
                         const endTime = new Date(shift.ended_at);
                         const duration = formatDurationText(shift.started_at, shift.ended_at);
-                        const isTakeover = shift.ended_by === "takeover";
-                        const wasTakenOver = shift.takeover_from;
-
                         return (
                             <TableRow key={shift.id} className="border-zinc-800 hover:bg-zinc-900/50">
                                 <TableCell className="font-medium text-white">

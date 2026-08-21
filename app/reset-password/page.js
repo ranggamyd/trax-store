@@ -1,9 +1,11 @@
 "use client";
-import { ArrowLeft,Gamepad2 } from "lucide-react";
+
+import { ArrowLeft, Loader2, MailCheck, Send } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 import { toast } from "sonner";
 
+import { AuthShell } from "@/components/templates/AuthShell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -17,65 +19,76 @@ export default function ResetPasswordPage() {
     const handleReset = async (e) => {
         e.preventDefault();
         setIsLoading(true);
+
         const { error } = await supabase.auth.resetPasswordForEmail(email, {
             redirectTo: `${window.location.origin}/profile`,
         });
 
         if (error) {
-            toast.error(error.message);
+            toast.error("Gagal kirim link", { description: error.message });
         } else {
-            toast.success("Link reset password udah dikirim!");
             setIsSent(true);
         }
         setIsLoading(false);
     };
 
-    return (
-        <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-black p-4">
-            {/* Background decoration */}
-            <div className="bg-primary/20 pointer-events-none absolute top-1/4 left-1/4 h-96 w-96 rounded-full blur-[120px]" />
-            <div className="bg-accent/20 pointer-events-none absolute right-1/4 bottom-1/4 h-96 w-96 rounded-full blur-[120px]" />
+    const backToLogin = (
+        <Link href="/login" className="text-muted-foreground hover:text-foreground inline-flex items-center gap-1.5 text-xs transition-colors">
+            <ArrowLeft className="h-3.5 w-3.5" />
+            Balik ke login
+        </Link>
+    );
 
-            <div className="relative z-10 w-full max-w-md space-y-8 rounded-2xl border border-zinc-800 bg-zinc-950/80 p-8 shadow-2xl backdrop-blur-xl">
-                <div className="flex flex-col items-center justify-center space-y-2 text-center">
-                    <div className="bg-primary/10 neon-border-primary border-primary/50 mb-4 flex h-16 w-16 items-center justify-center rounded-2xl border">
-                        <Gamepad2 className="text-primary h-8 w-8" />
+    // State terkirim: tunjukin EMAIL-nya, jangan cuma bilang "berhasil dikirim".
+    // Salah ketik email itu penyebab paling umum link reset gak nyampe, dan
+    // satu-satunya cara user nyadar adalah kalau alamatnya dibalikin ke dia.
+    if (isSent) {
+        return (
+            <AuthShell title="Cek inbox lu" description="Link reset password-nya udah jalan." footer={backToLogin}>
+                <div className="border-success/25 bg-success/[0.07] flex flex-col items-center gap-3 rounded-2xl border p-6 text-center">
+                    <div className="border-success/25 bg-success/10 flex h-11 w-11 items-center justify-center rounded-xl border">
+                        <MailCheck className="text-success h-5 w-5" />
                     </div>
-                    <h2 className="neon-text-primary text-3xl font-bold tracking-widest text-white uppercase">Traxstore</h2>
-                    <p className="text-zinc-400">Lupa Password Admin</p>
+                    <p className="text-foreground font-mono text-sm font-semibold break-all">{email}</p>
+                    <p className="text-muted-foreground text-xs leading-relaxed">Belum nyampe dalam 2 menit? Cek folder spam dulu, atau pastiin alamatnya bener.</p>
                 </div>
 
-                {isSent ? (
-                    <div className="space-y-4 rounded-xl border border-zinc-800 bg-zinc-900 p-6 text-center">
-                        <p className="font-medium text-green-400">Link reset password berhasil dikirim ke email kamu.</p>
-                        <p className="text-sm text-zinc-400">Cek inbox atau folder spam, lalu ikuti petunjuk di dalamnya.</p>
-                        <Link href="/login" className="mt-4 block">
-                            <Button variant="outline" className="w-full border-zinc-700 hover:bg-zinc-800">
-                                Kembali ke Login
-                            </Button>
-                        </Link>
-                    </div>
-                ) : (
-                    <form onSubmit={handleReset} className="mt-8 space-y-6">
-                        <div className="space-y-2">
-                            <Label htmlFor="email" className="text-zinc-300">
-                                Email Address
-                            </Label>
-                            <Input id="email" type="email" placeholder="admin@traxstore.com" required value={email} onChange={(e) => setEmail(e.target.value)} className="h-12 border-zinc-800 bg-zinc-900 text-white" />
-                        </div>
+                <Button
+                    variant="outline"
+                    className="mt-4 w-full"
+                    onClick={() => {
+                        setIsSent(false);
+                        setEmail("");
+                    }}
+                >
+                    Kirim ke email lain
+                </Button>
+            </AuthShell>
+        );
+    }
 
-                        <Button type="submit" className="bg-primary hover:bg-primary/80 h-12 w-full font-bold text-white" disabled={isLoading}>
-                            {isLoading ? "Mengirim link..." : "Kirim Link Reset"}
-                        </Button>
+    return (
+        <AuthShell title="Reset password" description="Masukin email admin lu, linknya kita kirim." footer={backToLogin}>
+            <form onSubmit={handleReset} className="space-y-5">
+                <div className="space-y-2">
+                    <Label htmlFor="email">Email admin</Label>
+                    <Input id="email" type="email" autoComplete="email" placeholder="admin@traxstore.com" required value={email} onChange={(e) => setEmail(e.target.value)} className="border-border bg-input/60 focus-visible:border-ring focus-visible:ring-ring/30 h-10" />
+                </div>
 
-                        <div className="text-center">
-                            <Link href="/login" className="inline-flex items-center gap-1 text-sm text-zinc-500 transition-colors hover:text-white">
-                                <ArrowLeft className="h-4 w-4" /> Kembali ke Login
-                            </Link>
-                        </div>
-                    </form>
-                )}
-            </div>
-        </div>
+                <Button type="submit" size="lg" className="h-11 w-full font-semibold" disabled={isLoading}>
+                    {isLoading ? (
+                        <>
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            Ngirim...
+                        </>
+                    ) : (
+                        <>
+                            <Send className="mr-2 h-4 w-4" />
+                            Kirim link reset
+                        </>
+                    )}
+                </Button>
+            </form>
+        </AuthShell>
     );
 }

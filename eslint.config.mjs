@@ -5,14 +5,7 @@ import unusedImports from "eslint-plugin-unused-imports";
 
 const eslintConfig = defineConfig([
     ...nextVitals,
-    // Override default ignores of eslint-config-next.
-    globalIgnores([
-        // Default ignores of eslint-config-next:
-        ".next/**",
-        "out/**",
-        "build/**",
-        "next-env.d.ts",
-    ]),
+    globalIgnores([".next/**", "out/**", "build/**", "next-env.d.ts"]),
     {
         plugins: {
             "unused-imports": unusedImports,
@@ -32,6 +25,12 @@ const eslintConfig = defineConfig([
             ],
             "simple-import-sort/imports": "error",
             "simple-import-sort/exports": "error",
+
+            // Semua <img> di app ini cuma ikon kecil (12-96px) dari host pihak ketiga
+            // (assetsdelivery.eldorado.gg, blob storage) plus games.icon_url yang hostnya
+            // dinamis dari DB. next/image bakal throw kalau hostnya belum kedaftar di
+            // images.remotePatterns, jadi <img> biasa lebih aman & gak nambah beban optimizer.
+            "@next/next/no-img-element": "off",
         },
     },
 ]);

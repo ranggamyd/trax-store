@@ -2,8 +2,7 @@
 
 import { Chatbox, Session } from "@talkjs/react";
 import { CalendarIcon, CheckCircleIcon, CheckIcon, CopyIcon, Gamepad2Icon, InfoIcon, Loader2Icon, PencilIcon, SearchIcon, SendIcon, SparklesIcon, TimerIcon, UserIcon, XCircleIcon } from "lucide-react";
-import { useEffect, useMemo, useRef, useState } from "react";
-import { toast } from "sonner";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { ComboboxSelect } from "@/components/molecules/ComboboxSelect";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
@@ -17,7 +16,6 @@ import { cn } from "@/lib/utils";
 
 import { CANCEL_REASONS, formatDeliveryTime, getStatusIcon } from "./utils";
 function ChatTemplateCard({ tmpl, onSend, isRecommended, compact = false, chatboxRef, game }) {
-    const [copied, setCopied] = useState(false);
     // Template Specific: akun default dari template, tapi bisa diganti sebelum kirim.
     const [accountId, setAccountId] = useState(tmpl.account_id || "");
 
@@ -37,8 +35,6 @@ function ChatTemplateCard({ tmpl, onSend, isRecommended, compact = false, chatbo
         } else {
             navigator.clipboard.writeText(resolvedText);
         }
-        setCopied(true);
-        setTimeout(() => setCopied(false), 2000);
     };
 
     const handleSendClick = (e) => {
@@ -83,7 +79,7 @@ function ChatTemplateCard({ tmpl, onSend, isRecommended, compact = false, chatbo
                         <span className="rounded bg-zinc-800 px-1 text-[7px] font-extrabold uppercase text-zinc-500">{tmpl.type}</span>
                     </div>
                 </div> */}
-                <p className="line-clamp-2 text-[10px] leading-tight break-words text-zinc-400">"{resolvedText}"</p>
+                <p className="line-clamp-2 text-[10px] leading-tight break-words text-zinc-400">&quot;{resolvedText}&quot;</p>
                 {accountPicker}
                 {blockedNote}
                 <div className="mt-auto flex items-center gap-1 border-t border-zinc-800/60 pt-1">
@@ -106,7 +102,7 @@ function ChatTemplateCard({ tmpl, onSend, isRecommended, compact = false, chatbo
                     <span className="truncate text-xs font-bold text-zinc-200">{tmpl.title}</span>
                     <span className="rounded bg-zinc-800 px-1 py-0.2 text-[8px] font-extrabold uppercase text-zinc-400">{tmpl.type}</span>
                 </div> */}
-                <p className="truncate text-[10px] text-zinc-400">"{resolvedText}"</p>
+                <p className="truncate text-[10px] text-zinc-400">&quot;{resolvedText}&quot;</p>
                 {accountPicker}
                 {blockedNote}
             </div>
@@ -136,7 +132,7 @@ function QuickRepliesPopover({ activeOrderDetails, onSend, chatboxRef }) {
     const currentStatus = activeOrderDetails?.status?.toLowerCase() || "";
     const orderGameId = String(activeOrderDetails?.raw?.orderOfferDetails?.gameId || activeOrderDetails?.raw?.gameId || "");
 
-    const fetchTemplates = async () => {
+    const fetchTemplates = useCallback(async () => {
         setIsLoading(true);
         const [{ data, error }, gamesList] = await Promise.all([supabase.from("chat_templates").select("*").order("sort_order", { ascending: true }), fetchGamesWithAccounts()]);
         setLinkedGames(gamesList);
@@ -155,32 +151,12 @@ function QuickRepliesPopover({ activeOrderDetails, onSend, chatboxRef }) {
             setTemplates(sorted);
         }
         setIsLoading(false);
-    };
-
-    useEffect(() => {
-        fetchTemplates();
     }, [currentStatus]);
 
-    const handleUpdateSortOrder = async (id, newOrder) => {
-        const { error } = await supabase.from("chat_templates").update({ sort_order: newOrder }).eq("id", id);
-
-        if (error) {
-            // toast.error("Gagal update urutan: " + error.message);
-        } else {
-            // Update state local untuk merubah sort order dan urutan list secara instan
-            setTemplates((prev) => {
-                const updated = prev.map((t) => (t.id === id ? { ...t, sort_order: newOrder } : t));
-                return updated.sort((a, b) => {
-                    const aRec = a.triggers?.includes(currentStatus) ? 1 : 0;
-                    const bRec = b.triggers?.includes(currentStatus) ? 1 : 0;
-                    if (aRec !== bRec) {
-                        return bRec - aRec;
-                    }
-                    return (a.sort_order === 0 ? Infinity : a.sort_order) - (b.sort_order === 0 ? Infinity : b.sort_order);
-                });
-            });
-        }
-    };
+    useEffect(() => {
+        // eslint-disable-next-line react-hooks/set-state-in-effect -- fetch data, loading flag-nya sengaja di-set biar spinner langsung nongol
+        fetchTemplates();
+    }, [fetchTemplates]);
 
     const filtered = templates.filter((t) => {
         // Template Specific yang nempel ke game lain gak nyambung sama order ini.
@@ -284,8 +260,8 @@ export default function OrderDetail({ activeOrderId, activeOrderDetails, activeO
             const conversation = sessionRef.current.getOrCreateConversation(activeOrderDetails.talkJsConversationId);
             conversation.sendMessage(tmpl.text);
             // toast.success("Pesan terkirim ke chat!");
-        } catch (err) {
-            // toast.error("Gagal ngirim pesan: " + err.message);
+        } catch {
+            // toast.error("Gagal ngirim pesan")
         }
     };
 
@@ -421,7 +397,7 @@ export default function OrderDetail({ activeOrderId, activeOrderDetails, activeO
                                     {review.reviewMessage && (
                                         <div className="flex items-start gap-2.5">
                                             <div className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full shadow-sm ${review.feedbackRating === "Positive" ? "border border-green-500/20 bg-green-500/20 text-green-400" : "border border-red-500/20 bg-red-500/20 text-red-400"}`}>{review.feedbackRating === "Positive" ? <CheckIcon className="h-3 w-3" /> : <XCircleIcon className="h-3 w-3" />}</div>
-                                            <p className="text-sm leading-relaxed text-zinc-300 italic">"{review.reviewMessage}"</p>
+                                            <p className="text-sm leading-relaxed text-zinc-300 italic">&quot;{review.reviewMessage}&quot;</p>
                                         </div>
                                     )}
 

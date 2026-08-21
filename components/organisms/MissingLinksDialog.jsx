@@ -13,7 +13,7 @@ export function MissingLinksDialog({ open, onOpenChange, missingLinks, setMissin
     return (
         <FormDialog open={open} onOpenChange={onOpenChange} title="Wajib Isi Link!" titleClassName="text-xl font-bold text-red-500" maxWidth="max-w-lg">
             <p className="mt-2 text-sm text-zinc-400">
-                Karena opsi "Buyer Wajib Join" diaktifkan, <strong>{missingLinks.length} akun</strong> ini butuh private server link. Isi dulu bos sebelum bisa simpan!
+                Karena opsi &quot;Buyer Wajib Join&quot; diaktifkan, <strong>{missingLinks.length} akun</strong> ini butuh private server link. Isi dulu bos sebelum bisa simpan!
             </p>
             <form onSubmit={onSubmit} className="mt-2 max-h-[60vh] space-y-4 overflow-y-auto pr-2">
                 {missingLinks.map((ml, idx) => (
