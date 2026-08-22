@@ -2,6 +2,7 @@
 
 import { AlertTriangleIcon, ExternalLinkIcon, Loader2Icon, PuzzleIcon } from "lucide-react";
 
+import { PlugOut } from "@/components/illustrations/PlugOut";
 import { TOKEN_FAILURE, TOKEN_STATUS } from "@/hooks/useTokenRecovery";
 
 /**
@@ -28,8 +29,14 @@ export default function TokenStatusNotice({ status, failure, retryCount = 0, cla
 
     return (
         <div className={`border-danger/50 bg-danger-muted/30 text-danger rounded-xl border p-4 text-sm ${className}`}>
-            <div className="flex items-start gap-3">
-                {isNoExtension ? <PuzzleIcon className="mt-0.5 h-4 w-4 shrink-0" /> : <AlertTriangleIcon className="mt-0.5 h-4 w-4 shrink-0" />}
+            <div className="flex items-start gap-4">
+                {/* Gambarnya gede-in dari ikon 16px, karena ini satu-satunya
+                    keadaan di app yang solusinya di LUAR dashboard (buka tab
+                    Eldorado, pasang extension). Steker sama colokan yang gak
+                    nyampe langsung bilang "sambungan ke luar", jadi user gak
+                    ngerefresh halaman ini berkali-kali. */}
+                <PlugOut direction={isNoExtension ? "extension" : "remote"} className="-mt-1 -mb-2 hidden h-20 w-20 shrink-0 sm:block" />
+                {isNoExtension ? <PuzzleIcon className="mt-0.5 h-4 w-4 shrink-0 sm:hidden" /> : <AlertTriangleIcon className="mt-0.5 h-4 w-4 shrink-0 sm:hidden" />}
                 <div>
                     <p className="font-semibold">{isNoExtension ? "Extension TraxStore Auto-Sync belum aktif" : "Lu belum login di Eldorado"}</p>
 

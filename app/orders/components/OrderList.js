@@ -2,6 +2,7 @@
 
 import { CalendarIcon, CheckIcon, ChevronsUpDownIcon, CopyIcon, FilterIcon, Gamepad2Icon, Loader2Icon, MessageSquareIcon, RefreshCwIcon, SearchIcon, TimerIcon, UserIcon } from "lucide-react";
 
+import { InboxZero } from "@/components/illustrations/InboxZero";
 import TokenStatusNotice from "@/components/molecules/TokenStatusNotice";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -21,7 +22,7 @@ export default function OrderList({ activeOrderList, activeOrderId, setActiveOrd
                 <div className="relative z-10 flex items-center justify-between">
                     <div className="flex flex-col gap-0.5">
                         <h1 className="text-glow-primary text-2xl font-bold tracking-widest uppercase">Order Masuk</h1>
-                        {/* <p className="text-[10px] font-medium tracking-wide text-muted-foreground">Semua order Eldorado, kekelola dari sini</p> */}
+                        <p className="text-muted-foreground text-[10px] font-medium tracking-wide">Semua order Eldorado, kekelola dari sini</p>
                     </div>
                     <Button size="icon" variant="ghost" className="text-muted-foreground hover:text-foreground h-8 w-8" onClick={() => fetchOrders("", false)} disabled={isLoadingOrders} title="Muat ulang order">
                         <RefreshCwIcon className={`h-4 w-4 ${isLoadingOrders ? "text-primary animate-spin" : ""}`} />
@@ -117,7 +118,14 @@ export default function OrderList({ activeOrderList, activeOrderId, setActiveOrd
                         <p className="mt-2 text-xs opacity-70">Coba muat ulang sebentar lagi</p>
                     </div>
                 ) : activeOrderList.length === 0 ? (
-                    <div className="text-muted-foreground p-4 text-center text-sm">Belum ada order masuk</div>
+                    /* Kolom order kosong itu KABAR BAGUS di sini — gak ada yang
+                       nunggu digarap. Sama kayak notifikasi: bingkainya solid dan
+                       warnanya success, bukan abu-abu yang kebaca kayak gagal load. */
+                    <div className="flex flex-col items-center gap-1 px-4 py-10 text-center">
+                        <InboxZero className="mb-1 h-24 w-24" />
+                        <p className="text-foreground text-sm font-semibold">Bersih, gak ada order nunggu</p>
+                        <p className="text-muted-foreground text-xs">Order baru masuk ke sini otomatis.</p>
+                    </div>
                 ) : (
                     activeOrderList.map((order) => {
                         const chatPreview = order.talkJsConversationId ? chatPreviews[order.talkJsConversationId] : null;

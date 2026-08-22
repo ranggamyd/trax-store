@@ -6,6 +6,8 @@ import { AccountsToolbar } from "@/app/accounts/components/AccountsToolbar";
 import { getAccountById, getAccounts } from "@/app/accounts/queries";
 import { StatusBadge } from "@/components/atoms/StatusBadge";
 import { CopyButton } from "@/components/CopyButton";
+import { EmptyRadar } from "@/components/illustrations/EmptyRadar";
+import { FirstDrop } from "@/components/illustrations/FirstDrop";
 import { ClickableTableRow } from "@/components/molecules/ClickableTableRow";
 import { PageHeader } from "@/components/molecules/PageHeader";
 import { Pagination } from "@/components/molecules/Pagination";
@@ -61,9 +63,13 @@ export default async function AccountsPage({ searchParams }) {
                 </div>
             )}
 
+            {/* Radar cuma buat hasil PENCARIAN kosong — dia bilang "gue udah nyari".
+                Tabel yang belum ada isinya dari awal dapet FirstDrop: slot yang
+                nunggu diisi, bukan radar yang gagal nemu. */}
             <DataTable
                 columns={COLUMNS}
                 data={accounts}
+                emptyIllustration={isSearching ? <EmptyRadar className="mb-2 h-32 w-32 opacity-90" /> : <FirstDrop className="mb-2 h-32 w-32 opacity-90" />}
                 emptyTitle={isSearching ? `Gak ada yang cocok sama "${query}"` : "Stok akun masih kosong"}
                 emptyHint={isSearching ? "Coba kata kunci yang lebih pendek, atau cek ejaan username-nya." : 'Klik "Tambah akun" di kanan atas buat masukin username Roblox pertama.'}
                 footer={<Pagination page={page} pageCount={pageCount} total={total} pageSize={pageSize} />}

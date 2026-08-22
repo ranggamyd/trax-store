@@ -9,6 +9,8 @@ import { ItemRowActions } from "@/app/accounts/[id]/components/ItemRowActions";
 import { getAccountDetail } from "@/app/accounts/[id]/queries";
 import { StatusBadge } from "@/components/atoms/StatusBadge";
 import { CopyButton } from "@/components/CopyButton";
+import { BrokenLink } from "@/components/illustrations/BrokenLink";
+import { EmptyRadar } from "@/components/illustrations/EmptyRadar";
 import { ClickableTableRow } from "@/components/molecules/ClickableTableRow";
 import { PrivateServerLinkCell } from "@/components/molecules/PrivateServerLinkCell";
 import { DataTable } from "@/components/organisms/DataTable";
@@ -113,6 +115,7 @@ export default async function AccountDetailPage({ params, searchParams }) {
                 <DataTable
                     columns={GAME_COLUMNS}
                     data={games}
+                    emptyIllustration={search ? <EmptyRadar className="mb-2 h-32 w-32 opacity-90" /> : <BrokenLink className="mb-2 h-32 w-32 opacity-90" />}
                     emptyTitle={search ? `Gak ada game yang cocok sama "${search}"` : "Akun ini belum ditautin ke game mana pun"}
                     emptyHint={search ? "Coba kata kunci yang lebih pendek." : 'Klik "Tautin game" buat nyambungin akun ini ke game.'}
                     renderRow={(row) => (
@@ -137,6 +140,7 @@ export default async function AccountDetailPage({ params, searchParams }) {
                 <DataTable
                     columns={ITEM_COLUMNS}
                     data={items}
+                    emptyIllustration={search ? <EmptyRadar className="mb-2 h-32 w-32 opacity-90" /> : <BrokenLink className="mb-2 h-32 w-32 opacity-90" />}
                     emptyTitle={search ? `Gak ada item yang cocok sama "${search}"` : "Akun ini belum punya item kecatat"}
                     emptyHint={search ? "Coba cari pakai potongan namanya." : 'Klik "Tautin item" buat nandain item yang ada di akun ini.'}
                     renderRow={(row) => (

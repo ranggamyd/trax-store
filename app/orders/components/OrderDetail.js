@@ -4,6 +4,7 @@ import { Chatbox, Session } from "@talkjs/react";
 import { CalendarIcon, CheckCircleIcon, CheckIcon, CopyIcon, Gamepad2Icon, InfoIcon, Loader2Icon, PencilIcon, SearchIcon, SendIcon, SparklesIcon, TimerIcon, UserIcon, XCircleIcon } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
+import { PickOne } from "@/components/illustrations/PickOne";
 import { ComboboxSelect } from "@/components/molecules/ComboboxSelect";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
@@ -268,7 +269,14 @@ export default function OrderDetail({ activeOrderId, activeOrderDetails, activeO
     if (!activeOrderDetails) {
         return (
             <div className="border-border bg-surface-2/40 flex h-full flex-1 flex-col overflow-hidden rounded-2xl border backdrop-blur-sm">
-                <div className="text-muted-foreground flex flex-1 items-center justify-center">Pilih pesanan di sebelah kiri buat lihat detail super komplit.</div>
+                {/* Panel ini makan separuh layar. Dulu isinya satu baris teks
+                    abu-abu di tengah — buat bidang segede ini, itu kebaca kayak
+                    render yang gagal, bukan kayak instruksi. */}
+                <div className="flex flex-1 flex-col items-center justify-center gap-1 p-6 text-center">
+                    <PickOne className="mb-1 h-32 w-32" />
+                    <p className="text-foreground text-base font-semibold">Belum ada order kepilih</p>
+                    <p className="text-muted-foreground max-w-xs text-sm">Klik salah satu order di kiri buat lihat detail, akun, dan chat buyer-nya.</p>
+                </div>
             </div>
         );
     }

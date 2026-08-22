@@ -5,6 +5,7 @@ import { TemplateEditDialog } from "@/app/templates/components/TemplateEditDialo
 import { TemplatesToolbar } from "@/app/templates/components/TemplatesToolbar";
 import { getTemplateById, getTemplatesPageData } from "@/app/templates/queries";
 import { EmptyRadar } from "@/components/illustrations/EmptyRadar";
+import { FirstDrop } from "@/components/illustrations/FirstDrop";
 import { PageHeader } from "@/components/molecules/PageHeader";
 import { PageContainer } from "@/components/templates/PageContainer";
 
@@ -38,7 +39,7 @@ export default async function TemplatesPage({ searchParams }) {
 
             {templates.length === 0 ? (
                 <div className="glass-subtle flex flex-col items-center justify-center rounded-2xl px-6 py-16 text-center">
-                    <EmptyRadar className="mb-2 h-32 w-32 opacity-90" />
+                    {isSearching ? <EmptyRadar className="mb-2 h-32 w-32 opacity-90" /> : <FirstDrop className="mb-2 h-32 w-32 opacity-90" />}
                     <p className="text-foreground text-base font-semibold">{isSearching ? `Gak ada template yang cocok sama "${query}"` : "Belum ada template"}</p>
                     <p className="text-muted-foreground mt-1 max-w-sm text-sm">{isSearching ? "Coba kata kunci lain, atau cari dari isi pesannya." : 'Klik "Template baru" buat bikin balesan pertama — nanti bisa dikirim sekali klik dari halaman order.'}</p>
                 </div>

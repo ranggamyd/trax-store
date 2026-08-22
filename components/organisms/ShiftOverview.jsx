@@ -1,6 +1,7 @@
 import { Clock, Timer } from "lucide-react";
 import Link from "next/link";
 
+import { Standby } from "@/components/illustrations/Standby";
 import { LiveDuration } from "@/components/organisms/shift/LiveDuration";
 import { ShiftActions } from "@/components/organisms/shift/ShiftActions";
 import { formatDuration, getInitials } from "@/lib/utils";
@@ -69,12 +70,13 @@ export function ShiftOverview({ activeShift, currentAdminId, showHistoryLink = t
                     </div>
                 ) : (
                     <div className="border-border bg-surface-1/40 flex flex-col items-center gap-4 rounded-xl border border-dashed p-8 text-center">
-                        <div className="bg-surface-3/50 ring-border flex h-16 w-16 items-center justify-center rounded-full ring-1">
-                            <Clock className="text-muted-foreground/70 h-8 w-8" />
-                        </div>
+                        {/* Ikon Clock dulu di sini, dan itu ngomongin WAKTU —
+                            padahal yang kosong ORANGNYA. Standby gambarnya slot
+                            avatar yang bolong, jadi langsung ke intinya. */}
+                        <Standby className="-mb-1 h-28 w-28" />
                         <div>
                             <p className="text-foreground text-base font-semibold">Belum ada yang jaga</p>
-                            <p className="text-muted-foreground mt-1 text-sm">Ambil shift biar order yang masuk ada yang pegang.</p>
+                            <p className="text-muted-foreground mt-1 max-w-xs text-sm">Order dan chat yang masuk sekarang gak ada yang pegang. Ambil shift biar gak numpuk.</p>
                         </div>
                         <ShiftActions activeShift={null} currentAdminId={currentAdminId} />
                     </div>

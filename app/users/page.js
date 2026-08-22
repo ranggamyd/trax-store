@@ -5,6 +5,8 @@ import { UserRowActions } from "@/app/users/components/UserRowActions";
 import { UsersToolbar } from "@/app/users/components/UsersToolbar";
 import { getAdminById, listAdmins } from "@/app/users/queries";
 import { StatusBadge } from "@/components/atoms/StatusBadge";
+import { EmptyRadar } from "@/components/illustrations/EmptyRadar";
+import { FirstDrop } from "@/components/illustrations/FirstDrop";
 import { ClickableTableRow } from "@/components/molecules/ClickableTableRow";
 import { PageHeader } from "@/components/molecules/PageHeader";
 import { Pagination } from "@/components/molecules/Pagination";
@@ -47,6 +49,7 @@ export default async function UsersPage({ searchParams }) {
             <DataTable
                 columns={COLUMNS}
                 data={users}
+                emptyIllustration={isSearching ? <EmptyRadar className="mb-2 h-32 w-32 opacity-90" /> : <FirstDrop className="mb-2 h-32 w-32 opacity-90" />}
                 emptyTitle={isSearching ? `Gak ada admin yang cocok sama "${query}"` : "Belum ada admin lain"}
                 emptyHint={isSearching ? "Coba cari pakai username atau email-nya langsung." : 'Klik "Tambah admin" buat ngasih akses ke anggota tim.'}
                 footer={<Pagination page={page} pageCount={pageCount} total={total} pageSize={pageSize} />}

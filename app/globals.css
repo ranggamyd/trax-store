@@ -404,3 +404,76 @@
         transform: translate(-50%, -40%) scale(1);
     }
 }
+
+/* ============================================================================
+   ANIMASI ILUSTRASI
+   Semuanya opacity/transform kecuali dash-march (stroke-dashoffset) — dan itu
+   cuma dipakai di satu garis pendek, jadi area repaint-nya sekecil ikon.
+
+   Gerakannya SENGAJA pelan dan tipis. Ilustrasi ini nongolnya di empty state
+   dan error state — layar yang user liat pas ada yang gak jalan. Animasi kenceng
+   di situ kerasa kayak sistemnya sibuk, padahal justru sebaliknya.
+
+   Yang diem total (InboxZero, SessionExpired) diem karena metaforanya BERES:
+   gerakan malah ngebantah pesannya.
+   ========================================================================== */
+
+/* Ngambang pelan — dipakai slot kosong di FirstDrop */
+@keyframes float-soft {
+    0%,
+    100% {
+        transform: translateY(0);
+    }
+    50% {
+        transform: translateY(-5px);
+    }
+}
+
+/* Garis putus-putus yang jalan — kesan "nyoba nyambung tapi belum ketemu" */
+@keyframes dash-march {
+    to {
+        stroke-dashoffset: -24;
+    }
+}
+
+/* Napas — nyala redup bergantian, buat elemen yang statusnya "nunggu" */
+@keyframes breathe {
+    0%,
+    100% {
+        opacity: 0.35;
+    }
+    50% {
+        opacity: 0.9;
+    }
+}
+
+/* Dorongan kecil ke kanan — panah penunjuk di PickOne */
+@keyframes nudge-x {
+    0%,
+    100% {
+        transform: translateX(0);
+    }
+    50% {
+        transform: translateX(4px);
+    }
+}
+
+/* Percikan yang kedip gak beraturan — celah kontak di PlugOut */
+@keyframes spark-flicker {
+    0%,
+    100% {
+        opacity: 0.9;
+    }
+    18% {
+        opacity: 0.2;
+    }
+    34% {
+        opacity: 1;
+    }
+    52% {
+        opacity: 0.35;
+    }
+    71% {
+        opacity: 0.85;
+    }
+}

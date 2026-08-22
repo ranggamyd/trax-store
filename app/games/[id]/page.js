@@ -9,6 +9,9 @@ import { ItemRowActions } from "@/app/games/[id]/components/ItemRowActions";
 import { getGameDetail } from "@/app/games/[id]/queries";
 import { StatusBadge } from "@/components/atoms/StatusBadge";
 import { CopyButton } from "@/components/CopyButton";
+import { BrokenLink } from "@/components/illustrations/BrokenLink";
+import { EmptyRadar } from "@/components/illustrations/EmptyRadar";
+import { FirstDrop } from "@/components/illustrations/FirstDrop";
 import { ClickableTableRow } from "@/components/molecules/ClickableTableRow";
 import { PrivateServerLinkCell } from "@/components/molecules/PrivateServerLinkCell";
 import { DataTable } from "@/components/organisms/DataTable";
@@ -114,6 +117,7 @@ export default async function GameDetailPage({ params, searchParams }) {
                 <DataTable
                     columns={ACCOUNT_COLUMNS}
                     data={accounts}
+                    emptyIllustration={search ? <EmptyRadar className="mb-2 h-32 w-32 opacity-90" /> : <BrokenLink className="mb-2 h-32 w-32 opacity-90" />}
                     emptyTitle={search ? `Gak ada akun yang cocok sama "${search}"` : "Belum ada akun yang ketaut ke game ini"}
                     emptyHint={search ? "Coba cari pakai potongan username-nya." : 'Klik "Tautin akun" buat nyambungin akun ke game ini.'}
                     renderRow={(row) => (
@@ -139,6 +143,7 @@ export default async function GameDetailPage({ params, searchParams }) {
                 <DataTable
                     columns={ITEM_COLUMNS}
                     data={filteredItems}
+                    emptyIllustration={search ? <EmptyRadar className="mb-2 h-32 w-32 opacity-90" /> : <FirstDrop className="mb-2 h-32 w-32 opacity-90" />}
                     emptyTitle={search ? `Gak ada item yang cocok sama "${search}"` : "Game ini belum punya item"}
                     emptyHint={search ? "Coba kata kunci yang lebih pendek." : 'Klik "Item baru" buat nyatet item yang bisa dijual dari game ini.'}
                     renderRow={(row) => (

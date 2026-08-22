@@ -1,12 +1,13 @@
 "use client";
 
-import { BellIcon, CheckCircle2Icon, Loader2Icon, RefreshCwIcon } from "lucide-react";
+import { CheckCircle2Icon, Loader2Icon, RefreshCwIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 
 import { getEldoradoNotifications, markAllNotificationsAsRead, markNotificationAsRead } from "@/app/actions";
 import { NotificationItem } from "@/app/notifications/components/NotificationItem";
+import { InboxZero } from "@/components/illustrations/InboxZero";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -149,12 +150,14 @@ export function NotificationsPanel() {
                         </div>
                     ))
                 ) : notifications.length === 0 ? (
-                    <div className="border-border/60 bg-surface-2/20 flex flex-col items-center justify-center rounded-2xl border border-dashed py-16 text-center">
-                        <div className="bg-surface-2 mb-4 rounded-full p-4">
-                            <BellIcon className="text-muted-foreground/70 h-10 w-10" />
-                        </div>
-                        <p className="text-foreground text-base font-semibold">Sepi, aman.</p>
-                        <p className="text-muted-foreground mt-1 text-sm">Order dan pesan baru bakal nongol di sini duluan.</p>
+                    /* Ini satu-satunya empty state di app yang KABAR BAGUS —
+                       semuanya udah kebaca. Garis putus-putus + ikon abu-abu bikin
+                       dia kebaca kayak kekurangan, padahal justru sebaliknya. Jadi
+                       bingkainya solid dan gambarnya pakai warna success. */
+                    <div className="border-success/15 bg-success/[0.03] flex flex-col items-center justify-center rounded-2xl border py-16 text-center">
+                        <InboxZero className="mb-2 h-32 w-32" />
+                        <p className="text-foreground text-base font-semibold">Semuanya udah kebaca</p>
+                        <p className="text-muted-foreground mt-1 max-w-sm text-sm">Gak ada yang nunggu ditindak. Order dan pesan baru bakal nongol di sini duluan.</p>
                     </div>
                 ) : (
                     notifications.map((notif) => <NotificationItem key={notif.notification?.id} notif={notif} onOpen={openNotification} onMarkRead={markOneRead} />)

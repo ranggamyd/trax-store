@@ -4,6 +4,7 @@ import { House, RotateCcw } from "lucide-react";
 import Link from "next/link";
 import { useEffect } from "react";
 
+import { SessionExpired } from "@/components/illustrations/SessionExpired";
 import { SignalLost } from "@/components/illustrations/SignalLost";
 import { StatusScreen } from "@/components/templates/StatusScreen";
 import { Button } from "@/components/ui/button";
@@ -33,7 +34,10 @@ export default function GlobalErrorBoundary({ error, reset }) {
 
     return (
         <StatusScreen
-            illustration={<SignalLost className="h-40 w-40" />}
+            // Dua sebab yang beda dapet gambar yang beda. Dulu dua-duanya
+            // SignalLost, dan itu bikin user ngeklik "coba lagi" berkali-kali
+            // buat sesi abis — masalah yang mustahil beres dengan cara itu.
+            illustration={isAuthError ? <SessionExpired className="h-40 w-40" /> : <SignalLost className="h-40 w-40" />}
             code={isAuthError ? "Sesi berakhir" : "Ada yang ngadat"}
             title={isAuthError ? "Sesi lu udah abis" : "Koneksinya kepotong di tengah jalan"}
             hint={isAuthError ? "Login sekali lagi dan lu bakal balik ke halaman ini." : "Biasanya ini cuma request yang gagal sekali. Klik coba lagi — sembilan dari sepuluh kasus langsung pulih."}

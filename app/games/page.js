@@ -3,6 +3,8 @@ import Link from "next/link";
 
 import { GameLinkDialog } from "@/app/games/components/GameLinkDialog";
 import { getGamesPageData } from "@/app/games/queries";
+import { EmptyRadar } from "@/components/illustrations/EmptyRadar";
+import { PlugOut } from "@/components/illustrations/PlugOut";
 import { PageHeader } from "@/components/molecules/PageHeader";
 import { UrlSearchBar } from "@/components/molecules/UrlSearchBar";
 import { PageContainer } from "@/components/templates/PageContainer";
@@ -37,7 +39,11 @@ export default async function GamesPage({ searchParams }) {
 
             {games.length === 0 ? (
                 <div className="border-border bg-surface-2/30 flex flex-col items-center justify-center rounded-2xl border border-dashed px-6 py-16 text-center">
-                    <Gamepad2 className="text-muted-foreground/70 mb-4 h-12 w-12" />
+                    {/* Halaman ini datanya dateng dari Eldorado, bukan dari DB kita.
+                        Jadi "kosong" di sini hampir selalu berarti sync-nya kepotong —
+                        dan itu PlugOut, bukan slot kosong yang nunggu diisi. Ikon
+                        Gamepad2 dulu netral banget: user gak dikasih tau harus ngapain. */}
+                    {isSearching ? <EmptyRadar className="mb-2 h-32 w-32 opacity-90" /> : <PlugOut direction="remote" className="mb-2 h-32 w-32 opacity-90" />}
                     <p className="text-foreground text-base font-semibold">{isSearching ? `Gak ada game yang cocok sama "${query}"` : "Library Eldorado belum kebaca"}</p>
                     <p className="text-muted-foreground mt-1 max-w-sm text-sm">{isSearching ? "Coba potong kata kuncinya — nama game di Eldorado sering beda dari nama populernya." : "Pastiin extension sync-nya aktif dan lu masih login di eldorado.gg."}</p>
                 </div>

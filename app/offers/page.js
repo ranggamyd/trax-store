@@ -5,6 +5,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 
 import { bulkDeleteEldoradoOffers, bulkPauseEldoradoOffers, deleteEldoradoOffer, getEldoradoOffers, pauseEldoradoOffer, resumeEldoradoOffer, updateEldoradoOfferDetails, updateEldoradoOfferPrice } from "@/app/actions";
+import { PickOne } from "@/components/illustrations/PickOne";
 import TokenStatusNotice from "@/components/molecules/TokenStatusNotice";
 import { PageContainer } from "@/components/templates/PageContainer";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
@@ -803,9 +804,10 @@ export default function OffersPage() {
             {/* ===== RIGHT PANEL — Detail ===== */}
             <div className="border-border bg-surface-2/40 flex h-full flex-1 flex-col overflow-hidden rounded-2xl border backdrop-blur-sm">
                 {!activeOffer ? (
-                    <div className="text-muted-foreground flex flex-1 flex-col items-center justify-center gap-3">
-                        <InfoIcon className="text-muted-foreground/60 h-8 w-8" />
-                        <p className="text-sm">Pilih offer di kiri buat lihat detailnya</p>
+                    <div className="flex flex-1 flex-col items-center justify-center gap-1 p-6 text-center">
+                        <PickOne className="mb-1 h-32 w-32" />
+                        <p className="text-foreground text-base font-semibold">Belum ada offer kepilih</p>
+                        <p className="text-muted-foreground max-w-xs text-sm">Klik salah satu offer di kiri buat lihat harga, stok, dan riwayat penjualannya.</p>
                     </div>
                 ) : (
                     <div className="relative flex h-full flex-1 flex-col">
