@@ -5,9 +5,9 @@ import { DataTable } from "@/components/organisms/DataTable";
 import { ShiftHistoryFilters } from "@/components/organisms/shift/ShiftHistoryFilters";
 import { TableCell, TableRow } from "@/components/ui/table";
 import { formatDurationText, getInitials } from "@/lib/utils";
-import { formatWibDate, formatWibTime } from "@/lib/wib";
+import { formatWibDate, formatWibTime, formatWibWeekday } from "@/lib/wib";
 
-const COLUMNS = [{ label: "Admin" }, { label: "Tanggal" }, { label: "Mulai" }, { label: "Selesai" }, { label: "Durasi", className: "text-right" }];
+const COLUMNS = [{ label: "Admin" }, { label: "Hari & tanggal" }, { label: "Mulai" }, { label: "Selesai" }, { label: "Durasi", className: "text-right" }];
 
 /**
  * Riwayat shift. SERVER COMPONENT.
@@ -59,7 +59,14 @@ export function ShiftHistoryTable({ shifts, total, page, pageCount, pageSize, ad
                                 <span className="text-foreground">{shift.username}</span>
                             </div>
                         </TableCell>
-                        <TableCell className="text-muted-foreground text-sm">{formatWibDate(shift.started_at)}</TableCell>
+                        {/* Nama hari jadi baris utama, tanggalnya di bawah.
+                            Rotasi jaga di sini jalan per hari (Sabtu–Jumat), jadi
+                            "Sabtu" itu yang dicari mata pas nyusurin kolom ini —
+                            tanggalnya cuma buat mastiin minggu keberapa. */}
+                        <TableCell className="text-sm whitespace-nowrap">
+                            <span className="text-foreground font-medium">{formatWibWeekday(shift.started_at)}</span>
+                            <span className="text-muted-foreground block text-xs">{formatWibDate(shift.started_at)}</span>
+                        </TableCell>
                         <TableCell className="text-foreground/85 font-mono text-sm">{formatWibTime(shift.started_at)}</TableCell>
                         <TableCell className="text-foreground/85 font-mono text-sm">{formatWibTime(shift.ended_at)}</TableCell>
                         <TableCell className="text-right">
