@@ -20,10 +20,25 @@ export async function POST(request) {
             return NextResponse.json({ success: false, error: "UNAUTHORIZED" }, { status: 401 });
         }
 
-        // Lapis kedua anti-CSRF: cuma layani request yang keliatan same-origin.
-        // Form lintas-site gak bisa nyetel Origin, jadi ini nyaring drive-by POST.
-        const origin = request.headers.get("origin");
-        if (origin && origin !== request.nextUrl.origin) {
+        // Lapis kedua anti-CSRF: cuma layani request yang beneran same-origin.
+        //
+        // Versi sebelumnya nulis `if (origin && origin !== ...)` — dan `&&` itu
+        // lubangnya: request TANPA header Origin lolos begitu aja. Sekarang
+        // Origin WAJIB ada dan wajib cocok.
+        //
+        // Ini aman buat pemanggil aslinya: hooks/useTokenRecovery.js nembak
+        // lewat fetch() POST same-origin, dan browser SELALU ngirim Origin di
+        // request POST. Yang gak ngirim Origin cuma curl dan sejenisnya —
+        // dan itu justru yang mau ditolak.
+        if (request.headers.get("origin") !== request.nextUrl.origin) {
+            return NextResponse.json({ success: false, error: "FORBIDDEN_ORIGIN" }, { status: 403 });
+        }
+
+        // Sinyal ketiga kalau browsernya ngirim: Fetch Metadata. Gak semua
+        // browser ngirim, jadi cuma ditolak kalau ADA dan isinya bukan
+        // same-origin — bukan ditolak karena absen.
+        const fetchSite = request.headers.get("sec-fetch-site");
+        if (fetchSite && fetchSite !== "same-origin") {
             return NextResponse.json({ success: false, error: "FORBIDDEN_ORIGIN" }, { status: 403 });
         }
 

@@ -5,6 +5,7 @@ import { useTransition } from "react";
 import { toast } from "sonner";
 
 import { endShift, startShift, takeoverShift } from "@/app/actions/shifts";
+import { HoverBorderGradient } from "@/components/aceternity/HoverBorderGradient";
 import { ConfirmDialog } from "@/components/molecules/ConfirmDialog";
 import { Button } from "@/components/ui/button";
 
@@ -35,12 +36,19 @@ export function ShiftActions({ activeShift, currentAdminId }) {
     };
 
     // Belum ada yang jaga -> tombol ambil shift.
+    //
+    // Ini SATU-SATUNYA tempat di seluruh app yang pakai HoverBorderGradient
+    // (Aceternity). Dipilih sengaja: ini aksi paling penting di dashboard, dan
+    // kalau border gradient dipasang di banyak tombol, dia berhenti nandain
+    // "yang ini" dan cuma jadi ramai.
     if (!activeShift) {
         return (
-            <Button size="lg" className="bg-success text-success-foreground hover:bg-success/90 mt-2 gap-2 font-semibold" style={{ boxShadow: "0 0 24px rgb(52 211 153 / 0.3)" }} onClick={() => run(() => startShift(), "Shift dimulai. Selamat jaga.")} disabled={isPending}>
-                {isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Play className="h-4 w-4" />}
-                Ambil shift
-            </Button>
+            <HoverBorderGradient containerClassName="mt-2 group" onClick={() => run(() => startShift(), "Shift dimulai. Selamat jaga.")} disabled={isPending}>
+                <span className="flex items-center gap-2">
+                    {isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Play className="h-4 w-4" />}
+                    Ambil shift
+                </span>
+            </HoverBorderGradient>
         );
     }
 

@@ -19,8 +19,8 @@ import { cn } from "@/lib/utils";
 // === Constants ===
 const DELIVERY_TIME_OPTIONS = [
     { value: "", label: "Semua" },
-    { value: "Instant", label: "Instant" },
-    { value: "Automated", label: "Automated" },
+    { value: "Instant", label: "Instan" },
+    { value: "Automated", label: "Otomatis" },
     { value: "Minute5", label: "5 Menit" },
     { value: "Minute20", label: "20 Menit" },
     { value: "Hour1", label: "1 Jam" },
@@ -37,34 +37,34 @@ const DELIVERY_TIME_OPTIONS = [
     { value: "Day28", label: "28 Hari" },
     { value: "Day45", label: "45 Hari" },
     { value: "Day60", label: "60 Hari" },
-    { value: "NotApplicable", label: "N/A" },
+    { value: "NotApplicable", label: "—" },
 ];
 
 const CATEGORY_OPTIONS = [
     { value: "", label: "Semua" },
-    { value: "Account", label: "Account" },
-    { value: "Currency", label: "Currency" },
-    { value: "CustomItem", label: "Custom Item" },
+    { value: "Account", label: "Akun" },
+    { value: "Currency", label: "Mata uang" },
+    { value: "CustomItem", label: "Item kustom" },
     { value: "Boosting", label: "Boosting" },
-    { value: "RequestedBoosting", label: "Requested Boosting" },
-    { value: "ManagedBoosting", label: "Managed Boosting" },
-    { value: "TopUp", label: "Top Up" },
-    { value: "GiftCard", label: "Gift Card" },
+    { value: "RequestedBoosting", label: "Boosting by request" },
+    { value: "ManagedBoosting", label: "Boosting dikelola" },
+    { value: "TopUp", label: "Top up" },
+    { value: "GiftCard", label: "Gift card" },
 ];
 
 const STATE_OPTIONS = [
     { value: "", label: "Semua" },
-    { value: "Active", label: "Active" },
-    { value: "Paused", label: "Paused" },
-    { value: "Closed", label: "Closed" },
+    { value: "Active", label: "Aktif" },
+    { value: "Paused", label: "Dijeda" },
+    { value: "Closed", label: "Ditutup" },
     { value: "Offline", label: "Offline" },
 ];
 
 const SORT_OPTIONS = [
-    { value: "", label: "Default" },
+    { value: "", label: "Bawaan" },
     { value: "Price", label: "Harga" },
     { value: "Date", label: "Tanggal" },
-    { value: "DeliveryTime", label: "Delivery Time" },
+    { value: "DeliveryTime", label: "Waktu kirim" },
 ];
 
 const formatDeliveryTime = (dt) => {
@@ -213,7 +213,7 @@ const SelectFilter = ({ value, onChange, options, icon, className = "" }) => {
                 </div>
                 <div className="custom-scrollbar flex max-h-48 flex-col gap-0.5 overflow-y-auto">
                     {filteredOptions.length === 0 ? (
-                        <div className="text-muted-foreground py-3 text-center text-[11px]">Tidak ditemukan</div>
+                        <div className="text-muted-foreground py-3 text-center text-[11px]">Gak ketemu</div>
                     ) : (
                         filteredOptions.map((o) => {
                             const isChecked = o.value === value;
@@ -513,17 +513,17 @@ export default function OffersPage() {
                     <div className="from-primary/10 absolute inset-0 z-0 bg-gradient-to-br to-transparent"></div>
                     <div className="relative z-10 flex items-center justify-between">
                         <div>
-                            <h1 className="text-glow-primary text-lg font-bold tracking-widest uppercase">Listingan Offers</h1>
+                            <h1 className="text-glow-primary text-lg font-bold tracking-widest uppercase">Offer Aktif</h1>
                             {!isLoading && <p className="text-muted-foreground mt-0.5 text-[10px]">{recordCount} total offers</p>}
                         </div>
                         <div className="flex items-center gap-1.5">
                             <Button size="icon" variant="ghost" className="text-muted-foreground hover:text-foreground h-7 w-7" onClick={() => setSelectMode(!selectMode)} title={selectMode ? "Exit Select" : "Select Mode"}>
                                 {selectMode ? <MinusSquareIcon className="text-primary h-3.5 w-3.5" /> : <CheckSquareIcon className="h-3.5 w-3.5" />}
                             </Button>
-                            <Button size="icon" variant="ghost" className="text-muted-foreground hover:text-foreground h-7 w-7" onClick={() => setShowAdvancedFilters(!showAdvancedFilters)} title="Advanced Filters">
+                            <Button size="icon" variant="ghost" className="text-muted-foreground hover:text-foreground h-7 w-7" onClick={() => setShowAdvancedFilters(!showAdvancedFilters)} title="Filter lanjutan">
                                 <SlidersHorizontalIcon className="h-3.5 w-3.5" />
                             </Button>
-                            <Button size="icon" variant="ghost" className="text-muted-foreground hover:text-foreground h-7 w-7" onClick={fetchOffers} title="Refresh">
+                            <Button size="icon" variant="ghost" className="text-muted-foreground hover:text-foreground h-7 w-7" onClick={fetchOffers} title="Muat ulang">
                                 <RefreshCwIcon className="h-3.5 w-3.5" />
                             </Button>
                         </div>
@@ -533,7 +533,7 @@ export default function OffersPage() {
                     <div className="relative z-10 flex gap-2">
                         <form onSubmit={handleSearchSubmit} className="relative flex-1">
                             <SearchIcon className="text-muted-foreground absolute top-2 left-2.5 h-4 w-4" />
-                            <input type="text" placeholder="Cari offer..." value={searchInput} onChange={(e) => setSearchInput(e.target.value)} className="focus:border-primary/50 border-border bg-surface-1/80 text-foreground placeholder:text-muted-foreground/70 h-8 w-full rounded-lg border pr-3 pl-8 text-xs transition-colors focus:outline-none" />
+                            <input type="text" placeholder="Cari judul offer..." value={searchInput} onChange={(e) => setSearchInput(e.target.value)} className="focus:border-primary/50 border-border bg-surface-1/80 text-foreground placeholder:text-muted-foreground/70 h-8 w-full rounded-lg border pr-3 pl-8 text-xs transition-colors focus:outline-none" />
                         </form>
                         <SelectFilter
                             value={offerStateFilter}
@@ -591,8 +591,8 @@ export default function OffersPage() {
                                     }}
                                     options={[
                                         { value: "", label: "Order" },
-                                        { value: "true", label: "Ascending" },
-                                        { value: "false", label: "Descending" },
+                                        { value: "true", label: "Kecil ke besar" },
+                                        { value: "false", label: "Besar ke kecil" },
                                     ]}
                                     className="w-[100px]"
                                 />
@@ -701,12 +701,12 @@ export default function OffersPage() {
                     ) : apiError ? (
                         <div className="border-danger/50 bg-danger-muted/30 text-danger rounded-xl border p-4 text-sm">
                             {apiError}
-                            <p className="mt-2 text-xs opacity-70">Coba refresh bentar lagi ya bro.</p>
+                            <p className="mt-2 text-xs opacity-70">Coba muat ulang sebentar lagi</p>
                         </div>
                     ) : offerList.length === 0 ? (
                         <div className="flex flex-col items-center gap-3 py-12 text-center">
                             <PackageIcon className="text-muted-foreground/60 h-10 w-10" />
-                            <p className="text-muted-foreground text-sm">Gak ada offer yang ketemu.</p>
+                            <p className="text-muted-foreground text-sm">Gak ada offer yang cocok</p>
                             {hasActiveFilters && (
                                 <button onClick={resetFilters} className="text-primary text-xs hover:underline">
                                     Reset filters
@@ -805,7 +805,7 @@ export default function OffersPage() {
                 {!activeOffer ? (
                     <div className="text-muted-foreground flex flex-1 flex-col items-center justify-center gap-3">
                         <InfoIcon className="text-muted-foreground/60 h-8 w-8" />
-                        <p className="text-sm">Pilih offer di sebelah kiri buat lihat detail.</p>
+                        <p className="text-sm">Pilih offer di kiri buat lihat detailnya</p>
                     </div>
                 ) : (
                     <div className="relative flex h-full flex-1 flex-col">
@@ -845,7 +845,7 @@ export default function OffersPage() {
                                             <AlertDialogHeader>
                                                 <AlertDialogTitle className="text-xl">Yakin hapus offer ini?</AlertDialogTitle>
                                                 <AlertDialogDescription className="text-muted-foreground">
-                                                    Offer <span className="text-foreground font-mono">{activeOffer.id?.substring(0, 8)}...</span> bakal ilang dari Eldorado. <span className="text-danger">Ga bisa di-undo bro.</span>
+                                                    Offer <span className="text-foreground font-mono">{activeOffer.id?.substring(0, 8)}...</span> bakal ilang dari Eldorado. <span className="text-danger">Gak bisa dibatalin.</span>
                                                 </AlertDialogDescription>
                                             </AlertDialogHeader>
                                             <AlertDialogFooter className="mt-4">
@@ -863,27 +863,27 @@ export default function OffersPage() {
                             <div className="custom-scrollbar flex-1 overflow-y-auto p-5">
                                 <div className="mx-auto max-w-4xl space-y-1">
                                     {/* 1. Overview */}
-                                    <DetailSection title="Overview" icon={<InfoIcon className="text-primary h-4 w-4" />}>
-                                        <DetailItem label="Title" value={activeOffer.offerTitle} icon={<PackageIcon className="h-3 w-3" />} colSpan />
-                                        <DetailItem label="Category" value={activeOffer.category} icon={<TagIcon className="h-3 w-3" />} />
+                                    <DetailSection title="Ringkasan" icon={<InfoIcon className="text-primary h-4 w-4" />}>
+                                        <DetailItem label="Judul" value={activeOffer.offerTitle} icon={<PackageIcon className="h-3 w-3" />} colSpan />
+                                        <DetailItem label="Kategori" value={activeOffer.category} icon={<TagIcon className="h-3 w-3" />} />
                                         <DetailItem label="Game" value={activeOffer.gameCategoryTitle} icon={<Gamepad2Icon className="h-3 w-3" />} />
                                         <DetailItem label="Status" value={activeOffer.offerState} valueClass={activeOffer.offerState === "Active" ? "text-success" : activeOffer.offerState === "Paused" ? "text-warning" : "text-muted-foreground"} icon={<PlayCircleIcon className="h-3 w-3" />} />
-                                        <DetailItem label="Game SEO Alias" value={activeOffer.gameSeoAlias} icon={<GlobeIcon className="h-3 w-3" />} />
-                                        <DetailItem label="Description" value={activeOffer.description} icon={<InfoIcon className="h-3 w-3" />} colSpan />
-                                        <DetailItem label="Expire Date" value={formatDate(activeOffer.expireDate)} icon={<CalendarIcon className="h-3 w-3" />} />
-                                        <DetailItem label="Offer Version" value={activeOffer.offerVersion} icon={<HashIcon className="h-3 w-3" />} />
-                                        <DetailItem label="Is Product" value={activeOffer.isProduct ? "Yes" : "No"} icon={<PackageIcon className="h-3 w-3" />} />
-                                        <DetailItem label="Product Key" value={activeOffer.standardizedProductKey} icon={<HashIcon className="h-3 w-3" />} />
+                                        <DetailItem label="Alias SEO game" value={activeOffer.gameSeoAlias} icon={<GlobeIcon className="h-3 w-3" />} />
+                                        <DetailItem label="Deskripsi" value={activeOffer.description} icon={<InfoIcon className="h-3 w-3" />} colSpan />
+                                        <DetailItem label="Kadaluarsa" value={formatDate(activeOffer.expireDate)} icon={<CalendarIcon className="h-3 w-3" />} />
+                                        <DetailItem label="Versi offer" value={activeOffer.offerVersion} icon={<HashIcon className="h-3 w-3" />} />
+                                        <DetailItem label="Berupa produk" value={activeOffer.isProduct ? "Yes" : "No"} icon={<PackageIcon className="h-3 w-3" />} />
+                                        <DetailItem label="Kunci produk" value={activeOffer.standardizedProductKey} icon={<HashIcon className="h-3 w-3" />} />
                                     </DetailSection>
 
                                     {/* 2. Pricing */}
-                                    <DetailSection title="Pricing" icon={<DollarSign className="text-primary h-4 w-4" />}>
-                                        <EditableField label="Price Per Unit" value={activeOffer.pricePerUnit?.amount} icon={<DollarSign className="h-3 w-3" />} type="number" isLoading={priceLoading} onSave={(v) => handleUpdatePrice(activeOffer.id, v)} />
-                                        <DetailItem label="Price w/ Discount" value={formatCurrency(activeOffer.pricePerUnitWithDiscount?.amount)} icon={<PercentIcon className="h-3 w-3" />} valueClass="text-success" />
-                                        <DetailItem label="Price in USD" value={formatCurrency(activeOffer.pricePerUnitInUSD?.amount)} icon={<DollarSign className="h-3 w-3" />} />
-                                        <DetailItem label="Discount %" value={activeOffer.discountPercentage ? `${activeOffer.discountPercentage}%` : "0%"} icon={<PercentIcon className="h-3 w-3" />} valueClass="text-warning" />
-                                        <DetailItem label="Min Purchase Price" value={formatCurrency(activeOffer.minPurchasePrice?.amount)} icon={<DollarSign className="h-3 w-3" />} />
-                                        <DetailItem label="Exchange Rate" value={activeOffer.exchangeRate ? `${activeOffer.exchangeRate.currency} × ${activeOffer.exchangeRate.exchangeRate}` : "-"} icon={<TrendingUpIcon className="h-3 w-3" />} />
+                                    <DetailSection title="Harga" icon={<DollarSign className="text-primary h-4 w-4" />}>
+                                        <EditableField label="Harga per unit" value={activeOffer.pricePerUnit?.amount} icon={<DollarSign className="h-3 w-3" />} type="number" isLoading={priceLoading} onSave={(v) => handleUpdatePrice(activeOffer.id, v)} />
+                                        <DetailItem label="Harga setelah diskon" value={formatCurrency(activeOffer.pricePerUnitWithDiscount?.amount)} icon={<PercentIcon className="h-3 w-3" />} valueClass="text-success" />
+                                        <DetailItem label="Harga (USD)" value={formatCurrency(activeOffer.pricePerUnitInUSD?.amount)} icon={<DollarSign className="h-3 w-3" />} />
+                                        <DetailItem label="Diskon %" value={activeOffer.discountPercentage ? `${activeOffer.discountPercentage}%` : "0%"} icon={<PercentIcon className="h-3 w-3" />} valueClass="text-warning" />
+                                        <DetailItem label="Harga beli minimum" value={formatCurrency(activeOffer.minPurchasePrice?.amount)} icon={<DollarSign className="h-3 w-3" />} />
+                                        <DetailItem label="Kurs tukar" value={activeOffer.exchangeRate ? `${activeOffer.exchangeRate.currency} × ${activeOffer.exchangeRate.exchangeRate}` : "-"} icon={<TrendingUpIcon className="h-3 w-3" />} />
                                         {activeOffer.volumeDiscounts?.length > 0 && (
                                             <div className="sm:col-span-2">
                                                 <div className="border-border/50 bg-surface-2/40 rounded-lg border p-2.5">
@@ -903,10 +903,10 @@ export default function OffersPage() {
                                     </DetailSection>
 
                                     {/* 3. Inventory & Delivery */}
-                                    <DetailSection title="Inventory & Delivery" icon={<ClockIcon className="text-primary h-4 w-4" />}>
-                                        <DetailItem label="Quantity" value={activeOffer.quantity} icon={<PackageIcon className="h-3 w-3" />} />
-                                        <DetailItem label="Min Quantity" value={activeOffer.minQuantity} icon={<PackageIcon className="h-3 w-3" />} />
-                                        <DetailItem label="Max Purchase Qty" value={activeOffer.maxPurchaseQuantity} icon={<ShoppingCartIcon className="h-3 w-3" />} />
+                                    <DetailSection title="Stok & pengiriman" icon={<ClockIcon className="text-primary h-4 w-4" />}>
+                                        <DetailItem label="Jumlah" value={activeOffer.quantity} icon={<PackageIcon className="h-3 w-3" />} />
+                                        <DetailItem label="Jumlah minimum" value={activeOffer.minQuantity} icon={<PackageIcon className="h-3 w-3" />} />
+                                        <DetailItem label="Maks beli sekali" value={activeOffer.maxPurchaseQuantity} icon={<ShoppingCartIcon className="h-3 w-3" />} />
 
                                         {/* Delivery Time — Editable via select */}
                                         <div className="group/item border-border/50 bg-surface-2/40 hover:border-border/60 hover:bg-surface-3/50 relative flex flex-col gap-1 overflow-hidden rounded-lg border p-2.5 transition-colors">
@@ -952,15 +952,15 @@ export default function OffersPage() {
                                     </DetailSection>
 
                                     {/* 4. Order Stats */}
-                                    <DetailSection title="Order Stats" icon={<ShoppingCartIcon className="text-primary h-4 w-4" />}>
-                                        <DetailItem label="Orders (24h)" value={activeOffer.orderCounts?.last24Hours} icon={<HistoryIcon className="h-3 w-3" />} valueClass="text-accent" />
-                                        <DetailItem label="Orders (30d)" value={activeOffer.orderCounts?.last30Days} icon={<HistoryIcon className="h-3 w-3" />} valueClass="text-accent" />
-                                        <DetailItem label="Orders (All Time)" value={activeOffer.orderCounts?.allTime} icon={<HistoryIcon className="h-3 w-3" />} valueClass="text-accent" />
+                                    <DetailSection title="Statistik order" icon={<ShoppingCartIcon className="text-primary h-4 w-4" />}>
+                                        <DetailItem label="Order 24 jam" value={activeOffer.orderCounts?.last24Hours} icon={<HistoryIcon className="h-3 w-3" />} valueClass="text-accent" />
+                                        <DetailItem label="Order 30 hari" value={activeOffer.orderCounts?.last30Days} icon={<HistoryIcon className="h-3 w-3" />} valueClass="text-accent" />
+                                        <DetailItem label="Order sepanjang waktu" value={activeOffer.orderCounts?.allTime} icon={<HistoryIcon className="h-3 w-3" />} valueClass="text-accent" />
                                     </DetailSection>
 
                                     {/* 5. Trade Environment */}
                                     {activeOffer.tradeEnvironmentValues?.length > 0 && (
-                                        <DetailSection title="Trade Environment" icon={<GlobeIcon className="text-primary h-4 w-4" />}>
+                                        <DetailSection title="Lingkungan transaksi" icon={<GlobeIcon className="text-primary h-4 w-4" />}>
                                             {activeOffer.tradeEnvironmentValues.map((tev, i) => (
                                                 <DetailItem key={i} label={tev.name || `Env ${i + 1}`} value={tev.value} icon={<GlobeIcon className="h-3 w-3" />} />
                                             ))}
@@ -969,7 +969,7 @@ export default function OffersPage() {
 
                                     {/* 6. Offer Attributes */}
                                     {activeOffer.offerAttributeIdValues?.length > 0 && (
-                                        <DetailSection title="Offer Attributes" icon={<LayersIcon className="text-primary h-4 w-4" />}>
+                                        <DetailSection title="Atribut offer" icon={<LayersIcon className="text-primary h-4 w-4" />}>
                                             {activeOffer.offerAttributeIdValues.map((attr, i) => (
                                                 <DetailItem key={i} label={attr.name || `Attr ${i + 1}`} value={attr.value} icon={<TagIcon className="h-3 w-3" />} />
                                             ))}
@@ -978,7 +978,7 @@ export default function OffersPage() {
 
                                     {/* 7. Attribute Definitions */}
                                     {activeOffer.attributes?.length > 0 && (
-                                        <DetailSection title="Attribute Definitions" icon={<SlidersHorizontalIcon className="text-primary h-4 w-4" />}>
+                                        <DetailSection title="Definisi atribut" icon={<SlidersHorizontalIcon className="text-primary h-4 w-4" />}>
                                             {activeOffer.attributes.map((attr, i) => (
                                                 <div key={i} className="border-border/50 bg-surface-2/40 flex flex-col gap-1 rounded-lg border p-2.5">
                                                     <span className="text-muted-foreground text-[9px] font-bold tracking-widest uppercase">{attr.name}</span>
@@ -993,7 +993,7 @@ export default function OffersPage() {
 
                                     {/* 8. Images */}
                                     {(activeOffer.mainOfferImage || activeOffer.offerImages?.length > 0) && (
-                                        <DetailSection title="Images" icon={<ImageIcon className="text-primary h-4 w-4" />}>
+                                        <DetailSection title="Gambar" icon={<ImageIcon className="text-primary h-4 w-4" />}>
                                             {activeOffer.mainOfferImage?.smallImage ? (
                                                 <div className="group/item border-border/50 bg-surface-2/40 flex flex-col gap-2 overflow-hidden rounded-lg border p-2.5 sm:col-span-2">
                                                     <span className="text-muted-foreground flex items-center gap-1.5 text-[9px] font-bold tracking-widest uppercase">
@@ -1002,12 +1002,12 @@ export default function OffersPage() {
                                                     <img src={`https://fileserviceusprod.blob.core.windows.net/offerimages/${activeOffer.mainOfferImage.smallImage}`} alt="Main" className="h-24 w-24 rounded object-cover" />
                                                 </div>
                                             ) : (
-                                                activeOffer.mainOfferImage && <DetailItem label="Main Image" value="No image URL" icon={<ImageIcon className="h-3 w-3" />} colSpan />
+                                                activeOffer.mainOfferImage && <DetailItem label="Gambar utama" value="No image URL" icon={<ImageIcon className="h-3 w-3" />} colSpan />
                                             )}
                                             {activeOffer.offerImages?.map((img, i) => (
                                                 <DetailItem key={i} label={`Image ${i + 1}`} value={img.smallImage || img.largeImage || "-"} icon={<ImageIcon className="h-3 w-3" />} />
                                             ))}
-                                            {activeOffer.productImage && <DetailItem label="Product Image" value={activeOffer.productImage.name} icon={<ImageIcon className="h-3 w-3" />} />}
+                                            {activeOffer.productImage && <DetailItem label="Gambar produk" value={activeOffer.productImage.name} icon={<ImageIcon className="h-3 w-3" />} />}
                                         </DetailSection>
                                     )}
                                 </div>

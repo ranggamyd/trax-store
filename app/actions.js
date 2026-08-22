@@ -32,20 +32,9 @@ export async function setEldoradoToken(token, refreshToken = "") {
     return { success: true };
 }
 
-export async function getEldoradoToken() {
-    // Ini ngembaliin kredensial mentah. Wajib dikunci.
-    if (!(await getCurrentAdmin())) return { idToken: "", refreshToken: "", error: UNAUTHORIZED_CODE };
-
-    const cookieStore = await cookies();
-    return {
-        idToken: cookieStore.get("eldorado_token")?.value || process.env.ELDORADO_ID_TOKEN || "",
-        refreshToken: cookieStore.get("eldorado_refresh_token")?.value || process.env.ELDORADO_REFRESH_TOKEN || "",
-    };
-}
-
-export async function refreshEldoradoToken() {
-    if (!(await getCurrentAdmin())) return { success: false, error: UNAUTHORIZED_CODE };
-
+// Sengaja TIDAK di-export: dipanggil cuma dari fetchEldorado di file ini.
+// Kalau di-export, dia jadi endpoint HTTP publik tanpa ada yang manggil.
+async function refreshEldoradoToken() {
     const cookieStore = await cookies();
     const refreshToken = cookieStore.get("eldorado_refresh_token")?.value || process.env.ELDORADO_REFRESH_TOKEN;
     if (!refreshToken) return { success: false, error: "No refresh token available" };
@@ -277,33 +266,6 @@ export async function getEldoradoOrders(params = {}) {
         };
     } catch (error) {
         console.error("[getEldoradoOrders] Error:", error.message);
-        return { success: false, error: error.message };
-    }
-}
-
-export async function getEldoradoMessages(orderId) {
-    if (!(await getCurrentAdmin())) return { success: false, error: UNAUTHORIZED_MESSAGE };
-
-    try {
-        // Karena Eldorado menggunakan TalkJS pihak ketiga untuk sistem chat (terlihat dari talkJsConversationId),
-        // kita belum bisa menarik chat secara langsung pakai REST API Eldorado tanpa token TalkJS mereka.
-        // Jadi untuk MVP, kita kembalikan data mock dulu ketika sebuah order diklik.
-
-        // Simulasi delay jaringan
-        await new Promise((res) => setTimeout(res, 500));
-
-        const mockMessages = [
-            {
-                id: 1,
-                text: "Halo bang, pesanan saya (Order ID: " + orderId.substring(0, 8) + "...) udah siap?",
-                sender: "buyer",
-                time: "10:30",
-            },
-            { id: 2, text: "Sabar ya bro, ini lagi diproses pengirimannya", sender: "me", time: "10:35" },
-        ];
-        return { success: true, data: mockMessages };
-    } catch (error) {
-        console.error(`[getEldoradoMessages] Error for ${orderId}:`, error.message);
         return { success: false, error: error.message };
     }
 }

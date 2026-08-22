@@ -83,31 +83,43 @@ export const getStatusIcon = (status, className) => {
     }
 };
 
+/**
+ * Waktu relatif, versi PENDEK — dipakai di badge kecil di daftar chat, jadi
+ * gak boleh panjang.
+ *
+ * Versi lama balikin bahasa Inggris ("just now", "5m", "3h", "2mo") — nyempil
+ * di UI yang seluruhnya bahasa Indonesia. Ini tempat kedua yang begitu; yang
+ * pertama di halaman notifikasi, dan itu udah dibenerin pakai
+ * `formatRelativeTimeId` di lib/utils.js.
+ *
+ * Yang ini SENGAJA gak pakai helper itu: helper-nya ngeluarin "5 menit lalu"
+ * yang kepanjangan buat badge selebar 40px. Di sini yang dibutuhin bentuk
+ * singkat, jadi formatnya beda tapi bahasanya sama.
+ */
 export const timeAgo = (timestamp) => {
     if (!timestamp) return "";
-    const now = Date.now();
-    const diff = now - timestamp;
-    const seconds = Math.floor(diff / 1000);
+
+    const seconds = Math.floor((Date.now() - timestamp) / 1000);
     const minutes = Math.floor(seconds / 60);
     const hours = Math.floor(minutes / 60);
     const days = Math.floor(hours / 24);
 
-    if (seconds < 60) return "just now";
-    if (minutes < 60) return `${minutes}m`;
-    if (hours < 24) return `${hours}h`;
-    if (days < 30) return `${days}d`;
-    return `${Math.floor(days / 30)}mo`;
+    if (seconds < 60) return "baru";
+    if (minutes < 60) return `${minutes} mnt`;
+    if (hours < 24) return `${hours} jam`;
+    if (days < 30) return `${days} hr`;
+    return `${Math.floor(days / 30)} bln`;
 };
 
 export const CANCEL_REASONS = [
     {
         value: "Buyer_Provided_Incorrect_Information",
-        label: "Buyer has provided incorrect account information",
+        label: "Info akun dari buyer salah",
     },
-    { value: "Out_Of_Stock", label: "Out of stock" },
-    { value: "Buyer_Does_Not_Meet_Criteria", label: "Buyer does not meet criteria for the order" },
-    { value: "Buyer_Unresponsive", label: "Buyer is unresponsive" },
-    { value: "Buyer_Does_Not_Need_It_Anymore", label: "Buyer does not need it anymore" },
-    { value: "Mutual_Agreement", label: "Mutual agreement" },
-    { value: "Other", label: "Other" },
+    { value: "Out_Of_Stock", label: "Stok habis" },
+    { value: "Buyer_Does_Not_Meet_Criteria", label: "Buyer gak masuk kriteria order" },
+    { value: "Buyer_Unresponsive", label: "Buyer gak bales chat" },
+    { value: "Buyer_Does_Not_Need_It_Anymore", label: "Buyer udah gak butuh" },
+    { value: "Mutual_Agreement", label: "Sepakat dua-duanya" },
+    { value: "Other", label: "Alasan lain" },
 ];

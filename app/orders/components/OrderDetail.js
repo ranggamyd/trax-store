@@ -59,7 +59,7 @@ function ChatTemplateCard({ tmpl, onSend, isRecommended, compact = false, chatbo
                             {!acc.private_server_link && <span className="text-warning shrink-0 text-[10px]">link kosong</span>}
                         </span>
                     )}
-                    placeholder="-- pilih akun --"
+                    placeholder="-- Pilih akun --"
                     searchPlaceholder="Cari akun..."
                     emptyText="Game ini belum ada akunnya."
                     triggerClassName="h-6 min-w-0 overflow-hidden px-1.5 text-[9px] font-normal [&_svg]:size-3"
@@ -137,7 +137,7 @@ function QuickRepliesPopover({ activeOrderDetails, onSend, chatboxRef }) {
         const [{ data, error }, gamesList] = await Promise.all([supabase.from("chat_templates").select("*").order("sort_order", { ascending: true }), fetchGamesWithAccounts()]);
         setLinkedGames(gamesList);
         if (error) {
-            // toast.error("Gagal load templates: " + error.message);
+            // toast.error("Gagal ambil template: " + error.message);
         } else {
             // Urutkan recommended paling atas, sisanya mengikuti sort_order bawaan
             let sorted = (data || []).sort((a, b) => {
@@ -176,7 +176,7 @@ function QuickRepliesPopover({ activeOrderDetails, onSend, chatboxRef }) {
         <div className="absolute right-6 bottom-24 z-50">
             <Popover>
                 <PopoverTrigger asChild>
-                    <Button size="icon" className="bg-primary hover:bg-primary/90 text-primary-foreground flex h-12 w-12 items-center justify-center rounded-full shadow-[var(--glow-primary)] transition-transform duration-300 hover:scale-110" title="Quick Replies">
+                    <Button size="icon" className="bg-primary hover:bg-primary/90 text-primary-foreground flex h-12 w-12 items-center justify-center rounded-full shadow-[var(--glow-primary)] transition-transform duration-300 hover:scale-110" title="Balesan cepat">
                         <SparklesIcon className="h-5 w-5" />
                     </Button>
                 </PopoverTrigger>
@@ -184,7 +184,7 @@ function QuickRepliesPopover({ activeOrderDetails, onSend, chatboxRef }) {
                     <div className="flex items-center justify-between gap-2">
                         <div className="flex items-center gap-2">
                             <SparklesIcon className="text-primary h-4 w-4" />
-                            <h3 className="text-foreground text-sm font-bold">Quick Replies</h3>
+                            <h3 className="text-foreground text-sm font-bold">Balesan cepat</h3>
                         </div>
                         <div className="relative w-40 shrink-0">
                             <SearchIcon className="text-muted-foreground pointer-events-none absolute top-1/2 left-2 h-3.5 w-3.5 -translate-y-1/2" />
@@ -253,13 +253,13 @@ export default function OrderDetail({ activeOrderId, activeOrderDetails, activeO
 
     const handleQuickReplySend = (tmpl) => {
         if (!sessionRef.current || !activeOrderDetails?.talkJsConversationId) {
-            // toast.error("Chat belum siap!");
+            // toast.error("Chat belum siap");
             return;
         }
         try {
             const conversation = sessionRef.current.getOrCreateConversation(activeOrderDetails.talkJsConversationId);
             conversation.sendMessage(tmpl.text);
-            // toast.success("Pesan terkirim ke chat!");
+            // toast.success("Pesan terkirim");
         } catch {
             // toast.error("Gagal ngirim pesan")
         }
@@ -320,7 +320,7 @@ export default function OrderDetail({ activeOrderId, activeOrderDetails, activeO
                                                 onClick={(e) => {
                                                     e.stopPropagation();
                                                     navigator.clipboard.writeText(activeOrderDetails?.game || activeOrderDetails?.gameName || "Detail Order");
-                                                    // toast.success("Item name dicopy!");
+                                                    // toast.success("Nama item dicopy");
                                                 }}
                                             >
                                                 <CopyIcon className="h-3.5 w-3.5" />
@@ -340,12 +340,12 @@ export default function OrderDetail({ activeOrderId, activeOrderDetails, activeO
                                     onClick={(e) => {
                                         e.stopPropagation();
                                         navigator.clipboard.writeText(`${process.env.NEXT_PUBLIC_ELDORADO_URL}/order/${activeOrderId}`);
-                                        // toast.success("Link order dicopy!");
+                                        // toast.success("Link order dicopy");
                                         setIsLinkCopied(true);
                                         setTimeout(() => setIsLinkCopied(false), 2000);
                                     }}
                                     className="border-border/50 bg-surface-3/50 text-muted-foreground hover:bg-surface-3/50 hover:text-foreground flex items-center gap-1.5 rounded-md border px-2 py-1 font-mono text-xs transition-colors"
-                                    title="Copy Order Link"
+                                    title="Copy link order"
                                 >
                                     {process.env.NEXT_PUBLIC_ELDORADO_URL}/order/{activeOrderId}
                                     {isLinkCopied ? <CheckIcon className="text-success h-3.5 w-3.5" /> : <CopyIcon className="h-3.5 w-3.5" />}
@@ -440,13 +440,13 @@ export default function OrderDetail({ activeOrderId, activeOrderDetails, activeO
                                                     ))}
                                                 </div>
                                                 <div className="mt-2 flex items-center justify-between">
-                                                    <p className="text-sm font-medium">Share details</p>
+                                                    <p className="text-sm font-medium">Kirim detail</p>
                                                     <span className="text-muted-foreground text-xs">{cancelMessage.length}/500</span>
                                                 </div>
-                                                <textarea value={cancelMessage} onChange={(e) => setCancelMessage(e.target.value.substring(0, 500))} className="focus:border-primary border-border bg-surface-2 text-foreground h-24 w-full resize-none rounded-md border p-2 text-sm focus:outline-none" placeholder="Add any additional details..." />
+                                                <textarea value={cancelMessage} onChange={(e) => setCancelMessage(e.target.value.substring(0, 500))} className="focus:border-primary border-border bg-surface-2 text-foreground h-24 w-full resize-none rounded-md border p-2 text-sm focus:outline-none" placeholder="Catatan tambahan buat buyer (opsional)..." />
                                             </div>
                                             <AlertDialogFooter className="mt-4 flex flex-row items-center justify-end gap-2">
-                                                <AlertDialogCancel className="border-border bg-surface-3 text-foreground/85 hover:bg-surface-3 hover:text-foreground mt-0">Back</AlertDialogCancel>
+                                                <AlertDialogCancel className="border-border bg-surface-3 text-foreground/85 hover:bg-surface-3 hover:text-foreground mt-0">Balik</AlertDialogCancel>
                                                 <AlertDialogAction onClick={handleCancelOrder} className="bg-warning hover:bg-warning/90 mt-0 font-bold text-black" disabled={isCanceling}>
                                                     {isCanceling ? "Canceling..." : "Cancel order"}
                                                 </AlertDialogAction>

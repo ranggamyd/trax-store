@@ -1,6 +1,7 @@
 import { Gamepad2, TriangleAlert, UserRound } from "lucide-react";
 
 import { TemplateCardActions } from "@/app/templates/components/TemplateCardActions";
+import { CardSpotlight } from "@/components/aceternity/CardSpotlight";
 import { StatusBadge } from "@/components/atoms/StatusBadge";
 
 /**
@@ -8,13 +9,19 @@ import { StatusBadge } from "@/components/atoms/StatusBadge";
  *
  * Nama & ikon game udah kelar di server (lihat queries.js), jadi gak ada lagi
  * kedipan "Game kehapus" waktu Eldorado library masih dijemput di browser.
+ *
+ * CardSpotlight (Aceternity) dipakai sebagai PEMBUNGKUS. Ini yang bikin dia
+ * murah: pembungkusnya client component ~40 baris, tapi seluruh isi kartunya —
+ * judul, badge, teks template, daftar trigger — tetep HTML dari server. React
+ * ngizinin client component nerima children yang udah dirender server, jadi
+ * efek hover-nya dapet tanpa nyeret isinya ke bundle browser.
  */
 export function TemplateCard({ template, game, account }) {
     const isSpecific = template.type === "Specific";
     const triggers = template.triggers ?? [];
 
     return (
-        <article className="glass-subtle hover:border-primary/25 flex flex-col rounded-2xl p-5 transition-colors">
+        <CardSpotlight as="article" radius={260} color={isSpecific ? "var(--primary)" : "var(--accent)"} className="flex flex-col p-5">
             <header className="mb-3 flex items-start justify-between gap-3">
                 <div className="min-w-0">
                     <h3 className="text-foreground truncate text-base font-semibold">{template.title}</h3>
@@ -67,6 +74,6 @@ export function TemplateCard({ template, game, account }) {
 
                 <TemplateCardActions template={template} />
             </footer>
-        </article>
+        </CardSpotlight>
     );
 }

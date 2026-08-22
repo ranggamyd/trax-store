@@ -20,10 +20,10 @@ export default function OrderList({ activeOrderList, activeOrderId, setActiveOrd
                 <div className="from-primary/10 absolute inset-0 z-0 bg-gradient-to-br to-transparent"></div>
                 <div className="relative z-10 flex items-center justify-between">
                     <div className="flex flex-col gap-0.5">
-                        <h1 className="text-glow-primary text-2xl font-bold tracking-widest uppercase">My Orderan Gweh</h1>
-                        {/* <p className="text-[10px] font-medium tracking-wide text-muted-foreground">Kelola pesanan aktif Eldorado secara real-time</p> */}
+                        <h1 className="text-glow-primary text-2xl font-bold tracking-widest uppercase">Order Masuk</h1>
+                        {/* <p className="text-[10px] font-medium tracking-wide text-muted-foreground">Semua order Eldorado, kekelola dari sini</p> */}
                     </div>
-                    <Button size="icon" variant="ghost" className="text-muted-foreground hover:text-foreground h-8 w-8" onClick={() => fetchOrders("", false)} disabled={isLoadingOrders} title="Refresh Orders">
+                    <Button size="icon" variant="ghost" className="text-muted-foreground hover:text-foreground h-8 w-8" onClick={() => fetchOrders("", false)} disabled={isLoadingOrders} title="Muat ulang order">
                         <RefreshCwIcon className={`h-4 w-4 ${isLoadingOrders ? "text-primary animate-spin" : ""}`} />
                     </Button>
                 </div>
@@ -32,7 +32,7 @@ export default function OrderList({ activeOrderList, activeOrderId, setActiveOrd
                 <div className="relative z-10 flex gap-2">
                     <form onSubmit={handleSearchSubmit} className="relative flex-1">
                         <SearchIcon className="text-muted-foreground absolute top-2 left-2.5 h-4 w-4" />
-                        <input type="text" placeholder="Nyari apaan..." value={searchInput} onChange={(e) => setSearchInput(e.target.value)} className="focus:border-primary/50 border-border bg-surface-1/80 text-foreground placeholder:text-muted-foreground/70 h-8 w-full rounded-lg border pr-3 pl-8 text-xs transition-colors focus:outline-none" />
+                        <input type="text" placeholder="Cari buyer, item, atau order ID..." value={searchInput} onChange={(e) => setSearchInput(e.target.value)} className="focus:border-primary/50 border-border bg-surface-1/80 text-foreground placeholder:text-muted-foreground/70 h-8 w-full rounded-lg border pr-3 pl-8 text-xs transition-colors focus:outline-none" />
                     </form>
                     <div className="shrink-0">
                         <Popover open={openFilter} onOpenChange={setOpenFilter}>
@@ -43,13 +43,13 @@ export default function OrderList({ activeOrderList, activeOrderId, setActiveOrd
                                         <span className="truncate">
                                             {[
                                                 { value: "", label: "Semua" },
-                                                { value: "Initialized", label: "Initialized" },
-                                                { value: "Paid", label: "Paid" },
-                                                { value: "Delivered", label: "Delivered" },
-                                                { value: "Received", label: "Received" },
-                                                { value: "Completed", label: "Completed" },
-                                                { value: "Disputed", label: "Disputed" },
-                                                { value: "Canceled", label: "Canceled" },
+                                                { value: "Initialized", label: "Baru masuk" },
+                                                { value: "Paid", label: "Udah dibayar" },
+                                                { value: "Delivered", label: "Udah dikirim" },
+                                                { value: "Received", label: "Diterima buyer" },
+                                                { value: "Completed", label: "Selesai" },
+                                                { value: "Disputed", label: "Disengketain" },
+                                                { value: "Canceled", label: "Dibatalin" },
                                             ].find((s) => s.value === orderStateFilter)?.label || "Semua"}
                                         </span>
                                     </div>
@@ -60,13 +60,13 @@ export default function OrderList({ activeOrderList, activeOrderId, setActiveOrd
                                 <div className="flex flex-col gap-0.5">
                                     {[
                                         { value: "", label: "Semua" },
-                                        { value: "Initialized", label: "Initialized" },
-                                        { value: "Paid", label: "Paid" },
-                                        { value: "Delivered", label: "Delivered" },
-                                        { value: "Received", label: "Received" },
-                                        { value: "Completed", label: "Completed" },
-                                        { value: "Disputed", label: "Disputed" },
-                                        { value: "Canceled", label: "Canceled" },
+                                        { value: "Initialized", label: "Baru masuk" },
+                                        { value: "Paid", label: "Udah dibayar" },
+                                        { value: "Delivered", label: "Udah dikirim" },
+                                        { value: "Received", label: "Diterima buyer" },
+                                        { value: "Completed", label: "Selesai" },
+                                        { value: "Disputed", label: "Disengketain" },
+                                        { value: "Canceled", label: "Dibatalin" },
                                     ].map((status) => {
                                         const isChecked = orderStateFilter === status.value;
                                         return (
@@ -114,10 +114,10 @@ export default function OrderList({ activeOrderList, activeOrderId, setActiveOrd
                 ) : apiError ? (
                     <div className="border-danger/50 bg-danger-muted/30 text-danger rounded-xl border p-4 text-sm">
                         {apiError}
-                        <p className="mt-2 text-xs opacity-70">Coba refresh bentar lagi ya bro.</p>
+                        <p className="mt-2 text-xs opacity-70">Coba muat ulang sebentar lagi</p>
                     </div>
                 ) : activeOrderList.length === 0 ? (
-                    <div className="text-muted-foreground p-4 text-center text-sm">Nggak ada pesanan aktif saat ini bro.</div>
+                    <div className="text-muted-foreground p-4 text-center text-sm">Belum ada order masuk</div>
                 ) : (
                     activeOrderList.map((order) => {
                         const chatPreview = order.talkJsConversationId ? chatPreviews[order.talkJsConversationId] : null;
@@ -190,7 +190,7 @@ export default function OrderList({ activeOrderList, activeOrderId, setActiveOrd
                                                                     onClick={(e) => {
                                                                         e.stopPropagation();
                                                                         navigator.clipboard.writeText(order.game || order.gameName || "Item");
-                                                                        // toast.success("Item name dicopy!");
+                                                                        // toast.success("Nama item dicopy");
                                                                     }}
                                                                 >
                                                                     <CopyIcon className="h-3.5 w-3.5" />
@@ -209,10 +209,10 @@ export default function OrderList({ activeOrderList, activeOrderId, setActiveOrd
                                                     onClick={(e) => {
                                                         e.stopPropagation();
                                                         navigator.clipboard.writeText(order.robloxUsername);
-                                                        // toast.success("Roblox username dicopy!");
+                                                        // toast.success("Username Roblox dicopy");
                                                     }}
                                                     className="text-accent bg-accent/10 hover:bg-accent/20 border-accent/20 flex cursor-pointer items-center gap-1 rounded border px-1.5 py-0.5 font-mono text-[10px] transition-colors"
-                                                    title="Copy Roblox Username"
+                                                    title="Copy username Roblox"
                                                 >
                                                     <UserIcon className="h-3 w-3" />
                                                     RBLX: {order.robloxUsername}
@@ -244,7 +244,7 @@ export default function OrderList({ activeOrderList, activeOrderId, setActiveOrd
                 {/* Loading Indicator for Infinity Scroll */}
                 {isFetchingNextPage && (
                     <div className="text-muted-foreground flex items-center justify-center py-4">
-                        <Loader2Icon className="mr-2 h-4 w-4 animate-spin" /> <span className="text-xs">Loading lagi...</span>
+                        <Loader2Icon className="mr-2 h-4 w-4 animate-spin" /> <span className="text-xs">Ngambil lagi...</span>
                     </div>
                 )}
                 {!hasNextPage && activeOrderList.length > 0 && !isLoadingOrders && <div className="text-muted-foreground/70 py-3 text-center font-mono text-[10px] tracking-widest uppercase">--- Mentok Bos ---</div>}

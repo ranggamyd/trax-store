@@ -108,7 +108,7 @@ export default function OrdersPage() {
                 reportTokenExpired();
             } else {
                 setApiError(res.error);
-                // toast.error("Gagal narik pesanan: " + res.error);
+                // toast.error("Gagal ambil order: " + res.error);
             }
         },
         [searchQuery, orderStateFilter, reportTokenExpired, reportTokenOk]
@@ -257,7 +257,7 @@ export default function OrdersPage() {
         setIsDelivering(false);
 
         if (result.success) {
-            // toast.success("Cakep! Pesanan udah ditandai terkirim ke Eldorado.");
+            // toast.success("Order ditandai terkirim", { description: "Statusnya udah keupdate di Eldorado." });
             setActiveOrders((prev) => prev.map((o) => (o.id === activeOrderId ? { ...o, status: "Delivered" } : o)));
             loadOrderDetails(true); // Silent reload
         } else {
@@ -273,7 +273,7 @@ export default function OrdersPage() {
         setIsCanceling(false);
 
         if (result.success) {
-            // toast.success("Order berhasil di-cancel!");
+            // toast.success("Order dibatalin", { description: "Buyer bakal dapet notifikasi dari Eldorado." });
             setCancelMessage("");
             setCancelReason("Buyer_Provided_Incorrect_Information");
             setIsCancelDialogOpen(false);

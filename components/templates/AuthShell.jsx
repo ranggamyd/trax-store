@@ -1,3 +1,4 @@
+import { Spotlight } from "@/components/aceternity/Spotlight";
 import { TraxMark } from "@/components/illustrations/TraxMark";
 import { cn } from "@/lib/utils";
 
@@ -6,17 +7,18 @@ import { cn } from "@/lib/utils";
  *
  * Dibikin karena dua halaman itu tadinya nyalin layout yang sama: wrapper
  * `bg-black`, dua blob blur sebagai aurora, kartu berkaca, logo, judul.
- * Dua salinan artinya dua tempat yang harus diinget tiap kali ada perubahan.
  *
- * Blob aurora-nya DICABUT, bukan dipindah ke sini — AmbientBackground di root
- * layout udah nyediain aurora buat SEMUA halaman, termasuk halaman auth.
- * Yang lama itu efek yang sama digambar dua kali, dan yang di halaman malah
- * ketutupan `bg-black`-nya sendiri.
+ * Blob aurora manualnya dicabut dan diganti <Spotlight> dari Aceternity —
+ * sorotan miring yang masuk pelan dari kiri atas. Bedanya bukan cuma tampilan:
+ * blob yang lama itu dua div blur yang justru ketutupan `bg-black`-nya sendiri,
+ * jadi efeknya gak pernah kelihatan. Spotlight-nya SVG di lapisan terpisah.
  */
 export function AuthShell({ title, description, children, footer, className }) {
     return (
-        <main className="flex min-h-[calc(100vh-2rem)] w-full items-center justify-center px-4 py-12">
-            <div className={cn("glass w-full max-w-md rounded-3xl p-7 md:p-8", className)}>
+        <main className="relative flex min-h-[calc(100vh-2rem)] w-full items-center justify-center overflow-hidden px-4 py-12">
+            <Spotlight className="-top-40 left-0 md:-top-20 md:left-60" />
+
+            <div className={cn("glass relative z-10 w-full max-w-md rounded-3xl p-7 md:p-8", className)}>
                 <div className="flex flex-col items-center text-center">
                     {/* Logo dalam tile berkaca — satu-satunya glow di layar ini,
                         jadi mata langsung mendarat di identitas produknya. */}

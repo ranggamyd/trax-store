@@ -362,3 +362,45 @@
         transform: rotate(360deg);
     }
 }
+
+/* ============================================================================
+   ANIMASI KOMPONEN ACETERNITY
+   Semuanya transform/opacity, jadi dikerjain compositor. Nol JS buat animasinya.
+   ========================================================================== */
+
+/* Meteor: melesat diagonal dari kanan-atas ke kiri-bawah */
+@keyframes meteor {
+    0% {
+        transform: rotate(215deg) translateX(0);
+        opacity: 1;
+    }
+    70% {
+        opacity: 1;
+    }
+    100% {
+        transform: rotate(215deg) translateX(-500px);
+        opacity: 0;
+    }
+}
+
+/* Border gradient yang muter — dipakai HoverBorderGradient */
+@keyframes border-spin {
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* Spotlight yang masuk pelan di halaman auth */
+@keyframes spotlight-in {
+    0% {
+        opacity: 0;
+        transform: translate(-72%, -62%) scale(0.5);
+    }
+    100% {
+        opacity: 1;
+        transform: translate(-50%, -40%) scale(1);
+    }
+}

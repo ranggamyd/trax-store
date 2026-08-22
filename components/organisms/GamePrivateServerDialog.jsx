@@ -4,223 +4,195 @@ import { Loader2, Trash2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
+import { createAccountFromDialog, loadPrivateServerConfig, savePrivateServerConfig } from "@/app/games/actions";
 import { ActionIcon } from "@/components/atoms/ActionIcon";
 import { ComboboxSelect } from "@/components/molecules/ComboboxSelect";
 import { FormDialog } from "@/components/molecules/FormDialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { supabase } from "@/lib/supabase";
-import { createAccountFromCombo, isDuplicateError } from "@/lib/supabaseHelpers";
 import { eldoradoIconUrl } from "@/lib/templateVars";
 
 /**
- * Atur akun + private server link buat satu game dari Eldorado library.
- * Game-nya gak disimpen manual lagi, jadi baris `games` lokal dibikin on demand
- * pas nyimpen dan ditautin ke Eldorado lewat kolom `eldorado_game_id`.
- * Relasinya tetep many-to-many di `account_games` (1 game banyak akun, 1 akun banyak game).
+ * Atur akun + private server link buat satu game dari library Eldorado.
+ *
+ * Game-nya gak disimpen manual: baris `games` lokal dibikin on demand waktu
+ * link pertama disimpen, dan ditautin ke Eldorado lewat `eldorado_game_id`.
+ * Relasi akun↔game tetep many-to-many di `account_games`.
+ *
+ * YANG BERUBAH: lima operasi tulis di sini dulu jalan langsung dari browser
+ * (bikin game, hapus tautan, hapus stok item, update link, insert link) dengan
+ * hanya RLS sebagai penjaga. Sekarang semuanya satu Server Action —
+ * `savePrivateServerConfig` — yang dicek auth dan yang juga nolak link kembar
+ * di server, bukan cuma di dialog ini.
  */
-export function GamePrivateServerDialog({ open, onOpenChange, game, onSaved }) {
-    const [loading, setLoading] = useState(true);
-    const [saving, setSaving] = useState(false);
-    const [gameRow, setGameRow] = useState(null);
+function PrivateServerForm({ eldoradoGameId, gameName, onSaved, onClose }) {
+    const [isLoading, setIsLoading] = useState(true);
+    const [isSaving, setIsSaving] = useState(false);
     const [allAccounts, setAllAccounts] = useState([]);
     const [rows, setRows] = useState([]);
     const [removedRows, setRemovedRows] = useState([]);
 
-    const gameName = game?.menuGameTitle || game?.gameName || "";
-    const eldoradoGameId = game?.gameId ? String(game.gameId) : null;
-
     useEffect(() => {
-        if (!open || !eldoradoGameId) return;
         let cancelled = false;
 
         (async () => {
-            setLoading(true);
-            setRows([]);
-            setRemovedRows([]);
+            const result = await loadPrivateServerConfig(eldoradoGameId);
+            if (cancelled) return;
 
-            const [{ data: accData }, { data: gData }] = await Promise.all([supabase.from("accounts").select("id, username").order("username"), supabase.from("games").select("id, name, requires_private_server").eq("eldorado_game_id", eldoradoGameId).maybeSingle()]);
-
-            let linked = [];
-            if (gData) {
-                const { data: agData } = await supabase.from("account_games").select("id, account_id, private_server_link, accounts(username)").eq("game_id", gData.id);
-                linked = (agData || [])
-                    .map((ag) => ({
-                        accountGameId: ag.id,
-                        account_id: ag.account_id,
-                        username: ag.accounts?.username || "(akun kehapus)",
-                        link: ag.private_server_link || "",
-                    }))
-                    .sort((a, b) => a.username.localeCompare(b.username));
+            if (result?.error) {
+                toast.error("Gagal ngambil data", { description: result.error });
+                setIsLoading(false);
+                return;
             }
 
-            if (cancelled) return;
-            setAllAccounts(accData || []);
-            setGameRow(gData || null);
-            setRows(linked);
-            setLoading(false);
+            setAllAccounts(result.allAccounts);
+            setRows(result.rows);
+            setIsLoading(false);
         })();
 
         return () => {
             cancelled = true;
         };
-    }, [open, eldoradoGameId]);
+    }, [eldoradoGameId]);
 
-    const availableAccounts = allAccounts.filter((acc) => !rows.some((r) => r.account_id === acc.id));
+    const availableAccounts = allAccounts.filter((acc) => !rows.some((row) => row.accountId === acc.id));
 
-    const handleAddAccount = (account) => {
-        setRows((prev) => [...prev, { accountGameId: null, account_id: account.id, username: account.username, link: "" }]);
+    const addAccount = (account) => {
+        setRows((prev) => [...prev, { accountGameId: null, accountId: account.id, username: account.username, link: "" }]);
     };
 
-    // Akunnya belum kedaftar di /accounts — daftarin langsung dari sini terus tautin.
-    const handleCreateAccount = async (username) => {
-        const { data } = await createAccountFromCombo(username.trim());
-        if (!data) return;
-        setAllAccounts((prev) => [...prev, data].sort((a, b) => a.username.localeCompare(b.username)));
-        handleAddAccount(data);
+    const changeLink = (accountId, link) => {
+        setRows((prev) => prev.map((row) => (row.accountId === accountId ? { ...row, link } : row)));
     };
 
-    const handleChangeLink = (accountId, link) => {
-        setRows((prev) => prev.map((r) => (r.account_id === accountId ? { ...r, link } : r)));
-    };
-
-    const handleRemoveRow = (accountId) => {
-        const row = rows.find((r) => r.account_id === accountId);
-        if (row?.accountGameId) setRemovedRows((prev) => [...prev, row]);
-        setRows((prev) => prev.filter((r) => r.account_id !== accountId));
-    };
-
-    // Link private server unique di DB, jadi cegah duplikat dari dialog sebelum kena error unique.
-    const findDuplicateLink = () => {
-        const seen = new Set();
-        for (const row of rows) {
-            const link = row.link.trim();
-            if (!link) continue;
-            if (seen.has(link)) return link;
-            seen.add(link);
+    const removeRow = (accountId) => {
+        const row = rows.find((r) => r.accountId === accountId);
+        // Cuma baris yang UDAH ada di DB yang perlu dicabut di server.
+        // Baris yang baru ditambah di dialog tinggal dibuang dari state.
+        if (row?.accountGameId) {
+            setRemovedRows((prev) => [...prev, { accountGameId: row.accountGameId, accountId: row.accountId }]);
         }
-        return null;
+        setRows((prev) => prev.filter((r) => r.accountId !== accountId));
     };
 
     const handleSave = async () => {
-        if (findDuplicateLink()) return toast.error("Ada link kembar!", { description: "Satu link private server cuma boleh dipake satu akun bro." });
+        setIsSaving(true);
+        const result = await savePrivateServerConfig({ eldoradoGameId, gameName, rows, removedRows });
+        setIsSaving(false);
 
-        setSaving(true);
-        try {
-            let targetGameId = gameRow?.id;
-
-            // Baris games lokal belum ada -> bikin dari data library.
-            if (!targetGameId) {
-                const { data: inserted, error } = await supabase
-                    .from("games")
-                    .insert([{ name: gameName, image_url: eldoradoIconUrl(eldoradoGameId), eldorado_game_id: eldoradoGameId, requires_private_server: false }])
-                    .select("id, name, requires_private_server")
-                    .single();
-                if (error) {
-                    toast.error("Gagal nyimpen game", { description: error.message });
-                    return;
-                }
-                targetGameId = inserted.id;
-                setGameRow(inserted);
-            }
-
-            const failed = [];
-
-            // Cabut akun yang dihapus, ikut bersihin stok itemnya di game ini.
-            if (removedRows.length > 0) {
-                const { error: delErr } = await supabase
-                    .from("account_games")
-                    .delete()
-                    .in(
-                        "id",
-                        removedRows.map((r) => r.accountGameId)
-                    );
-                if (delErr) {
-                    failed.push(`hapus akun: ${delErr.message}`);
-                } else {
-                    const { data: gameItems } = await supabase.from("items").select("id").eq("game_id", targetGameId);
-                    if (gameItems?.length > 0)
-                        await supabase
-                            .from("account_items")
-                            .delete()
-                            .in(
-                                "account_id",
-                                removedRows.map((r) => r.account_id)
-                            )
-                            .in(
-                                "item_id",
-                                gameItems.map((i) => i.id)
-                            );
-                }
-            }
-
-            for (const row of rows) {
-                const link = row.link.trim() || null;
-                const { error } = row.accountGameId ? await supabase.from("account_games").update({ private_server_link: link }).eq("id", row.accountGameId) : await supabase.from("account_games").insert([{ game_id: targetGameId, account_id: row.account_id, private_server_link: link }]);
-                if (error) failed.push(`${row.username}: ${isDuplicateError(error) ? "link udah dipake di tempat lain" : error.message}`);
-            }
-
-            if (failed.length > 0) {
-                toast.error("Sebagian gagal disimpen", { description: failed.join(" | ") });
-            } else {
-                toast.success("Mantap!", { description: `Link private server ${gameName} udah keupdate.` });
-                onOpenChange(false);
-            }
+        if (result?.partial) {
+            toast.warning("Sebagian gagal disimpen", { description: result.error });
             onSaved?.();
-        } finally {
-            setSaving(false);
+            return;
         }
+
+        if (result?.error) {
+            toast.error("Gagal nyimpen", { description: result.error });
+            return;
+        }
+
+        toast.success(`Link private server ${gameName} keupdate`);
+        onSaved?.();
+        onClose();
     };
 
-    return (
-        <FormDialog open={open} onOpenChange={onOpenChange} title="Private Server Link" titleClassName="text-glow-primary" maxWidth="sm:max-w-2xl">
-            <div className="space-y-4 pt-2">
-                <div className="border-border bg-surface-2/50 flex items-center gap-3 rounded-lg border p-3">
-                    <div className="border-border/50 bg-surface-3 flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-lg border">{eldoradoGameId && <img src={eldoradoIconUrl(eldoradoGameId)} alt={gameName} className="h-full w-full object-cover" />}</div>
-                    <div className="min-w-0">
-                        <p className="text-foreground truncate font-bold">{gameName}</p>
-                        <p className="text-muted-foreground font-mono text-xs">ID: {eldoradoGameId}</p>
-                    </div>
-                </div>
+    if (isLoading) {
+        return (
+            <div className="text-muted-foreground flex items-center justify-center gap-2 py-10 text-sm">
+                <Loader2 className="h-4 w-4 animate-spin" />
+                Ngambil data akun...
+            </div>
+        );
+    }
 
-                {loading ? (
-                    <div className="text-muted-foreground flex items-center justify-center gap-2 py-10 text-sm">
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                        Ngambil data akun...
+    return (
+        <div className="space-y-4">
+            <div className="space-y-2">
+                <Label className="text-muted-foreground">Tambah akun</Label>
+                <ComboboxSelect
+                    items={availableAccounts}
+                    value=""
+                    onSelect={addAccount}
+                    getItemValue={(acc) => acc.username}
+                    placeholder={availableAccounts.length > 0 ? "-- Pilih akun --" : "Semua akun udah ditautin"}
+                    searchPlaceholder="Cari atau tulis akun baru..."
+                    emptyText="Akun itu belum kedaftar."
+                    onCreateNew={async (username) => {
+                        const result = await createAccountFromDialog(username);
+                        if (result?.error) {
+                            toast.error("Gagal bikin akun", { description: result.error });
+                            return;
+                        }
+                        setAllAccounts((prev) => [...prev, result.account].sort((a, b) => a.username.localeCompare(b.username)));
+                        addAccount(result.account);
+                    }}
+                    createNewLabel={(term) => `Daftarin "${term}"`}
+                />
+            </div>
+
+            <div className="space-y-2">
+                <Label className="text-muted-foreground">Akun di game ini ({rows.length})</Label>
+
+                {rows.length > 0 ? (
+                    <div className="custom-scrollbar max-h-[45vh] space-y-2 overflow-y-auto pr-1">
+                        {rows.map((row) => (
+                            <div key={row.accountId} className="border-border bg-surface-1/50 flex items-center gap-2 rounded-lg border p-2">
+                                <span className="text-foreground w-28 shrink-0 truncate text-sm font-medium" title={row.username}>
+                                    {row.username}
+                                </span>
+                                <Input placeholder="https://www.roblox.com/share?code=..." value={row.link} onChange={(e) => changeLink(row.accountId, e.target.value)} className="border-border bg-input/60 focus-visible:border-ring focus-visible:ring-ring/30 h-9 text-xs" />
+                                <ActionIcon icon={Trash2} variant="delete" title="Cabut akun dari game ini" onClick={() => removeRow(row.accountId)} />
+                            </div>
+                        ))}
                     </div>
                 ) : (
-                    <>
-                        <div className="space-y-2">
-                            <Label className="text-muted-foreground">Tambah akun</Label>
-                            <ComboboxSelect items={availableAccounts} value="" onSelect={handleAddAccount} getItemValue={(acc) => acc.username} placeholder={availableAccounts.length > 0 ? "-- Pilih akun --" : "Semua akun udah ditautin"} searchPlaceholder="Cari atau ketik akun baru..." emptyText="Gak ada akun yang cocok." onCreateNew={handleCreateAccount} createNewLabel={(term) => `Daftarin "${term}"`} />
-                        </div>
-
-                        <div className="space-y-2">
-                            <Label className="text-muted-foreground">Akun di game ini ({rows.length})</Label>
-                            {rows.length > 0 ? (
-                                <div className="max-h-[45vh] space-y-2 overflow-y-auto pr-1">
-                                    {rows.map((row) => (
-                                        <div key={row.account_id} className="border-border bg-surface-2/40 flex items-center gap-2 rounded-lg border p-2">
-                                            <span className="text-foreground w-28 shrink-0 truncate text-sm font-medium" title={row.username}>
-                                                {row.username}
-                                            </span>
-                                            <Input placeholder="https://www.roblox.com/share?code=..." value={row.link} onChange={(e) => handleChangeLink(row.account_id, e.target.value)} className="border-border bg-surface-1 text-xs" />
-                                            <ActionIcon icon={Trash2} variant="delete" title="Cabut akun dari game ini" onClick={() => handleRemoveRow(row.account_id)} />
-                                        </div>
-                                    ))}
-                                </div>
-                            ) : (
-                                <p className="border-border bg-surface-2/30 text-muted-foreground rounded-lg border border-dashed py-6 text-center text-sm">Belum ada akun buat game ini.</p>
-                            )}
-                        </div>
-
-                        <Button type="button" onClick={handleSave} disabled={saving} className="bg-primary hover:bg-primary/80 w-full font-bold text-black">
-                            {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : "Simpan"}
-                        </Button>
-                    </>
+                    <p className="border-border bg-surface-2/30 text-muted-foreground rounded-lg border border-dashed py-6 text-center text-sm">Belum ada akun buat game ini.</p>
                 )}
             </div>
+
+            <div className="flex items-center justify-end gap-2 pt-1">
+                <Button type="button" variant="outline" onClick={onClose} disabled={isSaving}>
+                    Batal
+                </Button>
+                <Button type="button" onClick={handleSave} disabled={isSaving} className="font-semibold">
+                    {isSaving ? (
+                        <>
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            Nyimpen...
+                        </>
+                    ) : (
+                        "Simpen"
+                    )}
+                </Button>
+            </div>
+        </div>
+    );
+}
+
+export function GamePrivateServerDialog({ open, onOpenChange, game, onSaved }) {
+    const gameName = game?.menuGameTitle || game?.gameName || "";
+    const eldoradoGameId = game?.gameId ? String(game.gameId) : null;
+
+    return (
+        <FormDialog open={open} onOpenChange={onOpenChange} title="Private server link" description={gameName} maxWidth="sm:max-w-2xl">
+            {open && eldoradoGameId && (
+                <div className="space-y-4 pt-1">
+                    <div className="border-border bg-surface-1/50 flex items-center gap-3 rounded-lg border p-3">
+                        <div className="border-border bg-surface-3 flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-lg border">
+                            {/* Host gambarnya CDN Eldorado — next/image butuh allowlist domain. */}
+                            <img src={eldoradoIconUrl(eldoradoGameId)} alt="" className="h-full w-full object-cover" />
+                        </div>
+                        <div className="min-w-0">
+                            <p className="text-foreground truncate font-semibold">{gameName}</p>
+                            <p className="text-muted-foreground font-mono text-xs">ID {eldoradoGameId}</p>
+                        </div>
+                    </div>
+
+                    {/* key: ganti game -> form fresh, gak nyisa baris game sebelumnya */}
+                    <PrivateServerForm key={eldoradoGameId} eldoradoGameId={eldoradoGameId} gameName={gameName} onSaved={onSaved} onClose={() => onOpenChange(false)} />
+                </div>
+            )}
         </FormDialog>
     );
 }

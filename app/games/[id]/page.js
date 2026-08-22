@@ -1,703 +1,164 @@
-"use client";
+import { ArrowLeft, Package, TriangleAlert, Users } from "lucide-react";
+import Link from "next/link";
+import { notFound } from "next/navigation";
 
-import { zodResolver } from "@hookform/resolvers/zod";
-import { Pencil, Plus, Trash2 } from "lucide-react";
-import { useParams, useRouter } from "next/navigation";
-import { useState } from "react";
-import { useForm, useWatch } from "react-hook-form";
-import { toast } from "sonner";
-
-import { ActionIcon } from "@/components/atoms/ActionIcon";
+import { AccountRowActions } from "@/app/games/[id]/components/AccountRowActions";
+import { DetailToolbar } from "@/app/games/[id]/components/DetailToolbar";
+import { GameHeaderActions } from "@/app/games/[id]/components/GameHeaderActions";
+import { ItemRowActions } from "@/app/games/[id]/components/ItemRowActions";
+import { getGameDetail } from "@/app/games/[id]/queries";
+import { StatusBadge } from "@/components/atoms/StatusBadge";
 import { CopyButton } from "@/components/CopyButton";
 import { ClickableTableRow } from "@/components/molecules/ClickableTableRow";
-import { ComboboxSelect } from "@/components/molecules/ComboboxSelect";
-import { ConfirmDialog } from "@/components/molecules/ConfirmDialog";
-import { DetailHeader } from "@/components/molecules/DetailHeader";
-import { FormDialog } from "@/components/molecules/FormDialog";
-import { FormField } from "@/components/molecules/FormField";
 import { PrivateServerLinkCell } from "@/components/molecules/PrivateServerLinkCell";
 import { DataTable } from "@/components/organisms/DataTable";
-import { EditLinkDialog } from "@/components/organisms/EditLinkDialog";
-import { GameFormDialog } from "@/components/organisms/GameFormDialog";
-import { MissingLinksDialog } from "@/components/organisms/MissingLinksDialog";
 import { PageContainer } from "@/components/templates/PageContainer";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { TableCell } from "@/components/ui/table";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useAuthGuard } from "@/hooks/useAuthGuard";
-import { accountGameSchema, gameSchema, itemSchema } from "@/lib/schemas";
-import { supabase } from "@/lib/supabase";
-import { isDuplicateError, processItemLinks, saveMissingLinks, validateUniqueItems } from "@/lib/supabaseHelpers";
+import { TableCell, TableRow } from "@/components/ui/table";
 import { getInitials } from "@/lib/utils";
+import { formatWibDate } from "@/lib/wib";
 
-export default function GameDetail() {
-    const params = useParams();
-    const router = useRouter();
-    const [game, setGame] = useState(null);
-    const [accounts, setAccounts] = useState([]);
-    const [items, setItems] = useState([]);
-    const [allAccounts, setAllAccounts] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const [activeTab, setActiveTab] = useState("accounts");
-    const [accountSearch, setAccountSearch] = useState("");
-    const [itemSearch, setItemSearch] = useState("");
+const ACCOUNT_COLUMNS = [{ label: "Akun" }, { label: "Private server" }, { label: "Robux" }, { label: "Ditautkan", className: "text-right" }, { label: "Aksi", className: "text-right" }];
 
-    // Add Account dialog state
-    const [isAddAccountOpen, setIsAddAccountOpen] = useState(false);
-    const [accountItemsLinks, setAccountItemsLinks] = useState([]);
+const ITEM_COLUMNS = [{ label: "Item" }, { label: "Deskripsi" }, { label: "Dibuat", className: "text-right" }, { label: "Aksi", className: "text-right" }];
 
-    // Add Item dialog state
-    const [isAddItemOpen, setIsAddItemOpen] = useState(false);
-    const [editItemId, setEditItemId] = useState(null);
-    const [itemAccounts, setItemAccounts] = useState([{ account_id: "", private_server_link: "" }]);
+export async function generateMetadata({ params }) {
+    const { id } = await params;
+    const detail = await getGameDetail(id);
 
-    // Edit link dialog state
-    const [isEditLinkOpen, setIsEditLinkOpen] = useState(false);
-    const [editAccountGame, setEditAccountGame] = useState(null);
-    const [newLink, setNewLink] = useState("");
+    return { title: detail?.game?.name ?? "Game" };
+}
 
-    // Edit game dialog state
-    const [isEditGameOpen, setIsEditGameOpen] = useState(false);
-    const [missingLinks, setMissingLinks] = useState([]);
-    const [isMissingLinksOpen, setIsMissingLinksOpen] = useState(false);
-    const [pendingGameData, setPendingGameData] = useState(null);
+/** SERVER COMPONENT. Pola yang sama kayak /accounts/[id]. */
+export default async function GameDetailPage({ params, searchParams }) {
+    const { id } = await params;
+    const query = await searchParams;
 
-    const {
-        register: regAcc,
-        handleSubmit: handAcc,
-        formState: { errors: errAcc },
-        reset: resetAcc,
-        control: controlAcc,
-        setValue: setValueAcc,
-    } = useForm({ resolver: zodResolver(accountGameSchema) });
-    const selectedAccountId = useWatch({ control: controlAcc, name: "account_id" });
-    const {
-        register: regGame,
-        handleSubmit: handGame,
-        formState: { errors: errGame },
-        reset: resetGame,
-        watch: watchGame,
-        setValue: setValueGame,
-    } = useForm({ resolver: zodResolver(gameSchema) });
-    const {
-        register: regItem,
-        handleSubmit: handItem,
-        formState: { errors: errItem },
-        reset: resetItem,
-    } = useForm({ resolver: zodResolver(itemSchema) });
+    const detail = await getGameDetail(id);
+    if (!detail) notFound();
 
-    // ─── Data Fetching ───
-    const fetchData = async (showLoader = false) => {
-        if (showLoader) setLoading(true);
-        const [{ data: gameData }, { data: accountsData }, { data: itemsData }, { data: allAccData }] = await Promise.all([supabase.from("games").select("*").eq("id", params.id).single(), supabase.from("account_games").select("*, accounts(id, username, status)").eq("game_id", params.id), supabase.from("items").select("*").eq("game_id", params.id), supabase.from("accounts").select("*")]);
-        setGame(gameData);
-        setAccounts(accountsData || []);
-        setItems(itemsData || []);
-        setAllAccounts(allAccData || []);
-        setLoading(false);
-    };
+    const { game, linkedAccounts, items, allAccounts } = detail;
 
-    useAuthGuard(() => fetchData(true), [params.id]);
+    const tab = query?.tab === "items" ? "items" : "accounts";
+    const search = (typeof query?.q === "string" ? query.q : "").trim().toLowerCase();
 
-    // ─── Filtered Lists ───
-    const filteredAccounts = accounts.filter((acc) => acc.accounts?.username.toLowerCase().includes(accountSearch.toLowerCase()));
-    const filteredItems = items.filter((item) => item.item_name.toLowerCase().includes(itemSearch.toLowerCase()) || (item.description && item.description.toLowerCase().includes(itemSearch.toLowerCase())));
+    const accounts = search ? linkedAccounts.filter((row) => (row.accounts?.username ?? "").toLowerCase().includes(search)) : linkedAccounts;
 
-    // ─── Add Account Handler ───
-    const onAddAccount = async (data) => {
-        if (game.requires_private_server && !data.private_server_link) {
-            return toast.error("Wajib isi link!", {
-                description: "Game ini wajib pake Private Server Link bro!",
-            });
-        }
+    const filteredItems = search ? items.filter((row) => (row.item_name ?? "").toLowerCase().includes(search) || (row.description ?? "").toLowerCase().includes(search)) : items;
 
-        const validItems = accountItemsLinks.filter((lnk) => lnk.item_id !== "" || lnk.new_name !== "");
-        if (!validateUniqueItems(validItems)) return;
+    // Akun yang ketaut tapi link-nya kosong padahal game-nya wajib punya link.
+    // Ditampilin di header — dulu keadaan ini cuma kelihatan waktu lu kebetulan
+    // nyalain toggle-nya, padahal dampaknya nyata: template chat ngirim link kosong.
+    const missingLinkCount = game.requires_private_server ? linkedAccounts.filter((row) => !row.private_server_link?.trim()).length : 0;
 
-        const { error } = await supabase.from("account_games").insert([
-            {
-                game_id: params.id,
-                account_id: data.account_id,
-                private_server_link: data.private_server_link?.trim() || null,
-            },
-        ]);
-
-        if (error) {
-            if (isDuplicateError(error)) {
-                toast.error("Waduh, gagal nambah akun", {
-                    description: error.message.includes("private_server_link") ? "Link Private Server ini udah dipakai di akun lain! Cari link yang beda bos." : "Akun ini udah ditautin ke game ini bro!",
-                });
-            } else {
-                toast.error("Waduh, gagal nambah akun", { description: error.message });
-            }
-        } else {
-            const processedCount = await processItemLinks(validItems, {
-                gameId: params.id,
-                accountId: data.account_id,
-            });
-            toast.success("Masuk pak eko!", {
-                description: `Akun udah ditautin ke game ini${processedCount > 0 ? ` plus ${processedCount} item ditambahkan` : ""}.`,
-            });
-            resetAcc();
-            setAccountItemsLinks([]);
-            setIsAddAccountOpen(false);
-            fetchData(false);
-        }
-    };
-
-    // ─── Add/Edit Item Handler ───
-    const onAddItem = async (data) => {
-        if (editItemId) {
-            const { error } = await supabase
-                .from("items")
-                .update({ item_name: data.item_name, description: data.description || null })
-                .eq("id", editItemId);
-            if (error) {
-                toast.error("Waduh, gagal update item", { description: error.message });
-            } else {
-                toast.success("Item diupdate!", { description: "Data item berhasil diubah." });
-                closeItemDialog();
-                fetchData(false);
-            }
-        } else {
-            const validAccounts = itemAccounts.filter((a) => a.account_id !== "");
-            if (validAccounts.length === 0)
-                return toast.error("Akun wajib diisi!", {
-                    description: "Wajib pilih minimal 1 akun untuk nyimpen stok item ini.",
-                });
-
-            if (game?.requires_private_server) {
-                for (const acc of validAccounts) {
-                    if (!acc.private_server_link || acc.private_server_link.trim() === "") {
-                        return toast.error("Ada link private server yang kosong!", {
-                            description: "Game ini wajib private server, jadi semua akun yang dipilih wajib diisi linknya.",
-                        });
-                    }
-                }
-            }
-
-            const uniqueAccounts = new Set(validAccounts.map((a) => a.account_id));
-            if (uniqueAccounts.size !== validAccounts.length)
-                return toast.error("Ada akun ganda bos!", {
-                    description: "Gak boleh milih akun yang sama lebih dari sekali di baris yang beda.",
-                });
-
-            // Upsert account_games
-            for (const acc of validAccounts) {
-                const { data: existAccGame } = await supabase.from("account_games").select("id").eq("account_id", acc.account_id).eq("game_id", params.id).single();
-                if (existAccGame) {
-                    if (acc.private_server_link) {
-                        const { error: updErr } = await supabase.from("account_games").update({ private_server_link: acc.private_server_link }).eq("id", existAccGame.id);
-                        if (updErr && isDuplicateError(updErr))
-                            return toast.error("Link Duplikat!", {
-                                description: "Link private server udah dipake di tempat lain.",
-                            });
-                    }
-                } else {
-                    const { error: insErr } = await supabase.from("account_games").insert([
-                        {
-                            account_id: acc.account_id,
-                            game_id: params.id,
-                            private_server_link: acc.private_server_link || null,
-                        },
-                    ]);
-                    if (insErr) {
-                        if (isDuplicateError(insErr))
-                            return toast.error("Link Duplikat!", {
-                                description: "Link private server udah dipake di tempat lain.",
-                            });
-                        return toast.error("Gagal nyambungin akun ke game", { description: insErr.message });
-                    }
-                }
-            }
-
-            const { data: insertedItem, error } = await supabase
-                .from("items")
-                .insert([{ game_id: params.id, item_name: data.item_name, description: data.description || null }])
-                .select()
-                .single();
-            if (error) {
-                toast.error("Waduh, gagal nambah item", { description: error.message });
-            } else {
-                if (validAccounts.length > 0) {
-                    const { error: accErr } = await supabase.from("account_items").insert(
-                        validAccounts.map((acc) => ({
-                            item_id: insertedItem.id,
-                            account_id: acc.account_id,
-                            is_available: true,
-                        }))
-                    );
-                    toast[accErr ? "error" : "success"](accErr ? "Item terbuat, tapi gagal numpangin ke akun" : "Jos gandos!", { description: accErr ? accErr.message : "Item baru dan stok akunnya udah terdaftar." });
-                } else {
-                    toast.success("Jos gandos!", { description: "Item baru udah terdaftar." });
-                }
-                closeItemDialog();
-                fetchData(false);
-            }
-        }
-    };
-
-    // ─── Game CRUD ───
-    const onSubmitEditGame = async (data) => {
-        if (data.requires_private_server) {
-            const { data: missing } = await supabase.from("account_games").select("id, account_id, private_server_link, accounts(username)").eq("game_id", params.id).or('private_server_link.is.null,private_server_link.eq.""');
-            if (missing?.length > 0) {
-                setMissingLinks(missing);
-                setPendingGameData(data);
-                setIsMissingLinksOpen(true);
-                return;
-            }
-        }
-        const { error } = await supabase
-            .from("games")
-            .update({
-                name: data.name,
-                image_url: data.image_url,
-                requires_private_server: data.requires_private_server,
-            })
-            .eq("id", params.id);
-        if (error) {
-            toast.error("Waduh, gagal update game", { description: error.message });
-        } else {
-            toast.success("Mantap!", { description: "Data game berhasil diubah." });
-            setIsEditGameOpen(false);
-            fetchData(false);
-        }
-    };
-
-    const handleSaveMissingLinksSubmit = async (e) => {
-        e.preventDefault();
-        if (missingLinks.some((ml) => !ml.private_server_link || ml.private_server_link.trim() === "")) return toast.error("Semua link wajib diisi bos!");
-        const { error } = await saveMissingLinks(missingLinks, params.id);
-        if (error) return;
-        const { error: gameError } = await supabase
-            .from("games")
-            .update({
-                name: pendingGameData.name,
-                image_url: pendingGameData.image_url,
-                requires_private_server: pendingGameData.requires_private_server,
-            })
-            .eq("id", params.id);
-        if (gameError) {
-            toast.error("Waduh, gagal update game", { description: gameError.message });
-        } else {
-            toast.success("Mantap!", { description: "Data game dan link akun berhasil diupdate." });
-            setIsMissingLinksOpen(false);
-            setIsEditGameOpen(false);
-            fetchData(false);
-        }
-    };
-
-    const handleDeleteGame = async () => {
-        const { error } = await supabase.from("games").delete().eq("id", game.id);
-        if (error) {
-            toast.error("Gagal hapus game", { description: error.message });
-        } else {
-            toast.success("Game dihapus!", { description: "Semua data terkait udah lenyap." });
-            router.push("/games");
-        }
-    };
-
-    // ─── Account Helpers ───
-    const handleKickAccount = async (accountGameId, accountId) => {
-        const { error } = await supabase.from("account_games").delete().eq("id", accountGameId);
-        if (error) {
-            toast.error("Gagal nendang", { description: error.message });
-            return;
-        }
-        const { data: gameItems } = await supabase.from("items").select("id").eq("game_id", params.id);
-        if (gameItems?.length > 0)
-            await supabase
-                .from("account_items")
-                .delete()
-                .eq("account_id", accountId)
-                .in(
-                    "item_id",
-                    gameItems.map((i) => i.id)
-                );
-        toast.success("Ditendang!", {
-            description: "Akun dan semua itemnya dari game ini udah dicabut.",
-        });
-        fetchData(false);
-    };
-
-    const handleUpdateLink = async (e) => {
-        e.preventDefault();
-        if (game.requires_private_server && !newLink.trim())
-            return toast.error("Wajib isi link!", {
-                description: "Game ini wajib pake Private Server Link bro!",
-            });
-        const { error } = await supabase
-            .from("account_games")
-            .update({ private_server_link: newLink.trim() || null })
-            .eq("id", editAccountGame.id);
-        if (error) {
-            isDuplicateError(error)
-                ? toast.error("Gagal update", {
-                      description: "Link Private Server ini udah dipakai di tempat lain!",
-                  })
-                : toast.error("Gagal update", { description: error.message });
-        } else {
-            toast.success("Update sukses!", { description: "Link Private Server berhasil diubah." });
-            setIsEditLinkOpen(false);
-            fetchData(false);
-        }
-    };
-
-    // ─── Item Helpers ───
-    const closeItemDialog = () => {
-        setIsAddItemOpen(false);
-        setEditItemId(null);
-        setItemAccounts([{ account_id: "", private_server_link: "" }]);
-        resetItem({ item_name: "", description: "" });
-    };
-    const handleDeleteItem = async (itemId) => {
-        const { error } = await supabase.from("items").delete().eq("id", itemId);
-        if (error) {
-            toast.error("Gagal hapus item", { description: error.message });
-        } else {
-            toast.success("Dihapus!");
-            fetchData(false);
-        }
-    };
-
-    // ─── Account Combobox Helpers ───
-    const handleCreateAccountFromCombo = async (username, onSuccess) => {
-        const { data, error } = await supabase.from("accounts").insert([{ username }]).select().single();
-        if (error) {
-            toast.error("Gagal bikin akun", { description: error.message });
-            return;
-        }
-        toast.success("Akun baru berhasil didaftarin!");
-        setAllAccounts([...allAccounts, data]);
-        onSuccess(data);
+    const tabHref = (nextTab) => {
+        const next = new URLSearchParams();
+        if (nextTab === "items") next.set("tab", "items");
+        const qs = next.toString();
+        return qs ? `/games/${id}?${qs}` : `/games/${id}`;
     };
 
     return (
         <PageContainer>
-            <DetailHeader
-                title={game.name}
-                subtitle={
-                    <>
-                        Status Private Server: {game.requires_private_server ? <span className="text-danger font-bold">Wajib Join</span> : <span className="text-success font-bold">Bebas</span>}
-                        <span className="text-muted-foreground ml-2 text-xs">| Game ID: {game.id}</span>
-                    </>
-                }
-                imageUrl={game.image_url || "https://images.unsplash.com/photo-1550745165-9bc0b252726f?q=80&w=200&auto=format&fit=crop"}
-                avatarShape="xl"
-                rightContent={
-                    <>
-                        <ActionIcon
-                            icon={Pencil}
-                            title="Edit Game"
-                            variant="edit"
-                            onClick={() => {
-                                resetGame({
-                                    name: game.name,
-                                    image_url: game.image_url || "",
-                                    requires_private_server: game.requires_private_server || false,
-                                });
-                                setIsEditGameOpen(true);
-                            }}
-                            className="h-10 w-10"
-                        />
-                        <ConfirmDialog trigger={<ActionIcon icon={Trash2} title="Hapus Game" variant="delete" className="h-10 w-10" />} title="Yakin mau hapus game ini?" description="Kalo dihapus, semua data item, dan daftar akun yang terhubung ke game ini bakal hilang permanen lho!" onConfirm={handleDeleteGame} />
-                    </>
-                }
-            />
+            <header className="glass flex flex-col justify-between gap-4 rounded-2xl p-5 md:flex-row md:items-center md:p-6">
+                <div className="flex min-w-0 items-center gap-4">
+                    <Link href="/games" aria-label="Balik ke daftar game" className="text-muted-foreground hover:text-foreground hover:bg-surface-3 flex h-9 w-9 shrink-0 items-center justify-center rounded-full transition-colors">
+                        <ArrowLeft className="h-5 w-5" />
+                    </Link>
 
-            <GameFormDialog open={isEditGameOpen} onOpenChange={setIsEditGameOpen} isEdit register={regGame} errors={errGame} watch={watchGame} setValue={setValueGame} onSubmit={handGame(onSubmitEditGame)} />
-            <MissingLinksDialog open={isMissingLinksOpen} onOpenChange={setIsMissingLinksOpen} missingLinks={missingLinks} setMissingLinks={setMissingLinks} onSubmit={handleSaveMissingLinksSubmit} />
-            <EditLinkDialog open={isEditLinkOpen} onOpenChange={setIsEditLinkOpen} entityLabel="Akun" entityName={editAccountGame?.accounts?.username} link={newLink} onLinkChange={setNewLink} onSubmit={handleUpdateLink} />
+                    {game.image_url ? <span className="border-border bg-surface-3 h-14 w-14 shrink-0 rounded-xl border bg-cover bg-center" style={{ backgroundImage: `url(${game.image_url})` }} /> : <span className="border-border bg-surface-3 text-muted-foreground flex h-14 w-14 shrink-0 items-center justify-center rounded-xl border text-lg font-bold">{getInitials(game.name)}</span>}
 
-            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full flex-col">
-                <TabsList className="border-border bg-surface-2 mx-auto grid h-12 w-full max-w-md grid-cols-2 rounded-xl border p-1">
-                    <TabsTrigger value="accounts" className="data-[state=active]:bg-primary data-[state=active]:text-foreground rounded-lg transition-all data-[state=active]:font-bold">
-                        List Akun
-                    </TabsTrigger>
-                    <TabsTrigger value="items" className="data-[state=active]:bg-accent rounded-lg transition-all data-[state=active]:font-bold data-[state=active]:text-black">
-                        List Item
-                    </TabsTrigger>
-                </TabsList>
-
-                {/* ═══ ACCOUNTS TAB ═══ */}
-                <TabsContent value="accounts" className="mt-6 space-y-4">
-                    <div className="flex flex-col items-start justify-between gap-4 md:flex-row md:items-center">
-                        <h2 className="text-glow-primary text-xl font-bold">Akun yang main di sini</h2>
-                        <div className="flex w-full items-center gap-2 md:w-auto">
-                            <Input placeholder="Cari username..." value={accountSearch} onChange={(e) => setAccountSearch(e.target.value)} className="border-border bg-surface-2 w-full md:w-64" />
-                            <Button
-                                size="sm"
-                                className="bg-primary hover:bg-primary/80 font-bold text-black"
-                                onClick={() => {
-                                    resetAcc();
-                                    setAccountItemsLinks([]);
-                                    setIsAddAccountOpen(true);
-                                }}
-                            >
-                                <Plus className="mr-1 h-4 w-4" /> Tautkan Akun
-                            </Button>
+                    <div className="min-w-0">
+                        <p className="text-muted-foreground text-[10px] font-bold tracking-[0.18em] uppercase">Game</p>
+                        <h1 className="text-foreground flex items-center gap-2 text-2xl font-semibold tracking-tight">
+                            <span className="truncate">{game.name}</span>
+                            <CopyButton textToCopy={game.name} className="h-6 w-6 shrink-0" />
+                        </h1>
+                        <div className="mt-1.5 flex flex-wrap items-center gap-2">
+                            {game.requires_private_server ? <StatusBadge variant="warning">Wajib private server</StatusBadge> : <StatusBadge variant="default">Private server opsional</StatusBadge>}
+                            {game.eldorado_game_id && <span className="text-muted-foreground font-mono text-xs">Eldorado ID {game.eldorado_game_id}</span>}
                         </div>
                     </div>
+                </div>
 
-                    {/* Add Account Dialog */}
-                    <FormDialog open={isAddAccountOpen} onOpenChange={(open) => (open ? setIsAddAccountOpen(true) : setIsAddAccountOpen(false))} title="Tautkan Akun ke Game" titleClassName="text-glow-primary">
-                        <form onSubmit={handAcc(onAddAccount)} className="space-y-4 pt-4">
-                            <div className="flex w-full flex-col space-y-2">
-                                <Label>Pilih Akun</Label>
-                                <ComboboxSelect
-                                    items={allAccounts}
-                                    value={selectedAccountId}
-                                    onSelect={(acc) => setValueAcc("account_id", acc.id)}
-                                    getItemValue={(acc) => acc.username}
-                                    placeholder="-- Pilih Akun Bro --"
-                                    searchPlaceholder="Cari username akun..."
-                                    emptyText="Akun gak ketemu bro."
-                                    onCreateNew={(username) => handleCreateAccountFromCombo(username, (data) => setValueAcc("account_id", data.id))}
-                                    createNewLabel={(term) => `Daftarin "${term}"`}
-                                    renderItem={(acc) => (
-                                        <>
-                                            {acc.username}
-                                            {acc.status === "EMPTY_ROBUX" && <span className="border-danger bg-danger-muted text-danger ml-2 inline-flex items-center rounded-sm border px-2 py-0.5 text-[10px] font-bold">HABIS</span>}
-                                        </>
-                                    )}
-                                />
-                                {errAcc.account_id && <p className="text-danger text-sm">{errAcc.account_id.message}</p>}
-                            </div>
-                            <FormField label={<>Private Server Link {game.requires_private_server ? <span className="text-danger">* (Wajib)</span> : "(Opsional)"}</>} error={errAcc.private_server_link?.message} register={regAcc("private_server_link")} placeholder="https://..." />
+                <div className="flex items-center gap-2 self-end md:self-center">
+                    <GameHeaderActions game={game} linkedAccountCount={linkedAccounts.length} itemCount={items.length} />
+                </div>
+            </header>
 
-                            {/* Item links repeater */}
-                            <div className="border-border mt-4 space-y-2 border-t pt-4">
-                                <div className="flex items-center justify-between">
-                                    <Label>Item yang Dimiliki (Opsional)</Label>
-                                    <Button type="button" variant="outline" size="sm" onClick={() => setAccountItemsLinks([...accountItemsLinks, { item_id: "", new_name: "" }])} className="border-primary text-primary hover:bg-primary/20 h-7 text-xs">
-                                        <Plus className="mr-1 h-3 w-3" /> Tambah Item
-                                    </Button>
+            {missingLinkCount > 0 && (
+                <div className="border-warning/25 bg-warning/[0.07] flex items-start gap-3 rounded-2xl border p-4" role="alert">
+                    <TriangleAlert className="text-warning mt-0.5 h-4 w-4 shrink-0" />
+                    <p className="text-muted-foreground text-sm leading-relaxed">
+                        <strong className="text-foreground">{missingLinkCount} akun belum punya link private server </strong>
+                        padahal game ini diwajibin. Template chat buat akun-akun itu bakal ngirim link kosong ke buyer — isi lewat tombol edit di baris masing-masing.
+                    </p>
+                </div>
+            )}
+
+            <nav className="border-border bg-surface-1/60 mx-auto grid w-full max-w-md grid-cols-2 gap-1 rounded-xl border p-1">
+                <Link href={tabHref("accounts")} scroll={false} className={`flex items-center justify-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${tab === "accounts" ? "bg-primary/15 text-primary" : "text-muted-foreground hover:text-foreground"}`}>
+                    <Users className="h-4 w-4" />
+                    Akun
+                    <span className="text-muted-foreground text-xs">({linkedAccounts.length})</span>
+                </Link>
+                <Link href={tabHref("items")} scroll={false} className={`flex items-center justify-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${tab === "items" ? "bg-accent/15 text-accent" : "text-muted-foreground hover:text-foreground"}`}>
+                    <Package className="h-4 w-4" />
+                    Item
+                    <span className="text-muted-foreground text-xs">({items.length})</span>
+                </Link>
+            </nav>
+
+            <DetailToolbar game={game} allAccounts={allAccounts} gameItems={items} tab={tab} />
+
+            {tab === "accounts" ? (
+                <DataTable
+                    columns={ACCOUNT_COLUMNS}
+                    data={accounts}
+                    emptyTitle={search ? `Gak ada akun yang cocok sama "${search}"` : "Belum ada akun yang ketaut ke game ini"}
+                    emptyHint={search ? "Coba cari pakai potongan username-nya." : 'Klik "Tautin akun" buat nyambungin akun ke game ini.'}
+                    renderRow={(row) => (
+                        <ClickableTableRow key={row.id} href={`/accounts/${row.accounts?.id}`}>
+                            <TableCell className="font-medium">
+                                <div className="flex items-center gap-3">
+                                    <span className="border-border bg-surface-3 text-muted-foreground flex h-8 w-8 shrink-0 items-center justify-center rounded-full border text-[10px] font-bold">{getInitials(row.accounts?.username)}</span>
+                                    <span className="text-foreground truncate">{row.accounts?.username ?? "(akun kehapus)"}</span>
                                 </div>
-                                {accountItemsLinks.map((lnkObj, idx) => (
-                                    <div key={idx} className="mt-2 flex items-center gap-2">
-                                        <ComboboxSelect
-                                            items={items}
-                                            value={lnkObj.item_id}
-                                            onSelect={(itm) => {
-                                                const newArr = [...accountItemsLinks];
-                                                newArr[idx] = { item_id: itm.id, new_name: "" };
-                                                setAccountItemsLinks(newArr);
-                                            }}
-                                            getItemValue={(itm) => itm.item_name}
-                                            placeholder={lnkObj.new_name ? `Item Baru: ${lnkObj.new_name}` : "-- Pilih Item --"}
-                                            searchPlaceholder="Cari item..."
-                                            emptyText="Gak ada item itu bro."
-                                            onCreateNew={(name) => {
-                                                const newArr = [...accountItemsLinks];
-                                                newArr[idx] = { item_id: "", new_name: name };
-                                                setAccountItemsLinks(newArr);
-                                            }}
-                                            createNewLabel={(term) => `Tambah item "${term}"`}
-                                        />
-                                        <Button
-                                            type="button"
-                                            variant="ghost"
-                                            size="icon"
-                                            className="text-danger hover:bg-danger-muted hover:text-danger h-10 w-10 shrink-0"
-                                            onClick={() => {
-                                                const newArr = [...accountItemsLinks];
-                                                newArr.splice(idx, 1);
-                                                setAccountItemsLinks(newArr);
-                                            }}
-                                        >
-                                            <Trash2 className="h-4 w-4" />
-                                        </Button>
-                                    </div>
-                                ))}
-                            </div>
-
-                            <Button type="submit" className="bg-primary mt-4 w-full font-bold text-black">
-                                Gass Tautkan
-                            </Button>
-                        </form>
-                    </FormDialog>
-
-                    <DataTable
-                        loading={loading}
-                        data={filteredAccounts}
-                        emptyMessage={accounts.length === 0 ? "Belum ada akun nyangkut di game ini bro." : `Gak nemu akun dengan nama "${accountSearch}".`}
-                        columns={[{ label: "Nama Akun" }, { label: "Link Server" }, { label: "Aksi", className: "text-right" }]}
-                        renderRow={(acc) => (
-                            <ClickableTableRow key={acc.id} href={`/accounts/${acc.account_id}`}>
-                                <TableCell className="flex items-center gap-3 font-medium">
-                                    <div className="border-border/50 bg-surface-3/80 text-muted-foreground flex h-10 w-10 shrink-0 items-center justify-center rounded-full border font-bold shadow-inner">{getInitials(acc.accounts?.username)}</div>
-                                    <div className="flex items-center gap-2">
-                                        {acc.accounts?.username} <CopyButton textToCopy={acc.accounts?.username} className="h-6 w-6" />
-                                        {acc.accounts?.status === "EMPTY_ROBUX" && <span className="border-danger bg-danger-muted text-danger inline-flex items-center rounded-sm border px-2 py-0.5 text-[10px] font-bold">HABIS ROBUX</span>}
-                                    </div>
-                                </TableCell>
-                                <TableCell>
-                                    <PrivateServerLinkCell link={acc.private_server_link} />
-                                </TableCell>
-                                <TableCell className="text-right">
-                                    <div className="flex items-center justify-end gap-1">
-                                        <ActionIcon
-                                            icon={Pencil}
-                                            variant="edit"
-                                            title="Edit Link"
-                                            onClick={() => {
-                                                setEditAccountGame(acc);
-                                                setNewLink(acc.private_server_link || "");
-                                                setIsEditLinkOpen(true);
-                                            }}
-                                        />
-                                        <ConfirmDialog trigger={<ActionIcon icon={Trash2} variant="delete" title="Tendang Akun" />} title="Yakin mau tendang akun ini?" description="Akun ini gak bakal nge-link sama game ini lagi, dan semua stok item dari game ini di akun tersebut bakal ikut kehapus." onConfirm={() => handleKickAccount(acc.id, acc.account_id)} confirmText="Tendang!" cancelText="Gak Jadi" />
-                                    </div>
-                                </TableCell>
-                            </ClickableTableRow>
-                        )}
-                    />
-                </TabsContent>
-
-                {/* ═══ ITEMS TAB ═══ */}
-                <TabsContent value="items" className="mt-6 space-y-4">
-                    <div className="flex flex-col items-start justify-between gap-4 md:flex-row md:items-center">
-                        <h2 className="text-glow-accent text-xl font-bold">Daftar Item Game</h2>
-                        <div className="flex w-full items-center gap-2 md:w-auto">
-                            <Input placeholder="Cari nama item..." value={itemSearch} onChange={(e) => setItemSearch(e.target.value)} className="border-border bg-surface-2 w-full md:w-64" />
-                            <Button
-                                size="sm"
-                                className="bg-accent hover:bg-accent/80 font-bold text-black"
-                                onClick={() => {
-                                    setEditItemId(null);
-                                    resetItem({ item_name: "", description: "" });
-                                    setItemAccounts([{ account_id: "", private_server_link: "" }]);
-                                    setIsAddItemOpen(true);
-                                }}
-                            >
-                                <Plus className="mr-1 h-4 w-4" /> Tambah Item
-                            </Button>
-                        </div>
-                    </div>
-
-                    {/* Add/Edit Item Dialog */}
-                    <FormDialog open={isAddItemOpen} onOpenChange={(open) => (open ? setIsAddItemOpen(true) : closeItemDialog())} title={editItemId ? "Edit Item" : "Tambah Item Baru"} titleClassName="text-glow-accent">
-                        <form onSubmit={handItem(onAddItem)} className="space-y-4 pt-4">
-                            <FormField label="Nama Item" error={errItem.item_name?.message} register={regItem("item_name")} placeholder="Cth: Dark Blade" />
-                            <FormField label="Deskripsi (Opsional)" error={errItem.description?.message} register={regItem("description")} placeholder="Cth: Buah langka" />
-
-                            {!editItemId && (
-                                <div className="border-border mt-4 space-y-2 border-t pt-4">
-                                    <div className="flex items-center justify-between">
-                                        <Label>Tautkan ke Akun (Wajib minimal 1)</Label>
-                                        <Button type="button" variant="outline" size="sm" onClick={() => setItemAccounts([...itemAccounts, { account_id: "", private_server_link: "" }])} className="border-primary text-primary hover:bg-primary/20 h-7 text-xs">
-                                            <Plus className="mr-1 h-3 w-3" /> Tambah Akun
-                                        </Button>
-                                    </div>
-                                    {itemAccounts.map((accObj, idx) => (
-                                        <div key={idx} className="mt-2 flex flex-col gap-2">
-                                            <div className="flex items-center gap-2">
-                                                <ComboboxSelect
-                                                    items={allAccounts}
-                                                    value={accObj.account_id}
-                                                    onSelect={async (acc) => {
-                                                        const newArr = [...itemAccounts];
-                                                        newArr[idx].account_id = acc.id;
-                                                        if (game?.requires_private_server) {
-                                                            const { data: linkData } = await supabase.from("account_games").select("private_server_link").eq("account_id", acc.id).eq("game_id", params.id).single();
-                                                            newArr[idx].private_server_link = linkData?.private_server_link || "";
-                                                        }
-                                                        setItemAccounts(newArr);
-                                                    }}
-                                                    getItemValue={(acc) => acc.username}
-                                                    placeholder="-- Pilih Akun --"
-                                                    searchPlaceholder="Cari username akun..."
-                                                    emptyText="Akun gak ketemu bro."
-                                                    onCreateNew={(username) =>
-                                                        handleCreateAccountFromCombo(username, (data) => {
-                                                            const newArr = [...itemAccounts];
-                                                            newArr[idx].account_id = data.id;
-                                                            if (game?.requires_private_server) newArr[idx].private_server_link = "";
-                                                            setItemAccounts(newArr);
-                                                        })
-                                                    }
-                                                    createNewLabel={(term) => `Daftarin "${term}"`}
-                                                    renderItem={(acc) => (
-                                                        <>
-                                                            {acc.username}
-                                                            {acc.status === "EMPTY_ROBUX" && <span className="border-danger bg-danger-muted text-danger ml-2 inline-flex items-center rounded-sm border px-2 py-0.5 text-[10px] font-bold">HABIS</span>}
-                                                        </>
-                                                    )}
-                                                />
-                                                <Button
-                                                    type="button"
-                                                    variant="ghost"
-                                                    size="icon"
-                                                    className="text-danger hover:bg-danger-muted hover:text-danger h-10 w-10 shrink-0"
-                                                    onClick={() => {
-                                                        const newArr = [...itemAccounts];
-                                                        newArr.splice(idx, 1);
-                                                        setItemAccounts(newArr);
-                                                    }}
-                                                >
-                                                    <Trash2 className="h-4 w-4" />
-                                                </Button>
-                                            </div>
-                                            {game?.requires_private_server && accObj.account_id && (
-                                                <div className="border-border mb-2 ml-1 flex w-full items-center border-l-2 pl-4">
-                                                    <Input
-                                                        placeholder="Link Private Server (Wajib)"
-                                                        value={accObj.private_server_link}
-                                                        onChange={(e) => {
-                                                            const newArr = [...itemAccounts];
-                                                            newArr[idx].private_server_link = e.target.value;
-                                                            setItemAccounts(newArr);
-                                                        }}
-                                                        className="border-border bg-surface-2 h-8 text-xs"
-                                                    />
-                                                </div>
-                                            )}
-                                        </div>
-                                    ))}
+                            </TableCell>
+                            <TableCell>
+                                <PrivateServerLinkCell link={row.private_server_link} />
+                            </TableCell>
+                            <TableCell>{row.accounts?.status === "EMPTY_ROBUX" ? <StatusBadge variant="danger">Habis</StatusBadge> : <StatusBadge variant="success">Ada</StatusBadge>}</TableCell>
+                            <TableCell className="text-muted-foreground text-right text-sm">{formatWibDate(row.created_at)}</TableCell>
+                            <TableCell className="text-right">
+                                <AccountRowActions gameId={id} gameName={game.name} requiresPrivateServer={game.requires_private_server} accountGame={row} />
+                            </TableCell>
+                        </ClickableTableRow>
+                    )}
+                />
+            ) : (
+                <DataTable
+                    columns={ITEM_COLUMNS}
+                    data={filteredItems}
+                    emptyTitle={search ? `Gak ada item yang cocok sama "${search}"` : "Game ini belum punya item"}
+                    emptyHint={search ? "Coba kata kunci yang lebih pendek." : 'Klik "Item baru" buat nyatet item yang bisa dijual dari game ini.'}
+                    renderRow={(row) => (
+                        <TableRow key={row.id} className="border-border hover:bg-surface-2/60">
+                            <TableCell className="font-medium">
+                                <div className="flex items-center gap-3">
+                                    <span className="border-border bg-surface-3 text-muted-foreground flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border text-[10px] font-bold">{getInitials(row.item_name)}</span>
+                                    <span className="text-foreground truncate">{row.item_name}</span>
+                                    <CopyButton textToCopy={row.item_name} className="h-6 w-6 shrink-0" />
                                 </div>
-                            )}
-
-                            <Button type="submit" className="bg-accent w-full font-bold text-black">
-                                Gass Simpan
-                            </Button>
-                        </form>
-                    </FormDialog>
-
-                    <DataTable
-                        loading={loading}
-                        data={filteredItems}
-                        emptyMessage={items.length === 0 ? "Belum ada item di game ini." : `Gak nemu item dengan nama "${itemSearch}".`}
-                        columns={[{ label: "Nama Item" }, { label: "Deskripsi" }, { label: "Aksi", className: "text-right" }]}
-                        renderRow={(item) => (
-                            <ClickableTableRow key={item.id} href={`/items/${item.id}`}>
-                                <TableCell className="flex items-center gap-3 font-medium">
-                                    <div className="border-border/50 bg-surface-3/80 text-muted-foreground flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border font-bold shadow-inner">{getInitials(item.item_name)}</div>
-                                    <div className="flex items-center gap-2">
-                                        {item.item_name} <CopyButton textToCopy={item.item_name} className="h-6 w-6" />
-                                    </div>
-                                </TableCell>
-                                <TableCell className="text-muted-foreground">{item.description || "-"}</TableCell>
-                                <TableCell className="flex items-center justify-end gap-1 text-right">
-                                    <ActionIcon
-                                        icon={Pencil}
-                                        variant="edit"
-                                        title="Edit Item"
-                                        onClick={() => {
-                                            setEditItemId(item.id);
-                                            resetItem({ item_name: item.item_name, description: item.description || "" });
-                                            setIsAddItemOpen(true);
-                                        }}
-                                    />
-                                    <ConfirmDialog trigger={<ActionIcon icon={Trash2} variant="delete" title="Hapus Item" />} title="Yakin mau hapus item ini?" description={`Kalau item "${item.item_name}" dihapus, data stok di semua akun yang nyimpen item ini juga bakal ilang selamanya loh bos.`} onConfirm={() => handleDeleteItem(item.id)} confirmText="Ya, Hapus Aja" />
-                                </TableCell>
-                            </ClickableTableRow>
-                        )}
-                    />
-                </TabsContent>
-            </Tabs>
+                            </TableCell>
+                            <TableCell className="text-muted-foreground max-w-[240px] truncate text-sm">{row.description || "—"}</TableCell>
+                            <TableCell className="text-muted-foreground text-right text-sm">{formatWibDate(row.created_at)}</TableCell>
+                            <TableCell className="text-right">
+                                <ItemRowActions game={game} item={row} allAccounts={allAccounts} />
+                            </TableCell>
+                        </TableRow>
+                    )}
+                />
+            )}
         </PageContainer>
     );
 }
